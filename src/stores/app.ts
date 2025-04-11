@@ -1,13 +1,23 @@
 // Utilities
 import { defineStore } from 'pinia';
 
+interface AppStoreParameters {
+  initialized: boolean;
+  canvasWidth: number;
+  canvasHeight: number;
+  threadWidth: number;
+  threadSpacing: number;
+  pauseCanvas: boolean;
+}
+
 export const useAppStore = defineStore('app', {
-  state: () => ({
+  state: (): AppStoreParameters => ({
     initialized: false,
     canvasWidth: 600,
     canvasHeight: 600,
     threadWidth: 3,
     threadSpacing: 1,
+    pauseCanvas: false,
   }),
   actions: {
     initializeCanvas() {
@@ -23,6 +33,9 @@ export const useAppStore = defineStore('app', {
     },
     setThreadSpacing(spacing: number) {
       this.threadSpacing = spacing;
+    },
+    togglePause() {
+      this.pauseCanvas = !this.pauseCanvas;
     },
   },
 });
