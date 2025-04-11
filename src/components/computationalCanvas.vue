@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import P5 from 'p5';
-import { drawAxes } from '@/types and classes/DrawingUtils';
+import { drawAxes, pressSpaceToPause } from '@/types and classes/DrawingUtils';
 
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
@@ -32,7 +32,7 @@ onMounted(() => {
   const sketch = (p5: P5) => {
     p5.setup = () => {
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
-      p5.background(150);
+      p5.background(0);
       p5.frameRate(20);
     };
 
@@ -61,16 +61,7 @@ onMounted(() => {
     p5.mouseDragged = () => {};
 
     p5.keyPressed = () => {
-      if (p5.key == ' ') {
-        if (pauseCanvas.value) {
-          console.log('Spacebar Pressed: Unpausing Canvas');
-          p5.loop();
-        } else {
-          console.log('Spacebar Pressed: Pausing Canvas');
-          p5.noLoop();
-        }
-        appStore.togglePause();
-      }
+      pressSpaceToPause(p5);
     };
   };
 
