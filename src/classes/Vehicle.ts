@@ -61,6 +61,13 @@ export class Vehicle {
     this.constrainMovementOrthogonally = false;
   }
 
+  randomizeLocation(fromCoord:P5.Vector,maxDist:number, is3D:boolean = false): void {
+    let randomX = this.p5.random(fromCoord.x - maxDist, fromCoord.x + maxDist)
+    let randomY = this.p5.random(fromCoord.y - maxDist,fromCoord.y + maxDist)
+    let randomZ = this.p5.random(fromCoord.z - maxDist, fromCoord.z + maxDist)
+    this.coords = new P5.Vector(randomX,randomY,is3D?randomZ:0)
+  }
+
   update(): void {
     if (this.env.friction != null) {
       this.applyFriction();
@@ -128,4 +135,7 @@ export class Vehicle {
     let steer = P5.Vector.sub(direction, this.phys.velocity);
     this.phys.aggregateSteer.add(steer);
   }
+
+  
+  
 }
