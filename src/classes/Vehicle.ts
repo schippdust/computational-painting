@@ -30,16 +30,20 @@ export class Vehicle {
   public uuid: string;
   private p5: P5;
 
+  // characteristics
   private lifeExpectancy: number;
   private age: number;
 
+  // simulation variables
   public coords: P5.Vector;
   private previousCoords: P5.Vector[];
   private maxNumberOfPreviousCoords: number;
   private phys: VehiclePhysicalProps;
   private env: VehicleEnvironmentalProperties;
 
+  // behavior variables
   public constrainMovementOrthogonally: boolean;
+  public desiredSeparation: number;
 
   constructor(
     sketch: P5,
@@ -59,6 +63,7 @@ export class Vehicle {
     this.env = { wind: null, friction: null };
 
     this.constrainMovementOrthogonally = false;
+    this.desiredSeparation = 40;
   }
 
   randomizeLocation(
@@ -160,20 +165,68 @@ export class Vehicle {
     this.applyForce(steer);
   }
 
-  avoid(targetPosition:P5.Vector, desiredClosestDistance:number, multiplier:number = 1): void{
-    let distanceBetween = P5.Vector.dist(this.coords, targetPosition)
-    if (distanceBetween > desiredClosestDistance){
-      return
+  avoid(
+    targetPosition: P5.Vector,
+    desiredClosestDistance: number,
+    multiplier: number | 'Max Velocity' = 1,
+  ): void {
+    let distanceBetween = P5.Vector.dist(this.coords, targetPosition);
+    if (distanceBetween > desiredClosestDistance) {
+      return;
     } else {
-      const steerDirection = P5.Vector.sub(this.coords, targetPosition).normalize()
-      if (distanceBetween == 0){
-        distanceBetween = 0.001
+      const steerDirection = P5.Vector.sub(
+        this.coords,
+        targetPosition,
+      ).normalize();
+      if (distanceBetween == 0) {
+        distanceBetween = 0.001;
       }
-      const closenessRatio = distanceBetween / desiredClosestDistance
-      steerDirection.div(closenessRatio)
-      this.steer(steerDirection, multiplier)
+      const closenessRatio = distanceBetween / desiredClosestDistance;
+      steerDirection.div(closenessRatio);
+      this.steer(steerDirection, multiplier);
     }
   }
 
-  
+  separate(
+    otherVehicleCoords: P5.Vector[],
+    separateMultiplier: number | 'Max Velocity' = 0.5,
+  ): void {
+    if (otherVehicleCoords.length <= 0) {
+      return;
+    }
+    let countOfVehiclesTooClose = 0;
+    let sumOfDistance = 0;
+    const sumVect = new P5.Vector(0, 0, 0);
+
+    for (let v of otherVehicleCoords) {
+      const d = P5.Vector.dist(this.coords, v);
+
+      if (d > 0 && d < this.desiredSeparation) {
+        sumOfDistance += d;
+        const diff = P5.Vector.sub(this.coords, v).normalize().div(d);
+        sumVect.add(diff);
+        countOfVehiclesTooClose += 1;
+      }
+    }
+    if (countOfVehiclesTooClose > 0) {
+      sumVect.mult(sumOfDistance / countOfVehiclesTooClose);
+    }
+
+    this.steer(sumVect, separateMultiplier);
+  }
+
+  align(
+    alignmentVectors: P5.Vector[],
+    alignMultiplier: number | 'Max Velocity' = 5,
+  ): void {
+    if (alignmentVectors.length <= 0) {
+      return;
+    }
+    const sumVect = new P5.Vector(0, 0, 0);
+    for (let v of alignmentVectors) {
+      sumVect.add(v);
+    }
+    sumVect.div(alignmentVectors.length);
+    this.steer(sumVect, alignMultiplier);
+  }
 }
