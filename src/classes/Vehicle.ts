@@ -198,7 +198,7 @@ export class Vehicle {
     let sumOfDistance = 0;
     const sumVect = new P5.Vector(0, 0, 0);
 
-    for (let v of otherVehicleCoords) {
+    for (const v of otherVehicleCoords) {
       const d = P5.Vector.dist(this.coords, v);
 
       if (d > 0 && d < this.desiredSeparation) {
@@ -223,10 +223,37 @@ export class Vehicle {
       return;
     }
     const sumVect = new P5.Vector(0, 0, 0);
-    for (let v of alignmentVectors) {
+    for (const v of alignmentVectors) {
       sumVect.add(v);
     }
     sumVect.div(alignmentVectors.length);
     this.steer(sumVect, alignMultiplier);
+  }
+
+  cohere(
+    otherVehicleCoords: P5.Vector[],
+    cohereMultiplier: number | 'Max Velocity' = 5,
+  ): void {
+    if (otherVehicleCoords.length <= 0) {
+      return;
+    }
+    const sumVect = new P5.Vector(0, 0, 0);
+    for (const v of otherVehicleCoords) {
+      sumVect.add(v);
+    }
+    sumVect.div(otherVehicleCoords.length);
+    this.seak(sumVect, cohereMultiplier);
+  }
+
+  flock(
+    neighborCoords: P5.Vector[],
+    neighborVelocities: P5.Vector[],
+    separateMultiplier: number | 'Max Velocity',
+    alignMultiplier: number | 'Max Velocity',
+    cohereMultiplier: number | 'Max Velocity',
+  ) {
+    this.separate(neighborCoords, separateMultiplier);
+    this.align(neighborVelocities, alignMultiplier);
+    this.cohere(neighborCoords, cohereMultiplier);
   }
 }
