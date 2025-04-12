@@ -6,7 +6,7 @@ export interface VehiclePhysicalProps {
   acceleration: P5.Vector;
   mass: number;
   maxVelocity: number;
-  maxSteerForce: number | null;
+  maxSteerForce: number;
   aggregateSteer: P5.Vector;
   forward: P5.Vector | null;
 }
@@ -16,7 +16,7 @@ const genericPhysicalProps: VehiclePhysicalProps = {
   acceleration: new P5.Vector(0, 0, 0),
   mass: 10,
   maxVelocity: 10,
-  maxSteerForce: null,
+  maxSteerForce: 10,
   aggregateSteer: new P5.Vector(0, 0, 0),
   forward: null,
 };
@@ -102,16 +102,11 @@ export class Vehicle {
   applyWind(): void {}
 
   applyForce(force: P5.Vector): void {
-    if (this.phys.maxSteerForce != null) {
-      const acceleration = force
-        .copy()
-        .limit(this.phys.maxSteerForce)
-        .div(this.phys.mass);
-      this.phys.acceleration.add(acceleration);
-    } else {
-      const acceleration = force.copy().div(this.phys.mass);
-      this.phys.acceleration.add(acceleration);
-    }
+    const acceleration = force
+      .copy()
+      .limit(this.phys.maxSteerForce)
+      .div(this.phys.mass);
+    this.phys.acceleration.add(acceleration);
   }
 
   applyAggregateSteerForce(): void {
@@ -136,7 +131,32 @@ export class Vehicle {
     } else {
       direction.mult(multiplier);
     }
-    let steer = P5.Vector.sub(direction, this.phys.velocity);
-    this.phys.aggregateSteer.add(steer);
+    const steer = P5.Vector.sub(direction, this.phys.velocity);
+    this.applyForce(steer);
+  }
+
+  arrive(targetPosition: P5.Vector) {
+    const desiredVelocity = P5.Vector.sub(targetPosition, this.coords);
+    const desiredMagnitude = desiredVelocity.mag();
+    desiredVelocity.normalize();
+    const maxAccel = Math.sqrt(this.phys.maxSteerForce / this.phys.mass);
+    const extraFrames = 3; // a little fudge factor
+    const framesToStop = this.phys.maxVelocity / maxAccel + extraFrames;
+    const decelRadius = framesToStop * this.phys.maxVelocity;
+
+    if (desiredMagnitude < decelRadius) {
+      const mappedMagnitude = this.p5.map(
+        desiredMagnitude,
+        0,
+        decelRadius,
+        0,
+        this.phys.maxVelocity,
+      );
+      desiredVelocity.mult(mappedMagnitude);
+    } else {
+      desiredVelocity.mult(this.phys.maxVelocity);
+    }
+    const steer = P5.Vector.sub(desiredVelocity, this.phys.velocity);
+    this.applyForce(steer);
   }
 }
