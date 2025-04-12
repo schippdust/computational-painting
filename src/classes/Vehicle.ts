@@ -135,7 +135,7 @@ export class Vehicle {
     this.applyForce(steer);
   }
 
-  arrive(targetPosition: P5.Vector) {
+  arrive(targetPosition: P5.Vector): void {
     const desiredVelocity = P5.Vector.sub(targetPosition, this.coords);
     const desiredMagnitude = desiredVelocity.mag();
     desiredVelocity.normalize();
@@ -159,4 +159,21 @@ export class Vehicle {
     const steer = P5.Vector.sub(desiredVelocity, this.phys.velocity);
     this.applyForce(steer);
   }
+
+  avoid(targetPosition:P5.Vector, desiredClosestDistance:number, multiplier:number = 1): void{
+    let distanceBetween = P5.Vector.dist(this.coords, targetPosition)
+    if (distanceBetween > desiredClosestDistance){
+      return
+    } else {
+      const steerDirection = P5.Vector.sub(this.coords, targetPosition).normalize()
+      if (distanceBetween == 0){
+        distanceBetween = 0.001
+      }
+      const closenessRatio = distanceBetween / desiredClosestDistance
+      steerDirection.div(closenessRatio)
+      this.steer(steerDirection, multiplier)
+    }
+  }
+
+  
 }
