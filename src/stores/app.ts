@@ -20,8 +20,8 @@ let placeholderCamera = new Camera3D(600, 600);
 export const useAppStore = defineStore('app', {
   state: (): AppStoreParameters => ({
     initialized: false,
-    canvasWidth: 600,
-    canvasHeight: 600,
+    canvasWidth: 1200,
+    canvasHeight: 1200,
     threadWidth: 3,
     threadSpacing: 1,
     pauseCanvas: false,

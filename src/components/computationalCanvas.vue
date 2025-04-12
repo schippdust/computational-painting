@@ -4,6 +4,7 @@ import { drawAxes, pressSpaceToPause } from '@/types and classes/DrawingUtils';
 
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
+import { PixelManager } from '@/types and classes/PixelManager';
 
 const appStore = useAppStore();
 const {
@@ -18,10 +19,10 @@ const {
 
 let cameraPos = new P5.Vector(800, -500, 1000);
 let cameraFocus = new P5.Vector(0, 0, 0);
-let fovDegrees = 50;
+let fovDegrees = 80;
 appStore.setCameraPosition(cameraPos);
 appStore.setCameraTarget(cameraFocus);
-// appStore.setCameraFOV(fovDegrees);
+appStore.setCameraFOV(fovDegrees);
 
 onMounted(() => {
   function getSketchParams() {
@@ -29,11 +30,14 @@ onMounted(() => {
   }
   let cycleRadians = 0;
   let cycleIncrement = 0.05;
+  let pm: PixelManager;
+  let isMouseDragging: boolean = false;
   const sketch = (p5: P5) => {
     p5.setup = () => {
+      pm = new PixelManager(p5);
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
       p5.background(0);
-      p5.frameRate(20);
+      p5.frameRate(12);
     };
 
     p5.draw = () => {
@@ -56,9 +60,31 @@ onMounted(() => {
       }
 
       cycleRadians += cycleIncrement;
+      console.log(p5.frameRate());
     };
 
-    p5.mouseDragged = () => {};
+    p5.mousePressed = () => {
+      pm.loadPixels();
+      // pm.loadPixels()
+      // let clickCoords = new P5.Vector(p5.mouseX, p5.mouseY)
+      // let color = p5.color(255)
+      // pm.setPixels([clickCoords],color)
+      // pm.circle(clickCoords,20,color)
+      // pm.updatePixels()
+    };
+    p5.mouseDragged = () => {
+      isMouseDragging = true;
+      let clickCoords = new P5.Vector(p5.mouseX, p5.mouseY);
+      let color = p5.color(255);
+      pm.circle(clickCoords, 10, color);
+    };
+
+    p5.mouseReleased = () => {
+      if (isMouseDragging) {
+        isMouseDragging = false;
+        pm.updatePixels();
+      }
+    };
 
     p5.keyPressed = () => {
       pressSpaceToPause(p5);
