@@ -1,6 +1,6 @@
 // Utilities
 
-import { Camera3D } from '@/types and classes/Camera3D';
+import { Camera3D } from '@/classes/Camera3D';
 import { defineStore } from 'pinia';
 import P5 from 'p5';
 

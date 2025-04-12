@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import P5 from 'p5';
-import { drawAxes, pressSpaceToPause } from '@/types and classes/DrawingUtils';
+import { drawAxes, pressSpaceToPause } from '@/classes/DrawingUtils';
 
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
-import { PixelManager } from '@/types and classes/PixelManager';
+import { PixelManager } from '@/classes/PixelManager';
 
 const appStore = useAppStore();
 const {
