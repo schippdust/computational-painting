@@ -1,4 +1,5 @@
 import P5, { Vector } from 'p5';
+import { Line } from './Line';
 
 export class Camera3D {
   private pos: P5.Vector;
@@ -57,6 +58,15 @@ export class Camera3D {
     const screenY = ((1 - ndcY) * this.canvasHeight) / 2;
 
     return new P5.Vector(screenX, screenY);
+  }
+
+  renderLine(line: Line): Line | null {
+    const projectedStartPoint = this.project(line.starPoint);
+    const projectedEndPoint = this.project(line.endPoint);
+    if (projectedStartPoint == null || projectedEndPoint == null) {
+      return null;
+    }
+    return new Line(projectedStartPoint, projectedEndPoint);
   }
 
   setPosition(pos: P5.Vector) {

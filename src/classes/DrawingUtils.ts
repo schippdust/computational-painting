@@ -60,3 +60,30 @@ export function randomPointOnCircleOrSphere(
     return P5.Vector.add(center, new P5.Vector(x, y, 0)); // Z = 0 for 2D
   }
 }
+
+export function randomPointInCircleOrSphere(
+  center: P5.Vector,
+  radius: number,
+  is3D: boolean,
+): P5.Vector {
+  if (is3D) {
+    // Random point on a sphere using spherical coordinates
+    const u = Math.random();
+    const v = Math.random();
+
+    const theta = 2 * Math.PI * u; // azimuthal angle
+    const phi = Math.acos(2 * v - 1); // polar angle
+
+    const x = radius * Math.sin(phi) * Math.cos(theta);
+    const y = radius * Math.sin(phi) * Math.sin(theta);
+    const z = radius * Math.cos(phi);
+
+    return P5.Vector.add(center, new P5.Vector(x, y, z).mult(Math.random()));
+  } else {
+    const angle = Math.random() * 2 * Math.PI;
+    const x = radius * Math.cos(angle);
+    const y = radius * Math.sin(angle);
+
+    return P5.Vector.add(center, new P5.Vector(x, y, 0).mult(Math.random()));
+  }
+}
