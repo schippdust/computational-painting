@@ -20,6 +20,8 @@ const {
   axisVisibility,
 } = storeToRefs(appStore);
 
+const frameRate = ref(100);
+
 let cameraPos = new P5.Vector(800, -500, 1000);
 let cameraFocus = new P5.Vector(0, 0, 0);
 let fovDegrees = 80;
@@ -40,7 +42,7 @@ onMounted(() => {
       pm = new PixelManager(p5);
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
       p5.background(0);
-      p5.frameRate(12);
+      p5.frameRate(60);
     };
 
     p5.draw = () => {
@@ -72,7 +74,9 @@ onMounted(() => {
       }
 
       cycleRadians += cycleIncrement;
-      console.log(p5.frameRate());
+
+      // Utility Functions
+      frameRate.value = Math.round(p5.frameRate());
     };
 
     p5.mousePressed = () => {};
@@ -95,4 +99,5 @@ onMounted(() => {
 
 <template>
   <div id="computational-canvas"></div>
+  <div>{{ frameRate }} fps</div>
 </template>

@@ -65,7 +65,7 @@ export class CoordinateSystem {
   }
 
   transformPoints(outputCs: CoordinateSystem, points: p5.Vector | p5.Vector[]) {
-    CoordinateSystem.transformPoints(this, outputCs, points);
+    return CoordinateSystem.transformPoints(this, outputCs, points);
   }
 
   static transformPoints(
