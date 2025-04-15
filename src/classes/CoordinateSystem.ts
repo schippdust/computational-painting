@@ -64,9 +64,9 @@ export class CoordinateSystem {
     );
   }
 
-  transformPoints(outputCs: CoordinateSystem, points: p5.Vector | p5.Vector[]) {
-    return CoordinateSystem.transformPoints(this, outputCs, points);
-  }
+  // transformPoints(outputCs: CoordinateSystem, points: p5.Vector | p5.Vector[]) {
+  //   return CoordinateSystem.transformPoints(this, outputCs, points);
+  // }
 
   static transformPoints(
     inputCS: CoordinateSystem,
@@ -157,23 +157,9 @@ export class CoordinateSystem {
   }
 
   getRenderAxes(length = 1): Line[] {
-    const basisArray = this.basis.toArray() as number[][]; // 3x3 matrix
-
-    const xDir = new p5.Vector(
-      basisArray[0][0],
-      basisArray[1][0],
-      basisArray[2][0],
-    ).mult(length);
-    const yDir = new p5.Vector(
-      basisArray[0][1],
-      basisArray[1][1],
-      basisArray[2][1],
-    ).mult(length);
-    const zDir = new p5.Vector(
-      basisArray[0][2],
-      basisArray[1][2],
-      basisArray[2][2],
-    ).mult(length);
+    const xDir = this.getXAxis(length);
+    const yDir = this.getYAxis(length);
+    const zDir = this.getZAxis(length);
 
     const xLine = new Line(
       this.origin.copy(),

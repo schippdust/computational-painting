@@ -70,14 +70,15 @@ export class Vehicle {
     fromCoord: P5.Vector,
     maxDist: number,
     is3D: boolean = false,
-  ): void {
+  ): Vehicle {
     let randomX = this.p5.random(fromCoord.x - maxDist, fromCoord.x + maxDist);
     let randomY = this.p5.random(fromCoord.y - maxDist, fromCoord.y + maxDist);
     let randomZ = this.p5.random(fromCoord.z - maxDist, fromCoord.z + maxDist);
     this.coords = new P5.Vector(randomX, randomY, is3D ? randomZ : 0);
+    return this;
   }
 
-  update(): void {
+  update(): Vehicle {
     if (this.env.friction != null) {
       this.applyFriction();
     }
@@ -93,6 +94,7 @@ export class Vehicle {
     }
     this.phys.acceleration.mult(0);
     this.age += 1;
+    return this;
   }
 
   applyFriction(): Vehicle {
