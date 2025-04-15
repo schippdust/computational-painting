@@ -31,8 +31,8 @@ export class Vehicle {
   private p5: P5;
 
   // characteristics
-  private lifeExpectancy: number;
-  private age: number;
+  public lifeExpectancy: number;
+  public age: number;
 
   // simulation variables
   public coords: P5.Vector;

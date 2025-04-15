@@ -169,10 +169,13 @@ export class OcTree {
     return this;
   }
 
-  queryNeighbors(v: Vehicle, radius: number): Vehicle[] {
+  queryNeighbors(target: Vehicle | P5.Vector, radius: number): Vehicle[] {
+    const targetPos = target instanceof P5.Vector ? target : target.coords;
+    const targetId = (target as Vehicle).uuid ?? null;
+
     return this.root
-      .queryRange(v.coords, radius)
-      .filter((other) => other.uuid !== v.uuid);
+      .queryRange(targetPos, radius)
+      .filter((other) => other.uuid !== targetId);
   }
 
   private expandToFit(point: P5.Vector) {

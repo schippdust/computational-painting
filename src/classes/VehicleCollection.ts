@@ -5,7 +5,7 @@ import { OcTree } from './VehicleOcTree';
 export class VehicleCollection {
   public vehicles: Vehicle[] = [];
   private ocTree: OcTree | null = null;
-  private ocTreeRebuilt:boolean = false
+  private ocTreeRebuilt: boolean = false;
 
   constructor(vehicles?: Vehicle[]) {
     if (vehicles) {
@@ -32,16 +32,16 @@ export class VehicleCollection {
 
   buildOcTree(): VehicleCollection {
     this.ocTree = new OcTree(this.vehicles);
-    this.ocTreeRebuilt = true
+    this.ocTreeRebuilt = true;
     return this;
   }
 
   update(): VehicleCollection {
     this.vehicles.forEach((v) => v.update());
     this.vehicles = this.vehicles.filter((v) => {
-      return v.age < v.lifeExpectancy
-    })
-    this.ocTreeRebuilt = false
+      return v.age < v.lifeExpectancy;
+    });
+    this.ocTreeRebuilt = false;
     return this;
   }
 
@@ -84,12 +84,34 @@ export class VehicleCollection {
     return this;
   }
 
-  arrive(targetPosition: P5.Vector | P5.Vector[]): VehicleCollection {
+  arrive(
+    targetPosition: P5.Vector | P5.Vector[],
+    awarenessDistance: number | null,
+  ): VehicleCollection {
     const targetPositionList = Array.isArray(targetPosition)
       ? targetPosition
       : [targetPosition];
     for (const pos of targetPositionList) {
-      this.vehicles.forEach((v) => v.arrive(pos));
+      if (
+        this.ocTree == null &&
+        awarenessDistance != null &&
+        awarenessDistance > 0
+      ) {
+        this.buildOcTree();
+      }
+      if (
+        this.ocTree != null &&
+        awarenessDistance != null &&
+        awarenessDistance > 0
+      ) {
+        const relevantVehicles = this.ocTree.queryNeighbors(
+          pos,
+          awarenessDistance,
+        );
+        relevantVehicles.forEach((v) => v.arrive(pos));
+      } else {
+        this.vehicles.forEach((v) => v.arrive(pos));
+      }
     }
     return this;
   }
@@ -97,15 +119,37 @@ export class VehicleCollection {
   avoid(
     targetPosition: P5.Vector | P5.Vector[],
     desiredClosestDistance: number,
+    awarenessDistance: number | null,
     multiplier: number | 'Max Velocity' = 1,
   ): VehicleCollection {
     const targetPositionList = Array.isArray(targetPosition)
       ? targetPosition
       : [targetPosition];
     for (const pos of targetPositionList) {
-      this.vehicles.forEach((v) =>
-        v.avoid(pos, desiredClosestDistance, multiplier),
-      );
+      if (
+        this.ocTree == null &&
+        awarenessDistance != null &&
+        awarenessDistance > 0
+      ) {
+        this.buildOcTree();
+      }
+      if (
+        this.ocTree != null &&
+        awarenessDistance != null &&
+        awarenessDistance > 0
+      ) {
+        const relevantVehicles = this.ocTree.queryNeighbors(
+          pos,
+          awarenessDistance,
+        );
+        relevantVehicles.forEach((v) =>
+          v.avoid(pos, desiredClosestDistance, multiplier),
+        );
+      } else {
+        this.vehicles.forEach((v) =>
+          v.avoid(pos, desiredClosestDistance, multiplier),
+        );
+      }
     }
     return this;
   }
