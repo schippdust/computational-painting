@@ -95,41 +95,50 @@ export class Vehicle {
     this.age += 1;
   }
 
-  applyFriction(): void {
+  applyFriction(): Vehicle {
     if (this.env.friction == null) {
-      return;
+      return this;
     }
     const friction = P5.Vector.copy(this.phys.velocity);
     friction.mult(-1).normalize().mult(this.env.friction);
     this.applyForce(friction);
+    return this;
   }
 
-  applyWind(): void {}
+  applyWind(): Vehicle {
+    return this;
+  }
 
-  applyForce(force: P5.Vector): void {
+  applyForce(force: P5.Vector): Vehicle {
     const acceleration = force
       .copy()
       .limit(this.phys.maxSteerForce)
       .div(this.phys.mass);
     this.phys.acceleration.add(acceleration);
+    return this;
   }
 
-  applyAggregateSteerForce(): void {
+  applyAggregateSteerForce(): Vehicle {
     this.applyForce(this.phys.aggregateSteer);
     this.phys.aggregateSteer.mult(0);
+    return this;
   }
 
   seak(
     targetPosition: P5.Vector,
     multiplier: number | 'Max Velocity' = 1,
-  ): void {
+  ): Vehicle {
     const desiredVelocity = P5.Vector.sub(targetPosition, this.coords);
     this.steer(desiredVelocity, multiplier);
+    return this;
   }
 
-  steer(direction: P5.Vector, multiplier: number | 'Max Velocity' = 1): void {
+  steer(
+    direction: P5.Vector,
+    multiplier: number | 'Max Velocity' = 1,
+  ): Vehicle {
     if (direction.mag() == 0) {
-      return;
+      return this;
     }
     if (multiplier == 'Max Velocity') {
       direction.mult(this.phys.maxVelocity);
@@ -138,9 +147,10 @@ export class Vehicle {
     }
     const steer = P5.Vector.sub(direction, this.phys.velocity);
     this.applyForce(steer);
+    return this;
   }
 
-  arrive(targetPosition: P5.Vector): void {
+  arrive(targetPosition: P5.Vector): Vehicle {
     const desiredVelocity = P5.Vector.sub(targetPosition, this.coords);
     const desiredMagnitude = desiredVelocity.mag();
     desiredVelocity.normalize();
@@ -163,16 +173,17 @@ export class Vehicle {
     }
     const steer = P5.Vector.sub(desiredVelocity, this.phys.velocity);
     this.applyForce(steer);
+    return this;
   }
 
   avoid(
     targetPosition: P5.Vector,
     desiredClosestDistance: number,
     multiplier: number | 'Max Velocity' = 1,
-  ): void {
+  ): Vehicle {
     let distanceBetween = P5.Vector.dist(this.coords, targetPosition);
     if (distanceBetween > desiredClosestDistance) {
-      return;
+      return this;
     } else {
       const steerDirection = P5.Vector.sub(
         this.coords,
@@ -184,15 +195,16 @@ export class Vehicle {
       const closenessRatio = distanceBetween / desiredClosestDistance;
       steerDirection.div(closenessRatio);
       this.steer(steerDirection, multiplier);
+      return this;
     }
   }
 
   separate(
     otherVehicleCoords: P5.Vector[],
     separateMultiplier: number | 'Max Velocity' = 0.5,
-  ): void {
+  ): Vehicle {
     if (otherVehicleCoords.length <= 0) {
-      return;
+      return this;
     }
     let countOfVehiclesTooClose = 0;
     let sumOfDistance = 0;
@@ -213,14 +225,15 @@ export class Vehicle {
     }
 
     this.steer(sumVect, separateMultiplier);
+    return this;
   }
 
   align(
     alignmentVectors: P5.Vector[],
     alignMultiplier: number | 'Max Velocity' = 5,
-  ): void {
+  ): Vehicle {
     if (alignmentVectors.length <= 0) {
-      return;
+      return this;
     }
     const sumVect = new P5.Vector(0, 0, 0);
     for (const v of alignmentVectors) {
@@ -228,14 +241,15 @@ export class Vehicle {
     }
     sumVect.div(alignmentVectors.length);
     this.steer(sumVect, alignMultiplier);
+    return this;
   }
 
   cohere(
     otherVehicleCoords: P5.Vector[],
     cohereMultiplier: number | 'Max Velocity' = 5,
-  ): void {
+  ): Vehicle {
     if (otherVehicleCoords.length <= 0) {
-      return;
+      return this;
     }
     const sumVect = new P5.Vector(0, 0, 0);
     for (const v of otherVehicleCoords) {
@@ -243,6 +257,7 @@ export class Vehicle {
     }
     sumVect.div(otherVehicleCoords.length);
     this.seak(sumVect, cohereMultiplier);
+    return this;
   }
 
   flock(
@@ -251,9 +266,10 @@ export class Vehicle {
     separateMultiplier: number | 'Max Velocity',
     alignMultiplier: number | 'Max Velocity',
     cohereMultiplier: number | 'Max Velocity',
-  ) {
+  ): Vehicle {
     this.separate(neighborCoords, separateMultiplier);
     this.align(neighborVelocities, alignMultiplier);
     this.cohere(neighborCoords, cohereMultiplier);
+    return this;
   }
 }
