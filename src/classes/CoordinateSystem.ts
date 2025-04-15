@@ -56,6 +56,14 @@ export class CoordinateSystem {
     return new CoordinateSystem(origin, basis);
   }
 
+  static getWorldCoordinates() {
+    return this.fromOriginNormalX(
+      new p5.Vector(0, 0, 0),
+      new p5.Vector(0, 0, 1),
+      new p5.Vector(1, 0, 0),
+    );
+  }
+
   transformPoints(outputCs: CoordinateSystem, points: p5.Vector | p5.Vector[]) {
     CoordinateSystem.transformPoints(this, outputCs, points);
   }

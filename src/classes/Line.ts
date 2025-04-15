@@ -1,4 +1,5 @@
 import P5 from 'p5';
+import type { Camera3D } from './Camera3D';
 
 export class Line {
   public starPoint: P5.Vector;
@@ -15,5 +16,17 @@ export class Line {
       this.endPoint.x,
       this.endPoint.y,
     );
+  }
+
+  renderProjected(p5: P5, camera: Camera3D) {
+    const projectedLines = camera.renderLines(this);
+    for (const line of projectedLines) {
+      p5.line(
+        line.starPoint.x,
+        line.starPoint.y,
+        line.endPoint.x,
+        line.endPoint.y,
+      );
+    }
   }
 }

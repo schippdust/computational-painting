@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import P5 from 'p5';
 import { drawAxes, pressSpaceToPause } from '@/classes/DrawingUtils';
+import { CoordinateSystem } from '@/classes/CoordinateSystem';
+import { Circle } from '@/classes/Circle';
+import { Line } from '@/classes/Line';
 
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
@@ -55,7 +58,9 @@ onMounted(() => {
 
       let direction = P5.Vector.sub(pos, centerPoint);
       direction.rotate(p5.HALF_PI, zUp);
-      // P5.Vector.angleBetween()
+      let currentCoords = CoordinateSystem.fromOriginAndNormal(pos, direction);
+      let circle = new Circle(currentCoords, 40);
+      circle.renderProjected(p5, camera.value);
 
       let renderPos = camera.value.project(pos);
       if (renderPos) {
@@ -70,22 +75,10 @@ onMounted(() => {
       console.log(p5.frameRate());
     };
 
-    p5.mousePressed = () => {
-      // pm.loadPixels();
-    };
-    p5.mouseDragged = () => {
-      // isMouseDragging = true;
-      // let clickCoords = new P5.Vector(p5.mouseX, p5.mouseY);
-      // let color = p5.color(255);
-      // pm.circle(clickCoords, 10, color);
-    };
+    p5.mousePressed = () => {};
+    p5.mouseDragged = () => {};
 
-    p5.mouseReleased = () => {
-      // if (isMouseDragging) {
-      //   isMouseDragging = false;
-      //   pm.updatePixels();
-      // }
-    };
+    p5.mouseReleased = () => {};
 
     p5.keyPressed = () => {
       pressSpaceToPause(p5);

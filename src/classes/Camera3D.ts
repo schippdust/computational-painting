@@ -60,13 +60,18 @@ export class Camera3D {
     return new P5.Vector(screenX, screenY);
   }
 
-  renderLine(line: Line): Line | null {
-    const projectedStartPoint = this.project(line.starPoint);
-    const projectedEndPoint = this.project(line.endPoint);
-    if (projectedStartPoint == null || projectedEndPoint == null) {
-      return null;
+  renderLines(line: Line | Line[]): Line[] {
+    const lineList = Array.isArray(line) ? line : [line];
+    const linesOut: Line[] = [];
+    for (const line of lineList) {
+      const projectedStartPoint = this.project(line.starPoint);
+      const projectedEndPoint = this.project(line.endPoint);
+      if (projectedStartPoint == null || projectedEndPoint == null) {
+        continue;
+      }
+      linesOut.push(new Line(projectedStartPoint, projectedEndPoint));
     }
-    return new Line(projectedStartPoint, projectedEndPoint);
+    return linesOut;
   }
 
   setPosition(pos: P5.Vector) {
