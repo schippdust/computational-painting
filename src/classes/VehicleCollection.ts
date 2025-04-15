@@ -29,65 +29,71 @@ export class VehicleCollection {
     return this;
   }
 
-  buildOcTree() {
+  buildOcTree(): VehicleCollection {
     this.ocTree = new OcTree(this.vehicles);
+    return this;
   }
 
-  update() {
+  update(): VehicleCollection {
     this.vehicles.forEach((v) => v.update());
     this.ocTree = null;
     return this;
   }
 
-  applyWind() {
+  applyWind(): VehicleCollection {
     this.vehicles.forEach((v) => v.applyWind);
     return this;
   }
 
-  applyForce(force: P5.Vector) {
+  applyForce(force: P5.Vector): VehicleCollection {
     this.vehicles.forEach((v) => v.applyForce(force));
+    return this;
   }
 
-  applyAggregateSteerForce() {
+  applyAggregateSteerForce(): VehicleCollection {
     this.vehicles.forEach((v) => v.applyAggregateSteerForce());
+    return this;
   }
 
   seak(
     targetPosition: P5.Vector | P5.Vector[],
     multiplier: number | 'Max Velocity' = 1,
-  ) {
+  ): VehicleCollection {
     const targetList = Array.isArray(targetPosition)
       ? targetPosition
       : [targetPosition];
     for (const target of targetList) {
       this.vehicles.forEach((v) => v.seak(target, multiplier));
     }
+    return this;
   }
 
   steer(
     direction: P5.Vector | P5.Vector[],
     multiplier: number | 'Max Velocity' = 1,
-  ) {
+  ): VehicleCollection {
     const directionList = Array.isArray(direction) ? direction : [direction];
     for (const dir of directionList) {
       this.vehicles.forEach((v) => v.steer(dir, multiplier));
     }
+    return this;
   }
 
-  arrive(targetPosition: P5.Vector | P5.Vector[]) {
+  arrive(targetPosition: P5.Vector | P5.Vector[]): VehicleCollection {
     const targetPositionList = Array.isArray(targetPosition)
       ? targetPosition
       : [targetPosition];
     for (const pos of targetPositionList) {
       this.vehicles.forEach((v) => v.arrive(pos));
     }
+    return this;
   }
 
   avoid(
     targetPosition: P5.Vector | P5.Vector[],
     desiredClosestDistance: number,
     multiplier: number | 'Max Velocity' = 1,
-  ) {
+  ): VehicleCollection {
     const targetPositionList = Array.isArray(targetPosition)
       ? targetPosition
       : [targetPosition];
@@ -96,28 +102,96 @@ export class VehicleCollection {
         v.avoid(pos, desiredClosestDistance, multiplier),
       );
     }
+    return this;
   }
 
   separate(
-    separateMultiplier: number | 'Max Velocity' = 0.5,
     neighborDistance: number,
-  ) {
-    // need an oc tree to find neighbors
+    separateMultiplier: number | 'Max Velocity' = 1,
+  ): VehicleCollection {
+    if (this.ocTree == null) {
+      this.buildOcTree();
+    }
+    if (this.ocTree != null) {
+      const ocTree = this.ocTree;
+      this.vehicles.forEach((v) => {
+        v.neighbors = ocTree.queryNeighbors(v, neighborDistance);
+        v.separate(
+          v.neighbors.map((n) => n.coords),
+          separateMultiplier,
+        );
+      });
+    }
+    return this;
   }
 
-  align(alignMultiplier: number | 'Max Velocity' = 5) {
-    // need an oc tree to find neighbor vectors
+  align(
+    neighborDistance: number,
+    alignMultiplier: number | 'Max Velocity' = 1,
+  ): VehicleCollection {
+    if (this.ocTree == null) {
+      this.buildOcTree();
+    }
+    if (this.ocTree != null) {
+      const ocTree = this.ocTree;
+      this.vehicles.forEach((v) => {
+        v.neighbors = ocTree.queryNeighbors(v, neighborDistance);
+        v.align(
+          v.neighbors.map((n) => n.phys.velocity),
+          alignMultiplier,
+        );
+      });
+    }
+    return this;
   }
 
-  cohere(cohereMultiplier: number | 'Max Velocity' = 5) {
-    // need an oc tree to find neighbors
+  cohere(
+    neighborDistance: number,
+    cohereMultiplier: number | 'Max Velocity' = 1,
+  ): VehicleCollection {
+    if (this.ocTree == null) {
+      this.buildOcTree();
+    }
+    if (this.ocTree != null) {
+      const ocTree = this.ocTree;
+      this.vehicles.forEach((v) => {
+        v.neighbors = ocTree.queryNeighbors(v, neighborDistance);
+        v.cohere(
+          v.neighbors.map((n) => n.coords),
+          cohereMultiplier,
+        );
+      });
+    }
+    return this;
   }
 
   flock(
+    neighborDistance: number,
     separateMultiplier: number | 'Max Velocity' = 0.5,
     alignMultiplier: number | 'Max Velocity' = 5,
     cohereMultiplier: number | 'Max Velocity' = 5,
-  ) {
-    // need an oc tree to find neighbors and neighbor vectors
+  ): VehicleCollection {
+    if (this.ocTree == null) {
+      this.buildOcTree();
+    }
+    if (this.ocTree != null) {
+      const ocTree = this.ocTree;
+      this.vehicles.forEach((v) => {
+        v.neighbors = ocTree.queryNeighbors(v, neighborDistance);
+        v.separate(
+          v.neighbors.map((n) => n.coords),
+          separateMultiplier,
+        );
+        v.align(
+          v.neighbors.map((n) => n.phys.velocity),
+          alignMultiplier,
+        );
+        v.cohere(
+          v.neighbors.map((n) => n.coords),
+          cohereMultiplier,
+        );
+      });
+    }
+    return this;
   }
 }

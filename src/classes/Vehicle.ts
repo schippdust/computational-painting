@@ -38,8 +38,9 @@ export class Vehicle {
   public coords: P5.Vector;
   private previousCoords: P5.Vector[];
   private maxNumberOfPreviousCoords: number;
-  private phys: VehiclePhysicalProps;
-  private env: VehicleEnvironmentalProperties;
+  public phys: VehiclePhysicalProps;
+  public env: VehicleEnvironmentalProperties;
+  public neighbors: Vehicle[];
 
   // behavior variables
   public constrainMovementOrthogonally: boolean;
@@ -64,6 +65,7 @@ export class Vehicle {
 
     this.constrainMovementOrthogonally = false;
     this.desiredSeparation = 40;
+    this.neighbors = [];
   }
 
   randomizeLocation(
@@ -94,6 +96,7 @@ export class Vehicle {
     }
     this.phys.acceleration.mult(0);
     this.age += 1;
+    this.neighbors = [];
     return this;
   }
 
