@@ -5,6 +5,7 @@ import { OcTree } from './VehicleOcTree';
 export class VehicleCollection {
   public vehicles: Vehicle[] = [];
   private ocTree: OcTree | null = null;
+  private ocTreeRebuilt:boolean = false
 
   constructor(vehicles?: Vehicle[]) {
     if (vehicles) {
@@ -16,7 +17,7 @@ export class VehicleCollection {
     vehicles: Vehicle | Vehicle[],
     rebuildOcTree: boolean = true,
   ): VehicleCollection {
-    // rebuild octree can cause performance issues if using this function in loops adding single vehicles
+    // rebuild octree can cause performance issues if using this function repeatedly in loops adding single vehicles
     // in those instances consider not rebuilding until all vehicles have been added, then rebuild manually
     const vehicleList = Array.isArray(vehicles) ? vehicles : [vehicles];
     for (const vehicle of vehicleList) {
@@ -31,12 +32,16 @@ export class VehicleCollection {
 
   buildOcTree(): VehicleCollection {
     this.ocTree = new OcTree(this.vehicles);
+    this.ocTreeRebuilt = true
     return this;
   }
 
   update(): VehicleCollection {
     this.vehicles.forEach((v) => v.update());
-    this.ocTree = null;
+    this.vehicles = this.vehicles.filter((v) => {
+      return v.age < v.lifeExpectancy
+    })
+    this.ocTreeRebuilt = false
     return this;
   }
 
