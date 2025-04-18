@@ -54,7 +54,7 @@ export class Vehicle {
     this.uuid = crypto.randomUUID();
     this.p5 = sketch;
 
-    this.lifeExpectancy = 10000;
+    this.lifeExpectancy = 150;
     this.age = 0;
 
     this.coords = coords;

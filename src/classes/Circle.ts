@@ -178,12 +178,40 @@ export class Circle {
     }
   }
 
+  randomPointsOnSurface(numberOfPoints: number, useSphere: boolean = false) {
+    const points: P5.Vector[] = [];
+    for (let i = 0; i < numberOfPoints; i++) {
+      points.push(
+        Circle.getRandomPointOnSurface(
+          this.coordinateSystem,
+          this._radius,
+          useSphere,
+        ),
+      );
+    }
+    return points;
+  }
+
   randomPointOnSurface(useSphere: boolean = false): P5.Vector {
     return Circle.getRandomPointOnSurface(
       this.coordinateSystem,
       this._radius,
       useSphere,
     );
+  }
+
+  randomPointsInside(numberOfPoints: number, useSphere: boolean = false) {
+    const points: P5.Vector[] = [];
+    for (let i = 0; i < numberOfPoints; i++) {
+      points.push(
+        Circle.getRandomPointInside(
+          this.coordinateSystem,
+          this._radius,
+          useSphere,
+        ),
+      );
+    }
+    return points;
   }
 
   randomPointInside(useSphere: boolean = false): P5.Vector {
