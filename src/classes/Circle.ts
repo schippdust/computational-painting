@@ -84,17 +84,30 @@ export class Circle {
     this.renderSegments = segments;
   }
 
+  static getRandomPointsOnSurface(
+    center: P5.Vector | CoordinateSystem,
+    radius: number,
+    numberOfPoints: number,
+    useSphere: boolean = false,
+  ) {
+    const points: P5.Vector[] = [];
+    for (let i = 0; i < numberOfPoints; i++) {
+      points.push(Circle.getRandomPointOnSurface(center, radius, useSphere));
+    }
+    return points;
+  }
+
   static getRandomPointOnSurface(
     center: P5.Vector | CoordinateSystem,
     radius: number,
-    is3D: boolean,
+    useSphere: boolean = false,
   ): P5.Vector {
     const cs =
       center instanceof CoordinateSystem
         ? center
         : CoordinateSystem.fromOriginAndNormal(center, new P5.Vector(0, 0, 1));
 
-    if (is3D) {
+    if (useSphere) {
       const u = Math.random();
       const v = Math.random();
 
@@ -117,17 +130,30 @@ export class Circle {
     }
   }
 
+  static getRandomPointsInside(
+    center: P5.Vector | CoordinateSystem,
+    radius: number,
+    numberOfPoints: number,
+    useSphere: boolean = false,
+  ) {
+    const points: P5.Vector[] = [];
+    for (let i = 0; i < numberOfPoints; i++) {
+      points.push(Circle.getRandomPointInside(center, radius, useSphere));
+    }
+    return points;
+  }
+
   static getRandomPointInside(
     center: P5.Vector | CoordinateSystem,
     radius: number,
-    is3D: boolean,
+    useSphere: boolean = false,
   ): P5.Vector {
     const cs =
       center instanceof CoordinateSystem
         ? center
         : CoordinateSystem.fromOriginAndNormal(center, new P5.Vector(0, 0, 1));
 
-    if (is3D) {
+    if (useSphere) {
       const u = Math.random();
       const v = Math.random();
 
@@ -152,19 +178,19 @@ export class Circle {
     }
   }
 
-  randomPointOnSurface(is3D: boolean): P5.Vector {
+  randomPointOnSurface(useSphere: boolean = false): P5.Vector {
     return Circle.getRandomPointOnSurface(
       this.coordinateSystem,
       this._radius,
-      is3D,
+      useSphere,
     );
   }
 
-  randomPointInside(is3D: boolean): P5.Vector {
+  randomPointInside(useSphere: boolean = false): P5.Vector {
     return Circle.getRandomPointInside(
       this.coordinateSystem,
       this._radius,
-      is3D,
+      useSphere,
     );
   }
 
