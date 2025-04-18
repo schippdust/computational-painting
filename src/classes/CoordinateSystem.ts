@@ -3,11 +3,11 @@ import p5 from 'p5';
 import { Line } from './Line';
 
 export class CoordinateSystem {
-  private origin: p5.Vector;
+  private position: p5.Vector;
   private basis: math.Matrix; // 3x3 rotation matrix (columns are basis vectors)
 
   constructor(origin: p5.Vector, basis: math.Matrix) {
-    this.origin = origin;
+    this.position = origin;
     this.basis = basis; // each column is a basis vector in world coordinates
   }
 
@@ -73,9 +73,9 @@ export class CoordinateSystem {
     ).toArray() as number[];
 
     return new p5.Vector(
-      rotatedArr[0] + this.origin.x,
-      rotatedArr[1] + this.origin.y,
-      rotatedArr[2] + this.origin.z,
+      rotatedArr[0] + this.position.x,
+      rotatedArr[1] + this.position.y,
+      rotatedArr[2] + this.position.z,
     );
   }
 
@@ -97,7 +97,7 @@ export class CoordinateSystem {
     for (const point of pointList) {
       const relative = math.subtract(
         [point.x, point.y, point.z],
-        [inputCS.origin.x, inputCS.origin.y, inputCS.origin.z],
+        [inputCS.position.x, inputCS.position.y, inputCS.position.z],
       );
 
       const localMatrix = math.multiply(inputBasisInv, relative);
@@ -106,9 +106,9 @@ export class CoordinateSystem {
       ).toArray() as number[];
 
       const worldMatrix = math.add(math.multiply(outputBasis, local), [
-        outputCS.origin.x,
-        outputCS.origin.y,
-        outputCS.origin.z,
+        outputCS.position.x,
+        outputCS.position.y,
+        outputCS.position.z,
       ]);
       function toVector3(input: unknown): number[] {
         if (Array.isArray(input)) {
@@ -168,7 +168,7 @@ export class CoordinateSystem {
     // Apply rotation to the basis
     const newBasis = math.multiply(rotationMatrix, this.basis) as math.Matrix;
 
-    return new CoordinateSystem(this.origin.copy(), newBasis);
+    return new CoordinateSystem(this.position.copy(), newBasis);
   }
 
   getRenderAxes(length = 1): Line[] {
@@ -177,16 +177,16 @@ export class CoordinateSystem {
     const zDir = this.getZAxis(length);
 
     const xLine = new Line(
-      this.origin.copy(),
-      p5.Vector.add(this.origin, xDir),
+      this.position.copy(),
+      p5.Vector.add(this.position, xDir),
     );
     const yLine = new Line(
-      this.origin.copy(),
-      p5.Vector.add(this.origin, yDir),
+      this.position.copy(),
+      p5.Vector.add(this.position, yDir),
     );
     const zLine = new Line(
-      this.origin.copy(),
-      p5.Vector.add(this.origin, zDir),
+      this.position.copy(),
+      p5.Vector.add(this.position, zDir),
     );
 
     return [xLine, yLine, zLine];
@@ -219,7 +219,7 @@ export class CoordinateSystem {
     ).mult(length);
   }
 
-  getOrigin(): p5.Vector {
-    return this.origin;
+  getPosition(): p5.Vector {
+    return this.position;
   }
 }

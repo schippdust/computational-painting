@@ -46,7 +46,7 @@ export class Circle {
   }
 
   get centerPoint() {
-    return this.coordinateSystem.getOrigin();
+    return this.coordinateSystem.getPosition();
   }
 
   get normal() {

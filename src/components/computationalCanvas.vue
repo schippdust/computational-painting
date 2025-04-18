@@ -44,13 +44,13 @@ onMounted(() => {
     p5.setup = () => {
       pm = new PixelManager(p5);
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
-      p5.background(0);
+      p5.background(255);
       p5.frameRate(60);
     };
 
     p5.draw = () => {
-      p5.stroke(255, 255, 255);
-      p5.background(p5.color(0, 0, 0, 1));
+      p5.stroke(0);
+      p5.background(p5.color(255, 255, 255, 1));
 
       let centerPoint = new P5.Vector(0, 0, 0);
       let zUp = new P5.Vector(0, 0, 1);
@@ -64,30 +64,36 @@ onMounted(() => {
       let direction = P5.Vector.sub(pos, centerPoint);
       direction.rotate(p5.HALF_PI, zUp);
       let currentCoords = CoordinateSystem.fromOriginAndNormal(pos, direction);
-      let circle = new Circle(currentCoords, 40);
+      let circle = new Circle(currentCoords, 150);
       circle.renderProjected(p5, camera.value);
 
       const edgePoints = circle.randomPointsOnSurface(2);
       const vehicles = edgePoints.map((pt) => {
-        const vehicle = new Vehicle(p5, pt);
-        vehicle.phys.mass = 15;
-        vehicle.phys.maxVelocity = 10;
-        vehicle.phys.maxSteerForce = 10;
-        vehicle.lifeExpectancy = 1500;
-
-        vehicle.steer(currentCoords.getZAxis(100));
-        return vehicle;
+        
+        const v = new Vehicle(p5, pt);
+        v.phys.mass = 15;
+        v.phys.maxVelocity = 50;
+        v.phys.maxSteerForce = 10;
+        v.lifeExpectancy = 1500;
+         
+        const motionFromCenter = P5.Vector.sub(pt,currentCoords.getPosition())
+        v.steer(motionFromCenter.normalize().mult(100))
+        return v;
       });
       vehicleCollection.addVehicle(vehicles);
       vehicleCollection.seak(
-        CoordinateSystem.getWorldCoordinates().getOrigin(),
+        CoordinateSystem.getWorldCoordinates().getPosition(),
         0.01,
       );
-      vehicleCollection.steer(currentCoords.getZAxis(20));
+      vehicleCollection.steer(currentCoords.getZAxis(5));
+      vehicleCollection.vehicles.forEach((v) =>{
+        const motionFromCenter = P5.Vector.sub(v.coords,currentCoords.getPosition())
+        v.steer(motionFromCenter.normalize().mult(4))
+      })
       vehicleCollection.separate(35, 10);
-      vehicleCollection.align(20);
+      vehicleCollection.align(20,5);
+
       vehicleCollection.update();
-      console.log(vehicleCollection.vehicles.length, 'vehicles');
       vehicleCollection.vehicles.forEach((v) => {
         const location = camera.value.project(v.coords);
         if (location == null) {

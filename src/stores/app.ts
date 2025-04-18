@@ -26,7 +26,7 @@ export const useAppStore = defineStore('app', {
     threadSpacing: 1,
     pauseCanvas: false,
     camera: placeholderCamera,
-    axisVisibility: true,
+    axisVisibility: false, //
   }),
   actions: {
     initializeCanvas() {
