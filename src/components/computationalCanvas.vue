@@ -34,7 +34,7 @@ onMounted(() => {
     return {};
   }
   let cycleRadians = 0;
-  let cycleIncrement = 0.05;
+  let cycleIncrement = 0.005;
   let pm: PixelManager;
   let isMouseDragging: boolean = false;
   const sketch = (p5: P5) => {

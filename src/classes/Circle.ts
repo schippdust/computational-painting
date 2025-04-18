@@ -84,6 +84,90 @@ export class Circle {
     this.renderSegments = segments;
   }
 
+  static getRandomPointOnSurface(
+    center: P5.Vector | CoordinateSystem,
+    radius: number,
+    is3D: boolean,
+  ): P5.Vector {
+    const cs =
+      center instanceof CoordinateSystem
+        ? center
+        : CoordinateSystem.fromOriginAndNormal(center, new P5.Vector(0, 0, 1));
+
+    if (is3D) {
+      const u = Math.random();
+      const v = Math.random();
+
+      const theta = 2 * Math.PI * u;
+      const phi = Math.acos(2 * v - 1);
+
+      const x = radius * Math.sin(phi) * Math.cos(theta);
+      const y = radius * Math.sin(phi) * Math.sin(theta);
+      const z = radius * Math.cos(phi);
+
+      const local = new P5.Vector(x, y, z);
+      return cs.toWorld(local);
+    } else {
+      const angle = Math.random() * 2 * Math.PI;
+      const x = radius * Math.cos(angle);
+      const y = radius * Math.sin(angle);
+
+      const local = new P5.Vector(x, y, 0);
+      return cs.toWorld(local);
+    }
+  }
+
+  static getRandomPointInside(
+    center: P5.Vector | CoordinateSystem,
+    radius: number,
+    is3D: boolean,
+  ): P5.Vector {
+    const cs =
+      center instanceof CoordinateSystem
+        ? center
+        : CoordinateSystem.fromOriginAndNormal(center, new P5.Vector(0, 0, 1));
+
+    if (is3D) {
+      const u = Math.random();
+      const v = Math.random();
+
+      const theta = 2 * Math.PI * u;
+      const phi = Math.acos(2 * v - 1);
+
+      const x = radius * Math.sin(phi) * Math.cos(theta);
+      const y = radius * Math.sin(phi) * Math.sin(theta);
+      const z = radius * Math.cos(phi);
+
+      const local = new P5.Vector(x, y, z).mult(Math.cbrt(Math.random()));
+      return cs.toWorld(local);
+    } else {
+      const angle = Math.random() * 2 * Math.PI;
+      const r = radius * Math.sqrt(Math.random());
+
+      const x = r * Math.cos(angle);
+      const y = r * Math.sin(angle);
+
+      const local = new P5.Vector(x, y, 0);
+      return cs.toWorld(local);
+    }
+  }
+
+  randomPointOnSurface(is3D: boolean): P5.Vector {
+    return Circle.getRandomPointOnSurface(
+      this.coordinateSystem,
+      this._radius,
+      is3D,
+    );
+  }
+
+  randomPointInside(is3D: boolean): P5.Vector {
+    return Circle.getRandomPointInside(
+      this.coordinateSystem,
+      this._radius,
+      is3D,
+    );
+  }
+
   renderProjected(p5: P5, camera: Camera3D) {
     const cameraProjectedSegments = camera.renderLines(this.renderSegments);
     for (const segment of cameraProjectedSegments) {

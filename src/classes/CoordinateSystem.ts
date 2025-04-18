@@ -64,6 +64,21 @@ export class CoordinateSystem {
     );
   }
 
+  toWorld(local: p5.Vector): p5.Vector {
+    const localArr = [local.x, local.y, local.z];
+
+    const rotated = math.multiply(this.basis, localArr) as math.Matrix;
+    const rotatedArr = (
+      math.flatten(rotated) as math.Matrix
+    ).toArray() as number[];
+
+    return new p5.Vector(
+      rotatedArr[0] + this.origin.x,
+      rotatedArr[1] + this.origin.y,
+      rotatedArr[2] + this.origin.z,
+    );
+  }
+
   // transformPoints(outputCs: CoordinateSystem, points: p5.Vector | p5.Vector[]) {
   //   return CoordinateSystem.transformPoints(this, outputCs, points);
   // }

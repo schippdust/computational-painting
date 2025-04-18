@@ -60,19 +60,6 @@ export class VehicleCollection {
     return this;
   }
 
-  seak(
-    targetPosition: P5.Vector | P5.Vector[],
-    multiplier: number | 'Max Velocity' = 1,
-  ): VehicleCollection {
-    const targetList = Array.isArray(targetPosition)
-      ? targetPosition
-      : [targetPosition];
-    for (const target of targetList) {
-      this.vehicles.forEach((v) => v.seak(target, multiplier));
-    }
-    return this;
-  }
-
   steer(
     direction: P5.Vector | P5.Vector[],
     multiplier: number | 'Max Velocity' = 1,
@@ -84,9 +71,42 @@ export class VehicleCollection {
     return this;
   }
 
+  seak(
+    targetPosition: P5.Vector | P5.Vector[],
+    multiplier: number | 'Max Velocity' = 1,
+    awarenessDistance: number | null = null,
+  ): VehicleCollection {
+    const targetList = Array.isArray(targetPosition)
+      ? targetPosition
+      : [targetPosition];
+    for (const target of targetList) {
+      if (
+        this.ocTree == null &&
+        awarenessDistance != null &&
+        awarenessDistance > 0
+      ) {
+        this.buildOcTree();
+      }
+      if (
+        this.ocTree != null &&
+        awarenessDistance != null &&
+        awarenessDistance > 0
+      ) {
+        const relevantVehicles = this.ocTree.queryNeighbors(
+          target,
+          awarenessDistance,
+        );
+        relevantVehicles.forEach((v) => v.seak(target, multiplier));
+      } else {
+        this.vehicles.forEach((v) => v.seak(target, multiplier));
+      }
+    }
+    return this;
+  }
+
   arrive(
     targetPosition: P5.Vector | P5.Vector[],
-    awarenessDistance: number | null,
+    awarenessDistance: number | null = null,
   ): VehicleCollection {
     const targetPositionList = Array.isArray(targetPosition)
       ? targetPosition
@@ -119,7 +139,7 @@ export class VehicleCollection {
   avoid(
     targetPosition: P5.Vector | P5.Vector[],
     desiredClosestDistance: number,
-    awarenessDistance: number | null,
+    awarenessDistance: number | null = null,
     multiplier: number | 'Max Velocity' = 1,
   ): VehicleCollection {
     const targetPositionList = Array.isArray(targetPosition)
