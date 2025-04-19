@@ -32,10 +32,11 @@ export class Camera3D {
 
   project(point: P5.Vector): P5.Vector | null {
     // Step 1: Orthonormal basis
+    point = point.copy();
     const forward = P5.Vector.sub(this.focus, this.pos).normalize(); // forward: into screen (Y)
-    const right = P5.Vector.cross(forward, this.up.copy()) as unknown as Vector; // right: X
+    const right = forward.copy().cross(this.up.copy()) as Vector; // right: X
     right.normalize();
-    const camUp = P5.Vector.cross(right, forward) as unknown as Vector; // camUp: Z
+    const camUp = right.copy().cross(forward.copy()) as Vector; // camUp: Z
     camUp.normalize();
 
     // Step 2: Transform point into camera space
@@ -75,10 +76,12 @@ export class Camera3D {
   }
 
   setPosition(pos: P5.Vector) {
+    pos = pos.copy();
     this.pos = pos;
   }
 
   lookAt(focus: P5.Vector) {
+    focus = focus.copy();
     this.focus = focus;
   }
 

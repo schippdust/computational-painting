@@ -11,15 +11,17 @@ export interface VehiclePhysicalProps {
   forward: P5.Vector | null;
 }
 
-const genericPhysicalProps: VehiclePhysicalProps = {
-  velocity: new P5.Vector(0, 0, 0),
-  acceleration: new P5.Vector(0, 0, 0),
-  mass: 10,
-  maxVelocity: 10,
-  maxSteerForce: 10,
-  aggregateSteer: new P5.Vector(0, 0, 0),
-  forward: null,
-};
+function createGenericPhysicalProps() {
+  return {
+    velocity: new P5.Vector(0, 0, 0),
+    acceleration: new P5.Vector(0, 0, 0),
+    mass: 10,
+    maxVelocity: 10,
+    maxSteerForce: 10,
+    aggregateSteer: new P5.Vector(0, 0, 0),
+    forward: null,
+  };
+}
 
 export interface VehicleEnvironmentalProperties {
   wind: P5.Vector | null;
@@ -40,7 +42,6 @@ export class Vehicle {
   private maxNumberOfPreviousCoords: number;
   public phys: VehiclePhysicalProps;
   public env: VehicleEnvironmentalProperties;
-  public neighbors: Vehicle[];
 
   // behavior variables
   public constrainMovementOrthogonally: boolean;
@@ -49,7 +50,7 @@ export class Vehicle {
   constructor(
     sketch: P5,
     coords: P5.Vector,
-    physicalProperties: VehiclePhysicalProps = genericPhysicalProps,
+    physicalProperties: VehiclePhysicalProps = createGenericPhysicalProps(),
   ) {
     this.uuid = crypto.randomUUID();
     this.p5 = sketch;
@@ -57,7 +58,7 @@ export class Vehicle {
     this.lifeExpectancy = 150;
     this.age = 0;
 
-    this.coords = coords;
+    this.coords = coords.copy();
     this.previousCoords = [];
     this.maxNumberOfPreviousCoords = 10;
     this.phys = physicalProperties;
@@ -65,7 +66,6 @@ export class Vehicle {
 
     this.constrainMovementOrthogonally = false;
     this.desiredSeparation = 40;
-    this.neighbors = [];
   }
 
   randomizeLocation(
@@ -84,20 +84,40 @@ export class Vehicle {
     if (this.env.friction != null) {
       this.applyFriction();
     }
-    this.phys.velocity.add(this.phys.acceleration).limit(this.phys.maxVelocity); // applying acceleration to velocity
+
+    // Reset acceleration BEFORE applying it to velocity
+    this.phys.acceleration.limit(this.phys.maxSteerForce); // optional safety clamp
+    this.phys.velocity = P5.Vector.add(
+      this.phys.velocity,
+      this.phys.acceleration,
+    );
+    this.phys.velocity.limit(this.phys.maxVelocity);
+    // Reset acceleration so it doesn't carry into next frame
+    this.phys.acceleration.mult(0);
+
+    // Store previous position
     prependUniqueWithLimit(
       this.previousCoords,
       this.coords.copy(),
       this.maxNumberOfPreviousCoords,
-    ); // logging previous coordinates before updating
-    this.coords.add(this.phys.velocity); // updating position based on newly calculated velocity
+    );
+
+    // Update position
+    this.coords = P5.Vector.add(this.coords, this.phys.velocity);
+
+    // Stop near-zero velocities
     if (this.phys.velocity.mag() < 0.00001) {
-      this.phys.velocity.mult(0); // a mathemtically simple way of letting objects come to a stop
+      this.phys.velocity.mult(0);
     }
-    this.phys.acceleration.mult(0);
+
     this.age += 1;
-    this.neighbors = [];
     return this;
+  }
+
+  setVelocity(velocity: P5.Vector) {
+    velocity = velocity.copy();
+    this.phys.velocity = velocity;
+    console.log(this.uuid, 'setting velocity', velocity);
   }
 
   applyFriction(): Vehicle {
@@ -150,7 +170,7 @@ export class Vehicle {
     } else {
       direction.mult(multiplier);
     }
-    const steer = P5.Vector.sub(direction, this.phys.velocity);
+    const steer = direction;
     this.applyForce(steer);
     return this;
   }

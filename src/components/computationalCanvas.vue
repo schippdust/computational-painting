@@ -24,7 +24,8 @@ const {
 
 const frameRate = ref(100);
 
-let cameraPos = new P5.Vector(800, -500, 1000);
+// let cameraPos = new P5.Vector(800, -500, 1000);
+let cameraPos = new P5.Vector(0, 10, 7500);
 let cameraFocus = new P5.Vector(0, 0, 0);
 let fovDegrees = 80;
 appStore.setCameraPosition(cameraPos);
@@ -36,7 +37,7 @@ onMounted(() => {
     return {};
   }
   let cycleRadians = 0;
-  let cycleIncrement = 0.005;
+  let cycleIncrement = 0.01;
   let pm: PixelManager;
   let isMouseDragging: boolean = false;
   const vehicleCollection = new VehicleCollection();
@@ -44,65 +45,63 @@ onMounted(() => {
     p5.setup = () => {
       pm = new PixelManager(p5);
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
-      p5.background(255);
+      p5.background(0);
       p5.frameRate(60);
     };
 
     p5.draw = () => {
-      p5.stroke(0);
-      p5.background(p5.color(255, 255, 255, 1));
+      console.log('new loop');
+      p5.stroke(255);
+      // p5.background(p5.color(255, 255, 255, 1));
 
-      let centerPoint = new P5.Vector(0, 0, 0);
-      let zUp = new P5.Vector(0, 0, 1);
+      const centerPoint = new P5.Vector(0, 0, 0);
+      const zUp = new P5.Vector(0, 0, 1);
 
-      let pos = new P5.Vector(
+      const pos = new P5.Vector(
         (Math.cos(cycleRadians) * canvasWidth.value) / 2,
-        (Math.sin(cycleRadians) * canvasHeight.value) / 2,
+        (Math.sin(cycleRadians) * canvasWidth.value) / 2,
         0,
       );
 
-      let direction = P5.Vector.sub(pos, centerPoint);
-      direction.rotate(p5.HALF_PI, zUp);
-      let currentCoords = CoordinateSystem.fromOriginAndNormal(pos, direction);
-      let circle = new Circle(currentCoords, 150);
+      const direction = P5.Vector.sub(pos.copy(), centerPoint.copy());
+      direction.rotate(p5.HALF_PI * -1, zUp);
+      const currentCoords = CoordinateSystem.fromOriginAndNormal(
+        pos.copy(),
+        direction.copy(),
+      );
+      const circle = new Circle(currentCoords, 150);
       circle.renderProjected(p5, camera.value);
 
       const edgePoints = circle.randomPointsOnSurface(2);
-      const vehicles = edgePoints.map((pt) => {
-        
-        const v = new Vehicle(p5, pt);
+      // console.log(edgePoints);
+      const vehicles: Vehicle[] = [];
+
+      for (const pt of edgePoints) {
+        const v = new Vehicle(p5, pt.copy());
         v.phys.mass = 15;
         v.phys.maxVelocity = 50;
         v.phys.maxSteerForce = 10;
         v.lifeExpectancy = 1500;
-         
-        const motionFromCenter = P5.Vector.sub(pt,currentCoords.getPosition())
-        v.steer(motionFromCenter.normalize().mult(100))
-        return v;
-      });
-      vehicleCollection.addVehicle(vehicles);
-      vehicleCollection.seak(
-        CoordinateSystem.getWorldCoordinates().getPosition(),
-        0.01,
-      );
-      vehicleCollection.steer(currentCoords.getZAxis(5));
-      vehicleCollection.vehicles.forEach((v) =>{
-        const motionFromCenter = P5.Vector.sub(v.coords,currentCoords.getPosition())
-        v.steer(motionFromCenter.normalize().mult(4))
-      })
-      vehicleCollection.separate(35, 10);
-      vehicleCollection.align(20,5);
+        v.env.friction = null;
+
+        const motionFromCenter = P5.Vector.sub(pt.copy(), pos.copy()).copy();
+
+        v.setVelocity(motionFromCenter.copy());
+        vehicles.push(v);
+      }
+
+      vehicleCollection.addVehicle(vehicles, false);
 
       vehicleCollection.update();
       vehicleCollection.vehicles.forEach((v) => {
-        const location = camera.value.project(v.coords);
+        const location = camera.value.project(v.coords.copy());
         if (location == null) {
           return;
         }
         p5.point(location.x, location.y);
       });
 
-      let renderPos = camera.value.project(pos);
+      const renderPos = camera.value.project(pos.copy());
       if (renderPos) {
         p5.circle(renderPos.x, renderPos.y, 2);
       }
@@ -136,6 +135,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div id="computational-canvas"></div>
+  <div
+    id="computational-canvas"
+    style="overflow-y: auto; overflow-x: auto"
+  ></div>
   <div>{{ frameRate }} fps</div>
 </template>

@@ -184,9 +184,9 @@ export class VehicleCollection {
     if (this.ocTree != null) {
       const ocTree = this.ocTree;
       this.vehicles.forEach((v) => {
-        v.neighbors = ocTree.queryNeighbors(v, neighborDistance);
+        const neighbors = ocTree.queryNeighbors(v, neighborDistance);
         v.separate(
-          v.neighbors.map((n) => n.coords),
+          neighbors.map((n) => n.coords),
           separateMultiplier,
         );
       });
@@ -204,9 +204,9 @@ export class VehicleCollection {
     if (this.ocTree != null) {
       const ocTree = this.ocTree;
       this.vehicles.forEach((v) => {
-        v.neighbors = ocTree.queryNeighbors(v, neighborDistance);
+        const neighbors = ocTree.queryNeighbors(v, neighborDistance);
         v.align(
-          v.neighbors.map((n) => n.phys.velocity),
+          neighbors.map((n) => n.phys.velocity),
           alignMultiplier,
         );
       });
@@ -224,9 +224,9 @@ export class VehicleCollection {
     if (this.ocTree != null) {
       const ocTree = this.ocTree;
       this.vehicles.forEach((v) => {
-        v.neighbors = ocTree.queryNeighbors(v, neighborDistance);
+        const neighbors = ocTree.queryNeighbors(v, neighborDistance);
         v.cohere(
-          v.neighbors.map((n) => n.coords),
+          neighbors.map((n) => n.coords),
           cohereMultiplier,
         );
       });
@@ -246,17 +246,17 @@ export class VehicleCollection {
     if (this.ocTree != null) {
       const ocTree = this.ocTree;
       this.vehicles.forEach((v) => {
-        v.neighbors = ocTree.queryNeighbors(v, neighborDistance);
+        const neighbors = ocTree.queryNeighbors(v, neighborDistance);
         v.separate(
-          v.neighbors.map((n) => n.coords),
+          neighbors.map((n) => n.coords),
           separateMultiplier,
         );
         v.align(
-          v.neighbors.map((n) => n.phys.velocity),
+          neighbors.map((n) => n.phys.velocity),
           alignMultiplier,
         );
         v.cohere(
-          v.neighbors.map((n) => n.coords),
+          neighbors.map((n) => n.coords),
           cohereMultiplier,
         );
       });

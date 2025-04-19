@@ -66,7 +66,7 @@ export class Circle {
     }
 
     const segmentPoints = CoordinateSystem.transformPoints(
-      CoordinateSystem.getWorldCoordinates(),
+      CoordinateSystem.getWorldAxes(),
       this.coordinateSystem,
       unitPoints,
     );

@@ -15,7 +15,9 @@ export class CoordinateSystem {
     origin: p5.Vector,
     normal: p5.Vector,
   ): CoordinateSystem {
-    const z = normal.copy().normalize();
+    origin = origin.copy();
+    normal = normal.copy();
+    const z = normal.normalize();
 
     // Define "up" manually as world Y axis
     const up = new p5.Vector(0, 1, 0);
@@ -42,8 +44,11 @@ export class CoordinateSystem {
     normal: p5.Vector,
     xAxis: p5.Vector,
   ): CoordinateSystem {
-    const z = normal.copy().normalize();
-    const x = xAxis.copy().normalize();
+    origin = origin.copy();
+    normal = normal.copy();
+    xAxis = xAxis.copy();
+    const z = normal.normalize();
+    const x = xAxis.normalize();
     const y = z.copy().cross(x).normalize();
     const correctedX = y.copy().cross(z).normalize(); // ensures orthogonality
 
@@ -56,7 +61,7 @@ export class CoordinateSystem {
     return new CoordinateSystem(origin, basis);
   }
 
-  static getWorldCoordinates() {
+  static getWorldAxes() {
     return this.fromOriginNormalX(
       new p5.Vector(0, 0, 0),
       new p5.Vector(0, 0, 1),
@@ -65,6 +70,7 @@ export class CoordinateSystem {
   }
 
   toWorld(local: p5.Vector): p5.Vector {
+    local = local.copy();
     const localArr = [local.x, local.y, local.z];
 
     const rotated = math.multiply(this.basis, localArr) as math.Matrix;
@@ -94,7 +100,8 @@ export class CoordinateSystem {
     const inputBasisInv = math.inv(inputCS.basis);
     const outputBasis = outputCS.basis;
 
-    for (const point of pointList) {
+    for (let point of pointList) {
+      point = point.copy();
       const relative = math.subtract(
         [point.x, point.y, point.z],
         [inputCS.position.x, inputCS.position.y, inputCS.position.z],
@@ -134,9 +141,8 @@ export class CoordinateSystem {
 
   rotateCoordinateSystem(angle: number, axis?: p5.Vector): CoordinateSystem {
     // Default to the Z-axis if no axis is provided
-    const rotationAxis = axis || this.getZAxis(1).normalize();
-
-    const u = rotationAxis.copy().normalize();
+    const rotationAxis = (axis || this.getZAxis(1)).copy().normalize();
+    const u = rotationAxis.normalize();
 
     const cosA = Math.cos(angle);
     const sinA = Math.sin(angle);
@@ -220,6 +226,6 @@ export class CoordinateSystem {
   }
 
   getPosition(): p5.Vector {
-    return this.position;
+    return this.position.copy();
   }
 }
