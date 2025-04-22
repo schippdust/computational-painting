@@ -11,6 +11,8 @@ import { PixelManager } from '@/classes/PixelManager';
 import { Vehicle } from '@/classes/Vehicle';
 import { VehicleCollection } from '@/classes/VehicleCollection';
 
+type ColorScheme = 'Black on White' | 'White on Black';
+
 const appStore = useAppStore();
 const {
   canvasHeight,
@@ -40,7 +42,7 @@ onMounted(() => {
   let cycleIncrement = 0.01;
   let pm: PixelManager;
   let isMouseDragging: boolean = false;
-  let previousPosition
+  let previousPosition;
   const vehicleCollection = new VehicleCollection();
   const sketch = (p5: P5) => {
     p5.setup = () => {
@@ -71,9 +73,9 @@ onMounted(() => {
         direction.copy(),
       );
       const circle = new Circle(currentCoords, 150);
-      circle.renderProjected(p5, camera.value);
+      // circle.renderProjected(p5, camera.value);
 
-      const edgePoints = circle.randomPointsOnSurface(2);
+      const edgePoints = circle.randomPointsOnSurface(10);
       // console.log(edgePoints);
       const vehicles: Vehicle[] = [];
 
@@ -81,25 +83,25 @@ onMounted(() => {
         const v = new Vehicle(p5, pt.copy());
         v.phys.mass = 15;
         v.phys.maxVelocity = 50;
-        v.phys.maxSteerForce = 10;
-        v.lifeExpectancy = 1500;
+        v.phys.maxSteerForce = 20;
+        v.lifeExpectancy = 150;
         v.env.friction = 0.2;
 
         const motionFromCenter = P5.Vector.sub(pt.copy(), pos.copy()).copy();
-        v.setVelocity(motionFromCenter.setMag(3));
-        v.align(direction.copy(), 2);
+        // v.setVelocity(motionFromCenter.setMag(3));
+        v.align(direction.copy());
         vehicles.push(v);
       }
 
-      vehicleCollection.addVehicle(vehicles, false);
-      vehicleCollection.alignToVectors(direction);
-      vehicleCollection.seak(centerPoint);
-      vehicleCollection.arrive(pos);
-      vehicleCollection.avoid(pos, 300);
+      vehicleCollection.addVehicle(vehicles);
+      // vehicleCollection.alignToVectors(direction,0.1);
+      vehicleCollection.seak(pos, 0.1);
+      // vehicleCollection.arrive(pos);
+      vehicleCollection.avoid(pos, 10);
       // vehicleCollection.flock(100)
-      vehicleCollection.alignToNeighbors(350, 5);
-      vehicleCollection.cohere(1000, 5);
-      vehicleCollection.separate(500, 12);
+      vehicleCollection.alignToNeighbors(300);
+      // vehicleCollection.cohere(300,1);
+      vehicleCollection.separate(1200, 100);
       vehicleCollection.update();
       vehicleCollection.vehicles.forEach((v) => {
         const location = camera.value.project(v.coords.copy());

@@ -62,7 +62,7 @@ export class VehicleCollection {
 
   steer(
     direction: P5.Vector | P5.Vector[],
-    multiplier: number | 'Max Velocity' = 1,
+    multiplier: number = 1,
   ): VehicleCollection {
     const directionList = Array.isArray(direction) ? direction : [direction];
     for (const dir of directionList) {
@@ -73,7 +73,7 @@ export class VehicleCollection {
 
   seak(
     targetPosition: P5.Vector | P5.Vector[],
-    multiplier: number | 'Max Velocity' = 1,
+    multiplier: number = 1,
     awarenessDistance: number | null = null,
   ): VehicleCollection {
     const targetList = Array.isArray(targetPosition)
@@ -140,7 +140,7 @@ export class VehicleCollection {
     targetPosition: P5.Vector | P5.Vector[],
     desiredClosestDistance: number,
     awarenessDistance: number | null = null,
-    multiplier: number | 'Max Velocity' = 1,
+    multiplier: number = 1,
   ): VehicleCollection {
     const targetPositionList = Array.isArray(targetPosition)
       ? targetPosition
@@ -176,7 +176,7 @@ export class VehicleCollection {
 
   separate(
     neighborDistance: number,
-    separateMultiplier: number | 'Max Velocity' = 1,
+    separateMultiplier: number = 1,
   ): VehicleCollection {
     if (this.ocTree == null) {
       this.buildOcTree();
@@ -196,7 +196,7 @@ export class VehicleCollection {
 
   alignToVectors(
     alignmentVectors: P5.Vector | P5.Vector[],
-    alignMultiplier: number | 'Max Velocity' = 1,
+    alignMultiplier: number = 1,
   ) {
     const vectorList = Array.isArray(alignmentVectors)
       ? alignmentVectors
@@ -208,7 +208,7 @@ export class VehicleCollection {
 
   alignToNeighbors(
     neighborDistance: number,
-    alignMultiplier: number | 'Max Velocity' = 1,
+    alignMultiplier: number = 1,
   ): VehicleCollection {
     if (this.ocTree == null) {
       this.buildOcTree();
@@ -228,7 +228,7 @@ export class VehicleCollection {
 
   cohere(
     neighborDistance: number,
-    cohereMultiplier: number | 'Max Velocity' = 1,
+    cohereMultiplier: number = 1,
   ): VehicleCollection {
     if (this.ocTree == null) {
       this.buildOcTree();
@@ -248,9 +248,9 @@ export class VehicleCollection {
 
   flock(
     neighborDistance: number,
-    separateMultiplier: number | 'Max Velocity' = 0.5,
-    alignMultiplier: number | 'Max Velocity' = 5,
-    cohereMultiplier: number | 'Max Velocity' = 5,
+    separateMultiplier: number = 0.5,
+    alignMultiplier: number = 5,
+    cohereMultiplier: number = 5,
   ): VehicleCollection {
     if (this.ocTree == null) {
       this.buildOcTree();

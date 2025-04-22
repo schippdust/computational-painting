@@ -135,10 +135,7 @@ export class Vehicle {
   }
 
   applyForce(force: P5.Vector): Vehicle {
-    const acceleration = force
-      .copy()
-      .limit(this.phys.maxSteerForce)
-      .div(this.phys.mass);
+    const acceleration = force.copy().div(this.phys.mass);
     this.phys.acceleration.add(acceleration);
     return this;
   }
