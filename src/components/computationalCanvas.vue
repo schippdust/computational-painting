@@ -24,8 +24,8 @@ const {
 
 const frameRate = ref(100);
 
-// let cameraPos = new P5.Vector(800, -500, 1000);
-let cameraPos = new P5.Vector(0, 10, 7500);
+let cameraPos = new P5.Vector(2000, -2000, 4000);
+// let cameraPos = new P5.Vector(0, 10, 7500);
 let cameraFocus = new P5.Vector(0, 0, 0);
 let fovDegrees = 80;
 appStore.setCameraPosition(cameraPos);
@@ -40,6 +40,7 @@ onMounted(() => {
   let cycleIncrement = 0.01;
   let pm: PixelManager;
   let isMouseDragging: boolean = false;
+  let previousPosition
   const vehicleCollection = new VehicleCollection();
   const sketch = (p5: P5) => {
     p5.setup = () => {
@@ -64,7 +65,7 @@ onMounted(() => {
       );
 
       const direction = P5.Vector.sub(pos.copy(), centerPoint.copy());
-      direction.rotate(p5.HALF_PI * -1, zUp);
+      direction.rotate(p5.HALF_PI, zUp);
       const currentCoords = CoordinateSystem.fromOriginAndNormal(
         pos.copy(),
         direction.copy(),
@@ -82,16 +83,23 @@ onMounted(() => {
         v.phys.maxVelocity = 50;
         v.phys.maxSteerForce = 10;
         v.lifeExpectancy = 1500;
-        v.env.friction = null;
+        v.env.friction = 0.2;
 
         const motionFromCenter = P5.Vector.sub(pt.copy(), pos.copy()).copy();
-
-        v.setVelocity(motionFromCenter.copy());
+        v.setVelocity(motionFromCenter.setMag(3));
+        v.align(direction.copy(), 2);
         vehicles.push(v);
       }
 
       vehicleCollection.addVehicle(vehicles, false);
-
+      vehicleCollection.alignToVectors(direction);
+      vehicleCollection.seak(centerPoint);
+      vehicleCollection.arrive(pos);
+      vehicleCollection.avoid(pos, 300);
+      // vehicleCollection.flock(100)
+      vehicleCollection.alignToNeighbors(350, 5);
+      vehicleCollection.cohere(1000, 5);
+      vehicleCollection.separate(500, 12);
       vehicleCollection.update();
       vehicleCollection.vehicles.forEach((v) => {
         const location = camera.value.project(v.coords.copy());

@@ -149,27 +149,20 @@ export class Vehicle {
     return this;
   }
 
-  seak(
-    targetPosition: P5.Vector,
-    multiplier: number | 'Max Velocity' = 1,
-  ): Vehicle {
+  seak(targetPosition: P5.Vector, multiplier: number = 1): Vehicle {
     const desiredVelocity = P5.Vector.sub(targetPosition, this.coords);
     this.steer(desiredVelocity, multiplier);
     return this;
   }
 
-  steer(
-    direction: P5.Vector,
-    multiplier: number | 'Max Velocity' = 1,
-  ): Vehicle {
+  steer(direction: P5.Vector, multiplier: number = 1): Vehicle {
+    direction = direction.copy();
     if (direction.mag() == 0) {
       return this;
     }
-    if (multiplier == 'Max Velocity') {
-      direction.mult(this.phys.maxVelocity);
-    } else {
-      direction.mult(multiplier);
-    }
+
+    direction.mult(multiplier);
+
     const steer = direction;
     this.applyForce(steer);
     return this;
@@ -204,7 +197,7 @@ export class Vehicle {
   avoid(
     targetPosition: P5.Vector,
     desiredClosestDistance: number,
-    multiplier: number | 'Max Velocity' = 1,
+    multiplier: number = 1,
   ): Vehicle {
     let distanceBetween = P5.Vector.dist(this.coords, targetPosition);
     if (distanceBetween > desiredClosestDistance) {
@@ -226,7 +219,7 @@ export class Vehicle {
 
   separate(
     otherVehicleCoords: P5.Vector[],
-    separateMultiplier: number | 'Max Velocity' = 0.5,
+    separateMultiplier: number = 0.5,
   ): Vehicle {
     if (otherVehicleCoords.length <= 0) {
       return this;
@@ -254,24 +247,27 @@ export class Vehicle {
   }
 
   align(
-    alignmentVectors: P5.Vector[],
-    alignMultiplier: number | 'Max Velocity' = 5,
+    alignmentVectors: P5.Vector[] | P5.Vector,
+    alignMultiplier: number = 5,
   ): Vehicle {
-    if (alignmentVectors.length <= 0) {
+    const vectorList = Array.isArray(alignmentVectors)
+      ? alignmentVectors
+      : [alignmentVectors];
+    if (vectorList.length <= 0) {
       return this;
     }
     const sumVect = new P5.Vector(0, 0, 0);
-    for (const v of alignmentVectors) {
+    for (const v of vectorList) {
       sumVect.add(v);
     }
-    sumVect.div(alignmentVectors.length);
+    sumVect.div(vectorList.length);
     this.steer(sumVect, alignMultiplier);
     return this;
   }
 
   cohere(
     otherVehicleCoords: P5.Vector[],
-    cohereMultiplier: number | 'Max Velocity' = 5,
+    cohereMultiplier: number = 5,
   ): Vehicle {
     if (otherVehicleCoords.length <= 0) {
       return this;
@@ -288,9 +284,9 @@ export class Vehicle {
   flock(
     neighborCoords: P5.Vector[],
     neighborVelocities: P5.Vector[],
-    separateMultiplier: number | 'Max Velocity',
-    alignMultiplier: number | 'Max Velocity',
-    cohereMultiplier: number | 'Max Velocity',
+    separateMultiplier: number,
+    alignMultiplier: number,
+    cohereMultiplier: number,
   ): Vehicle {
     this.separate(neighborCoords, separateMultiplier);
     this.align(neighborVelocities, alignMultiplier);

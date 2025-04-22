@@ -194,7 +194,19 @@ export class VehicleCollection {
     return this;
   }
 
-  align(
+  alignToVectors(
+    alignmentVectors: P5.Vector | P5.Vector[],
+    alignMultiplier: number | 'Max Velocity' = 1,
+  ) {
+    const vectorList = Array.isArray(alignmentVectors)
+      ? alignmentVectors
+      : [alignmentVectors];
+    this.vehicles.forEach((v) => {
+      v.align(vectorList, alignMultiplier);
+    });
+  }
+
+  alignToNeighbors(
     neighborDistance: number,
     alignMultiplier: number | 'Max Velocity' = 1,
   ): VehicleCollection {
