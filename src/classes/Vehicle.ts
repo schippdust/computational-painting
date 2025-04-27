@@ -1,5 +1,6 @@
 import P5 from 'p5';
 import { prependUniqueWithLimit } from './CodeUtils';
+import type { WindSystem } from './WindSystem';
 
 export interface VehiclePhysicalProps {
   velocity: P5.Vector;
@@ -130,7 +131,7 @@ export class Vehicle {
     return this;
   }
 
-  applyWind(): Vehicle {
+  applyWind(windSystem: WindSystem, multiplier = 1): Vehicle {
     return this;
   }
 

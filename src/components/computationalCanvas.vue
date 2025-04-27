@@ -60,16 +60,16 @@ onMounted(() => {
       const centerPoint = new P5.Vector(0, 0, 0);
       const zUp = new P5.Vector(0, 0, 1);
 
-      const pos = new P5.Vector(
+      const cursor = new P5.Vector(
         (Math.cos(cycleRadians) * canvasWidth.value) / 2,
         (Math.sin(cycleRadians) * canvasWidth.value) / 2,
         0,
       );
 
-      const direction = P5.Vector.sub(pos.copy(), centerPoint.copy());
+      const direction = P5.Vector.sub(cursor.copy(), centerPoint.copy());
       direction.rotate(p5.HALF_PI, zUp);
       const currentCoords = CoordinateSystem.fromOriginAndNormal(
-        pos.copy(),
+        cursor.copy(),
         direction.copy(),
       );
       const circle = new Circle(currentCoords, 150);
@@ -87,22 +87,18 @@ onMounted(() => {
         v.lifeExpectancy = 150;
         v.env.friction = 0.2;
 
-        const motionFromCenter = P5.Vector.sub(pt.copy(), pos.copy()).copy();
-        // v.setVelocity(motionFromCenter.setMag(3));
         v.align(direction.copy());
         vehicles.push(v);
       }
 
-      vehicleCollection.addVehicle(vehicles);
-      // vehicleCollection.alignToVectors(direction,0.1);
-      vehicleCollection.seak(pos, 0.1);
-      // vehicleCollection.arrive(pos);
-      vehicleCollection.avoid(pos, 10);
-      // vehicleCollection.flock(100)
-      vehicleCollection.alignToNeighbors(300);
-      // vehicleCollection.cohere(300,1);
-      vehicleCollection.separate(1200, 100);
-      vehicleCollection.update();
+      vehicleCollection
+        .addVehicle(vehicles)
+        .seak(cursor, 0.1)
+        .avoid(cursor, 10)
+        .alignToNeighbors(300)
+        .separate(1200, 100)
+        // .applyWind(windSystem,1)
+        .update();
       vehicleCollection.vehicles.forEach((v) => {
         const location = camera.value.project(v.coords.copy());
         if (location == null) {
@@ -111,18 +107,18 @@ onMounted(() => {
         p5.point(location.x, location.y);
       });
 
-      const renderPos = camera.value.project(pos.copy());
-      if (renderPos) {
-        p5.circle(renderPos.x, renderPos.y, 2);
-      }
-
-      if (axisVisibility.value) {
-        drawAxes(p5, camera.value, 100);
+      const cursorRenderPos = camera.value.project(cursor.copy());
+      if (cursorRenderPos) {
+        p5.circle(cursorRenderPos.x, cursorRenderPos.y, 2);
       }
 
       cycleRadians += cycleIncrement;
 
       // Utility Functions
+      if (axisVisibility.value) {
+        drawAxes(p5, camera.value, 100);
+      }
+
       frameRate.value = Math.round(p5.frameRate());
     };
 

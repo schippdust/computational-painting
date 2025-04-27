@@ -1,6 +1,7 @@
 import P5 from 'p5';
 import type { Vehicle } from './Vehicle';
 import { OcTree } from './VehicleOcTree';
+import type { WindSystem } from './WindSystem';
 
 export class VehicleCollection {
   public vehicles: Vehicle[] = [];
@@ -45,8 +46,8 @@ export class VehicleCollection {
     return this;
   }
 
-  applyWind(): VehicleCollection {
-    this.vehicles.forEach((v) => v.applyWind);
+  applyWind(windSystem: WindSystem, multiplier = 1): VehicleCollection {
+    this.vehicles.forEach((v) => v.applyWind(windSystem, multiplier));
     return this;
   }
 
