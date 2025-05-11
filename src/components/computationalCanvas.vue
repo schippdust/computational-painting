@@ -28,7 +28,7 @@ const {
 const frameRate = ref(100);
 const numberOfVehicles = ref(0);
 
-let cameraPos = new P5.Vector(2000, -2000, 4000);
+let cameraPos = new P5.Vector(1, 1, 8000);
 // let cameraPos = new P5.Vector(0, 10, 7500);
 let cameraFocus = new P5.Vector(0, 0, 0);
 let fovDegrees = 80;
@@ -52,8 +52,8 @@ onMounted(() => {
     p5.setup = () => {
       pm = new PixelManager(p5);
       ws = new WindSystem(p5);
-      ws.noiseScale = 0.01;
-      ws.timeScale = 0.0
+      ws.noiseScale = 0.0001;
+      ws.timeScale = 1
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
       p5.background(0);
       p5.frameRate(60);
@@ -94,7 +94,7 @@ onMounted(() => {
         v.lifeExpectancy = 100;
         v.env.friction = 0.2;
 
-        v.align(direction.copy());
+        // v.align(direction.copy());
         vehicles.push(v);
       }
 

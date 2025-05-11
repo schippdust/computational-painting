@@ -10,7 +10,7 @@ export class WindSystem {
   constructor(p5: P5) {
     this.p5 = p5;
     this.noiseScale = 0.01;
-    this.timeScale = 0.03;
+    this.timeScale = 0.01;
     this.time = undefined;
     this.uvSeparation = 50000;
     this.setNoiseDetail(4);
@@ -20,68 +20,46 @@ export class WindSystem {
     this.p5.noiseDetail(octaves, falloff);
   }
 
-  calculateWindAtCoords(coords: P5.Vector, multiplier = 1) {
-    let calcTime = this.p5.frameCount;
-    if (this.time != undefined) {
-      calcTime = this.time; //option to manage time manually if desired
+  /**
+   * Computes wind as fBm curl noise.
+   * Adjust `useFBM` to toggle layered noise or single-scale.
+   */
+  // a method from chatgpt to determine 3D perlin noise fields.  No clue how it works
+  calculateWindAtCoords(pos: P5.Vector, multiplier = 1): P5.Vector {
+    const scale = this.noiseScale;
+    const eps = 0.001;
+  
+    const x = pos.x * scale + this.p5.frameCount * this.timeScale;
+    const y = pos.y * scale + this.p5.frameCount * this.timeScale;
+    const z = pos.z * scale + this.p5.frameCount * this.timeScale;
+  
+    // Define vector-valued field F = [N1, N2, N3] using offset noise
+    const N1 = (xi: number, yi: number, zi: number) => this.p5.noise(xi, yi, zi);
+    const N2 = (xi: number, yi: number, zi: number) => this.p5.noise(xi + 31.416, yi + 47.853, zi + 12.793); // offset to decorrelate
+    const N3 = (xi: number, yi: number, zi: number) => this.p5.noise(xi + 99.123, yi + 65.432, zi + 77.789);
+  
+    // Partial derivatives via central differences
+    const dN3_dy = (N3(x, y + eps, z) - N3(x, y - eps, z)) / (2 * eps);
+    const dN2_dz = (N2(x, y, z + eps) - N2(x, y, z - eps)) / (2 * eps);
+  
+    const dN1_dz = (N1(x, y, z + eps) - N1(x, y, z - eps)) / (2 * eps);
+    const dN3_dx = (N3(x + eps, y, z) - N3(x - eps, y, z)) / (2 * eps);
+  
+    const dN2_dx = (N2(x + eps, y, z) - N2(x - eps, y, z)) / (2 * eps);
+    const dN1_dy = (N1(x, y + eps, z) - N1(x, y - eps, z)) / (2 * eps);
+  
+    // Curl: ∇ × F
+    const curl = new P5.Vector(
+      dN3_dy - dN2_dz,  // ∂N3/∂y - ∂N2/∂z
+      dN1_dz - dN3_dx,  // ∂N1/∂z - ∂N3/∂x
+      dN2_dx - dN1_dy   // ∂N2/∂x - ∂N1/∂y
+    );
+  
+    if (curl.magSq() < 1e-6) {
+      return new P5.Vector(0, 0, 0);
     }
-    let uNoise = this.p5.noise(
-      coords.x * this.noiseScale + calcTime * this.timeScale,
-      coords.y * this.noiseScale + calcTime * this.timeScale,
-      coords.z * this.noiseScale + calcTime * this.timeScale,
-    );
-    let vNoise = this.p5.noise(
-      coords.x * this.noiseScale +
-        calcTime * this.timeScale +
-        this.uvSeparation,
-      coords.y * this.noiseScale +
-        calcTime * this.timeScale +
-        this.uvSeparation,
-      coords.z * this.noiseScale +
-        calcTime * this.timeScale +
-        this.uvSeparation,
-    );
-
-    // because noise rarely approaches 0 or 1 and has a more guassian
-    // distribution around 0.5, I will multiply by 3PI then find the sin
-    // This creates a smooth distribution from -1 to 1
-    // which can be remapped to 0 to 1
-    // const u = this.p5.map(Math.sin(uNoise * 6 * Math.PI), -1, 1, 0, 1);
-    // const v = this.p5.map(Math.sin(vNoise * 6 * Math.PI), -1, 1, 0, 1);
-
-    // // random point on sphere from ChatGPT, appears to work
-    // const theta = 2 * Math.PI * u;
-    // const phi = Math.acos(2 * v - 1);
-
-    // const x = multiplier * Math.sin(phi) * Math.cos(theta);
-    // const y = multiplier * Math.sin(phi) * Math.sin(theta);
-    // const z = multiplier * Math.cos(phi);
-
-    /////////////////////////////////////
-    // const u = uNoise; // in [0, 1]
-    // const v = vNoise; // in [0, 1]
-
-    // const theta = 2 * Math.PI * u;
-    // const phi = Math.acos(1 - 2 * v); // correct for uniform sampling
-
-    // const x = multiplier * Math.sin(phi) * Math.cos(theta);
-    // const y = multiplier * Math.sin(phi) * Math.sin(theta);
-    // const z = multiplier * Math.cos(phi);
-    /////////////////////////////////////////
-
-    // Use 3D Perlin noise to define a *single* direction vector.
-    const theta = this.p5.noise(coords.x * this.noiseScale, coords.y * this.noiseScale, coords.z * this.noiseScale) * 2 * Math.PI;
-    const phi = this.p5.noise(coords.x * this.noiseScale + 100, coords.y * this.noiseScale + 100, coords.z * this.noiseScale + 100) * Math.PI;
-
-    const xDir = Math.sin(phi) * Math.cos(theta);
-    const yDir = Math.sin(phi) * Math.sin(theta);
-    const zDir = Math.cos(phi);
-
-    const dir = this.p5.createVector(xDir, yDir, zDir).normalize().mult(multiplier);
-
-    // const windForce = new P5.Vector(x, y, z);
-
-    //temp return function until wind calcs are determined
-    return dir;
+  
+    return curl.normalize().mult(multiplier);
   }
+
 }
