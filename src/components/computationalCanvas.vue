@@ -28,7 +28,7 @@ const {
 const frameRate = ref(100);
 const numberOfVehicles = ref(0);
 
-let cameraPos = new P5.Vector(1, 1, 8000);
+let cameraPos = new P5.Vector(2000, -2000, 4000);
 // let cameraPos = new P5.Vector(0, 10, 7500);
 let cameraFocus = new P5.Vector(0, 0, 0);
 let fovDegrees = 80;
@@ -53,7 +53,7 @@ onMounted(() => {
       pm = new PixelManager(p5);
       ws = new WindSystem(p5);
       ws.noiseScale = 0.0001;
-      ws.timeScale = 1
+      ws.timeScale = 1;
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
       p5.background(0);
       p5.frameRate(60);
@@ -94,17 +94,17 @@ onMounted(() => {
         v.lifeExpectancy = 100;
         v.env.friction = 0.2;
 
-        // v.align(direction.copy());
+        v.align(direction.copy());
         vehicles.push(v);
       }
 
       vehicleCollection
         .addVehicle(vehicles)
-        // .seak(cursor, 0.1)
-        // .avoid(cursor, 10)
-        // .alignToNeighbors(300)
-        // .separate(1200, 100)
-        .applyWind(ws,1000)
+        .seak(cursor, 0.1)
+        .avoid(cursor, 10)
+        .alignToNeighbors(300)
+        .separate(1200, 100)
+        .applyWind(ws, 1000)
         .update();
       vehicleCollection.vehicles.forEach((v) => {
         const location = camera.value.project(v.coords.copy());
@@ -127,7 +127,7 @@ onMounted(() => {
       }
 
       frameRate.value = Math.round(p5.frameRate());
-      numberOfVehicles.value = vehicleCollection.vehicles.length
+      numberOfVehicles.value = vehicleCollection.vehicles.length;
     };
 
     p5.mousePressed = () => {};
@@ -154,5 +154,5 @@ onMounted(() => {
     style="overflow-y: auto; overflow-x: auto"
   ></div>
   <div>{{ frameRate }} fps</div>
-  <div>{{ numberOfVehicles}} number of vehicles</div>
+  <div>{{ numberOfVehicles }} number of vehicles</div>
 </template>

@@ -28,38 +28,40 @@ export class WindSystem {
   calculateWindAtCoords(pos: P5.Vector, multiplier = 1): P5.Vector {
     const scale = this.noiseScale;
     const eps = 0.001;
-  
+
     const x = pos.x * scale + this.p5.frameCount * this.timeScale;
     const y = pos.y * scale + this.p5.frameCount * this.timeScale;
     const z = pos.z * scale + this.p5.frameCount * this.timeScale;
-  
+
     // Define vector-valued field F = [N1, N2, N3] using offset noise
-    const N1 = (xi: number, yi: number, zi: number) => this.p5.noise(xi, yi, zi);
-    const N2 = (xi: number, yi: number, zi: number) => this.p5.noise(xi + 31.416, yi + 47.853, zi + 12.793); // offset to decorrelate
-    const N3 = (xi: number, yi: number, zi: number) => this.p5.noise(xi + 99.123, yi + 65.432, zi + 77.789);
-  
+    const N1 = (xi: number, yi: number, zi: number) =>
+      this.p5.noise(xi, yi, zi);
+    const N2 = (xi: number, yi: number, zi: number) =>
+      this.p5.noise(xi + 31.416, yi + 47.853, zi + 12.793); // offset to decorrelate
+    const N3 = (xi: number, yi: number, zi: number) =>
+      this.p5.noise(xi + 99.123, yi + 65.432, zi + 77.789);
+
     // Partial derivatives via central differences
     const dN3_dy = (N3(x, y + eps, z) - N3(x, y - eps, z)) / (2 * eps);
     const dN2_dz = (N2(x, y, z + eps) - N2(x, y, z - eps)) / (2 * eps);
-  
+
     const dN1_dz = (N1(x, y, z + eps) - N1(x, y, z - eps)) / (2 * eps);
     const dN3_dx = (N3(x + eps, y, z) - N3(x - eps, y, z)) / (2 * eps);
-  
+
     const dN2_dx = (N2(x + eps, y, z) - N2(x - eps, y, z)) / (2 * eps);
     const dN1_dy = (N1(x, y + eps, z) - N1(x, y - eps, z)) / (2 * eps);
-  
+
     // Curl: ∇ × F
     const curl = new P5.Vector(
-      dN3_dy - dN2_dz,  // ∂N3/∂y - ∂N2/∂z
-      dN1_dz - dN3_dx,  // ∂N1/∂z - ∂N3/∂x
-      dN2_dx - dN1_dy   // ∂N2/∂x - ∂N1/∂y
+      dN3_dy - dN2_dz, // ∂N3/∂y - ∂N2/∂z
+      dN1_dz - dN3_dx, // ∂N1/∂z - ∂N3/∂x
+      dN2_dx - dN1_dy, // ∂N2/∂x - ∂N1/∂y
     );
-  
+
     if (curl.magSq() < 1e-6) {
       return new P5.Vector(0, 0, 0);
     }
-  
+
     return curl.normalize().mult(multiplier);
   }
-
 }
