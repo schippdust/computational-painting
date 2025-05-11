@@ -132,6 +132,8 @@ export class Vehicle {
   }
 
   applyWind(windSystem: WindSystem, multiplier = 1): Vehicle {
+    const wind = windSystem.calculateWindAtCoords(this.coords, multiplier);
+    this.applyForce(wind);
     return this;
   }
 

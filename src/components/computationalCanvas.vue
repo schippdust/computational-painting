@@ -10,6 +10,7 @@ import { storeToRefs } from 'pinia';
 import { PixelManager } from '@/classes/PixelManager';
 import { Vehicle } from '@/classes/Vehicle';
 import { VehicleCollection } from '@/classes/VehicleCollection';
+import { WindSystem } from '@/classes/WindSystem';
 
 type ColorScheme = 'Black on White' | 'White on Black';
 
@@ -25,6 +26,7 @@ const {
 } = storeToRefs(appStore);
 
 const frameRate = ref(100);
+const numberOfVehicles = ref(0);
 
 let cameraPos = new P5.Vector(2000, -2000, 4000);
 // let cameraPos = new P5.Vector(0, 10, 7500);
@@ -41,12 +43,17 @@ onMounted(() => {
   let cycleRadians = 0;
   let cycleIncrement = 0.01;
   let pm: PixelManager;
+  let ws: WindSystem;
   let isMouseDragging: boolean = false;
   let previousPosition;
   const vehicleCollection = new VehicleCollection();
+
   const sketch = (p5: P5) => {
     p5.setup = () => {
       pm = new PixelManager(p5);
+      ws = new WindSystem(p5);
+      ws.noiseScale = 0.01;
+      ws.timeScale = 0.0
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
       p5.background(0);
       p5.frameRate(60);
@@ -84,7 +91,7 @@ onMounted(() => {
         v.phys.mass = 15;
         v.phys.maxVelocity = 50;
         v.phys.maxSteerForce = 20;
-        v.lifeExpectancy = 150;
+        v.lifeExpectancy = 100;
         v.env.friction = 0.2;
 
         v.align(direction.copy());
@@ -93,11 +100,11 @@ onMounted(() => {
 
       vehicleCollection
         .addVehicle(vehicles)
-        .seak(cursor, 0.1)
-        .avoid(cursor, 10)
-        .alignToNeighbors(300)
-        .separate(1200, 100)
-        // .applyWind(windSystem,1)
+        // .seak(cursor, 0.1)
+        // .avoid(cursor, 10)
+        // .alignToNeighbors(300)
+        // .separate(1200, 100)
+        .applyWind(ws,1000)
         .update();
       vehicleCollection.vehicles.forEach((v) => {
         const location = camera.value.project(v.coords.copy());
@@ -120,6 +127,7 @@ onMounted(() => {
       }
 
       frameRate.value = Math.round(p5.frameRate());
+      numberOfVehicles.value = vehicleCollection.vehicles.length
     };
 
     p5.mousePressed = () => {};
@@ -146,4 +154,5 @@ onMounted(() => {
     style="overflow-y: auto; overflow-x: auto"
   ></div>
   <div>{{ frameRate }} fps</div>
+  <div>{{ numberOfVehicles}} number of vehicles</div>
 </template>
