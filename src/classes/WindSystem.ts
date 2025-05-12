@@ -82,6 +82,6 @@ export class WindSystem {
       return new P5.Vector(0, 0, 0);
     }
 
-    return curl.normalize().mult(multiplier);
+    return curl.mult(multiplier);
   }
 }

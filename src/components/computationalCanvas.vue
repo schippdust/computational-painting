@@ -80,9 +80,9 @@ onMounted(() => {
         direction.copy(),
       );
       const circle = new Circle(currentCoords, 150);
-      circle.renderProjected(p5, camera.value);
+      // circle.renderProjected(p5, camera.value);
 
-      const edgePoints = circle.randomPointsOnSurface(15);
+      const edgePoints = circle.randomPointsOnSurface(10);
       // console.log(edgePoints);
       const vehicles: Vehicle[] = [];
 
@@ -91,7 +91,7 @@ onMounted(() => {
         v.phys.mass = 15;
         v.phys.maxVelocity = 50;
         v.phys.maxSteerForce = 20;
-        v.lifeExpectancy = 350;
+        v.lifeExpectancy = 150;
         v.env.friction = 0.2;
 
         // v.align(direction.copy());
@@ -100,11 +100,11 @@ onMounted(() => {
 
       vehicleCollection
         .addVehicle(vehicles)
-        .seak(cursor, 0.2)
+        .seak(cursor, 0.1)
         .avoid(cursor, 10)
         .alignToNeighbors(300)
         .separate(1200, 100)
-        .applyWind(ws, 350, 500)
+        .applyWind(ws, 450, 750)
         .update();
       vehicleCollection.vehicles.forEach((v) => {
         const location = camera.value.project(v.coords.copy());
