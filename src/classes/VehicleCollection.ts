@@ -46,8 +46,14 @@ export class VehicleCollection {
     return this;
   }
 
-  applyWind(windSystem: WindSystem, multiplier = 1): VehicleCollection {
-    this.vehicles.forEach((v) => v.applyWind(windSystem, multiplier));
+  applyWind(
+    windSystem: WindSystem,
+    directionalWindMultiplier = 1,
+    eddyMultiplier = 1,
+  ): VehicleCollection {
+    this.vehicles.forEach((v) =>
+      v.applyWind(windSystem, directionalWindMultiplier, eddyMultiplier),
+    );
     return this;
   }
 

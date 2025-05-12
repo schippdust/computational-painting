@@ -131,8 +131,16 @@ export class Vehicle {
     return this;
   }
 
-  applyWind(windSystem: WindSystem, multiplier = 1): Vehicle {
-    const wind = windSystem.calculateWindAtCoords(this.coords, multiplier);
+  applyWind(
+    windSystem: WindSystem,
+    directionalWindMultiplier = 1,
+    eddyMultiplier = 1,
+  ): Vehicle {
+    const wind = windSystem.calculateWindAtCoords(
+      this.coords,
+      directionalWindMultiplier,
+      eddyMultiplier,
+    );
     this.applyForce(wind);
     return this;
   }

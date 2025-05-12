@@ -25,7 +25,27 @@ export class WindSystem {
    * Adjust `useFBM` to toggle layered noise or single-scale.
    */
   // a method from chatgpt to determine 3D perlin noise fields.  No clue how it works
-  calculateWindAtCoords(pos: P5.Vector, multiplier = 1): P5.Vector {
+  calculateWindAtCoords(
+    pos: P5.Vector,
+    directionalWindMultiplier = 1,
+    eddyMultiplier = 1,
+    strengthVariability = true,
+  ): P5.Vector {
+    const eddyWind = this.calculateNoiseAtCoords(pos, eddyMultiplier);
+    const directionalWind = this.calculateNoiseAtCoords(
+      new P5.Vector(0, 0, 0),
+      directionalWindMultiplier,
+    );
+    const time = this.p5.frameCount * this.timeScale;
+    const strengthMult = this.p5.noise(time, time, time);
+    const cumulativeWind = P5.Vector.add(eddyWind, directionalWind);
+    if (strengthVariability) {
+      cumulativeWind.mult(strengthMult);
+    }
+    return cumulativeWind;
+  }
+
+  private calculateNoiseAtCoords(pos: P5.Vector, multiplier = 1) {
     const scale = this.noiseScale;
     const eps = 0.001;
 
