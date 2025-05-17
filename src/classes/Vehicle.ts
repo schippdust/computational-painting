@@ -1,6 +1,7 @@
 import P5 from 'p5';
 import { prependUniqueWithLimit } from './CodeUtils';
 import type { WindSystem } from './WindSystem';
+import { CoordinateSystem } from './CoordinateSystem';
 
 export interface VehiclePhysicalProps {
   velocity: P5.Vector;
@@ -8,8 +9,10 @@ export interface VehiclePhysicalProps {
   mass: number;
   maxVelocity: number;
   maxSteerForce: number;
+  maxPitchAdjustment: number; // in radians
   aggregateSteer: P5.Vector;
-  forward: P5.Vector | null;
+  forward: P5.Vector;
+  up: P5.Vector;
 }
 
 function createGenericPhysicalProps() {
@@ -19,13 +22,14 @@ function createGenericPhysicalProps() {
     mass: 10,
     maxVelocity: 10,
     maxSteerForce: 10,
+    maxPitchAdjustment: Math.PI / 12, // radians
     aggregateSteer: new P5.Vector(0, 0, 0),
-    forward: null,
+    forward: new P5.Vector(0, 0, 0),
+    up: new P5.Vector(0, 0, 1),
   };
 }
 
 export interface VehicleEnvironmentalProperties {
-  wind: P5.Vector | null;
   friction: number | null; // friction number from 0 to 1 will reduce motion by that amount
 }
 
@@ -38,8 +42,10 @@ export class Vehicle {
   public age: number;
 
   // simulation variables
-  public coords: P5.Vector;
+  public coordSystem: CoordinateSystem;
   private previousCoords: P5.Vector[];
+  private previousUpDirection: P5.Vector | null;
+  private previousForward: P5.Vector | null;
   private maxNumberOfPreviousCoords: number;
   public phys: VehiclePhysicalProps;
   public env: VehicleEnvironmentalProperties;
@@ -52,6 +58,7 @@ export class Vehicle {
     sketch: P5,
     coords: P5.Vector,
     physicalProperties: VehiclePhysicalProps = createGenericPhysicalProps(),
+    upAxis: P5.Vector = new P5.Vector(0, 0, 1),
   ) {
     this.uuid = crypto.randomUUID();
     this.p5 = sketch;
@@ -59,25 +66,58 @@ export class Vehicle {
     this.lifeExpectancy = 150;
     this.age = 0;
 
-    this.coords = coords.copy();
+    this.coordSystem = CoordinateSystem.fromOriginAndNormal(coords, upAxis);
     this.previousCoords = [];
+    this.previousForward = null;
+    this.previousUpDirection = null;
     this.maxNumberOfPreviousCoords = 10;
     this.phys = physicalProperties;
-    this.env = { wind: null, friction: null };
+    this.phys.up = upAxis; //should always be normalized
+    this.phys.forward = new P5.Vector(0, 0, 0); //should always be normalized or 0
+    this.env = { friction: null };
 
     this.constrainMovementOrthogonally = false;
     this.desiredSeparation = 40;
   }
 
+  get coords(): P5.Vector {
+    return this.coordSystem.getPosition();
+  }
+
+  get isDead(): boolean {
+    return this.age >= this.lifeExpectancy;
+  }
+
+  set velocity(velocityVector: P5.Vector) {
+    this.phys.velocity = velocityVector.copy();
+    this.phys.forward = velocityVector.copy().normalize();
+  }
+
   randomizeLocation(
     fromCoord: P5.Vector,
     maxDist: number,
-    is3D: boolean = false,
+    is3D: boolean = true,
+    randomizeUp: boolean = true,
   ): Vehicle {
     let randomX = this.p5.random(fromCoord.x - maxDist, fromCoord.x + maxDist);
     let randomY = this.p5.random(fromCoord.y - maxDist, fromCoord.y + maxDist);
     let randomZ = this.p5.random(fromCoord.z - maxDist, fromCoord.z + maxDist);
-    this.coords = new P5.Vector(randomX, randomY, is3D ? randomZ : 0);
+    let randomCoords = new P5.Vector(randomX, randomY, is3D ? randomZ : 0);
+    if (randomizeUp && is3D) {
+      let randomUpX = this.p5.random();
+      let randomUpY = this.p5.random();
+      let randomUpZ = this.p5.random();
+      let randomUp = new P5.Vector(randomUpX, randomUpY, randomUpZ).normalize();
+      this.coordSystem = CoordinateSystem.fromOriginAndNormal(
+        randomCoords,
+        randomUp,
+      );
+    } else {
+      this.coordSystem = CoordinateSystem.fromOriginAndNormal(
+        randomCoords,
+        this.coordSystem.getYAxis(),
+      );
+    }
     return this;
   }
 
@@ -99,12 +139,33 @@ export class Vehicle {
     // Store previous position
     prependUniqueWithLimit(
       this.previousCoords,
-      this.coords.copy(),
+      this.coords,
       this.maxNumberOfPreviousCoords,
     );
 
+    // Store previous up direction
+    this.previousUpDirection = this.phys.up.copy();
+
     // Update position
-    this.coords = P5.Vector.add(this.coords, this.phys.velocity);
+    this.coordSystem.translateCoordinateSystem(this.phys.velocity);
+
+    // Update pitch
+    const pitchTarget = this.calculateTargetPitch();
+    const currentUp = this.phys.up.copy().normalize();
+    const angleBetween = currentUp.angleBetween(pitchTarget);
+
+    if (angleBetween > 1e-5) {
+      const rotationAxis = currentUp.copy().cross(pitchTarget).normalize();
+      const limitedAngle = Math.min(angleBetween, this.phys.maxPitchAdjustment);
+      const rotatedUp = currentUp
+        .copy()
+        .rotate(limitedAngle, rotationAxis)
+        .normalize();
+      this.phys.up = rotatedUp;
+      this.coordSystem.setYAxis(rotatedUp);
+    }
+    // rotate coordinate system up to the maxPitchAdjustment to attempt to match the pitch target
+    // set up to be equal to a normalized version of this vector
 
     // Stop near-zero velocities
     if (this.phys.velocity.mag() < 0.00001) {
@@ -113,6 +174,41 @@ export class Vehicle {
 
     this.age += 1;
     return this;
+  }
+
+  private calculateTargetPitch(): P5.Vector {
+    if (!this.previousForward || !this.previousUpDirection) {
+      return this.phys.up.copy();
+    }
+
+    const currentForward = this.phys.forward.copy().normalize();
+    const previousForward = this.previousForward.copy().normalize();
+    const previousUp = this.previousUpDirection.copy().normalize();
+
+    // The pitch plane is defined by the cross product of the previousForward and currentForward
+    const pitchNormal = previousForward
+      .copy()
+      .cross(currentForward)
+      .normalize();
+
+    // Near 0 conditions will occur if the direction hasn't really changed
+    if (pitchNormal.mag() < 1e-5) {
+      return this.phys.up.copy();
+    }
+
+    // Project the previous up direction onto the pitch plane with some fun vector math
+    const dot = previousUp.dot(pitchNormal);
+    const projectedUp = previousUp
+      .copy()
+      .sub(pitchNormal.copy().mult(dot))
+      .normalize();
+
+    const newUp = currentForward
+      .copy()
+      .cross(currentForward.copy().cross(projectedUp))
+      .normalize();
+
+    return newUp;
   }
 
   setVelocity(velocity: P5.Vector) {
@@ -300,5 +396,19 @@ export class Vehicle {
     this.align(neighborVelocities, alignMultiplier);
     this.cohere(neighborCoords, cohereMultiplier);
     return this;
+  }
+
+  // creating simple debugging object, customize as needed
+  toJson() {
+    let coords = this.coords;
+    let velocity = this.phys.velocity;
+    let up = this.phys.up;
+    return {
+      uuid: this.uuid,
+      age: this.age,
+      coords: `X:${coords.x}, Y:${coords.y}, Z:${coords.z}`,
+      velocity: `X:${velocity.x}, Y:${velocity.y}, Z:${velocity.z}`,
+      up: `X:${up.x}, Y:${up.y}, Z:${up.z}`,
+    };
   }
 }

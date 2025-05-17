@@ -201,6 +201,29 @@ export class CoordinateSystem {
     return this;
   }
 
+  // this preserves the z axis
+  setYAxis(newYAxis: p5.Vector): CoordinateSystem {
+    const y = newYAxis.copy().normalize();
+    const z = this.getZAxis(1).normalize();
+    let x = y.copy().cross(z).normalize();
+
+    // If y and z are parallel, fallback to a default orthogonal x
+    if (x.mag() < 1e-6) {
+      const fallback = new p5.Vector(1, 0, 0);
+      x = fallback.copy().cross(z).normalize();
+    }
+
+    const correctedY = z.copy().cross(x).normalize(); // ensure orthogonality
+
+    this.basis = math.matrix([
+      [x.x, correctedY.x, z.x],
+      [x.y, correctedY.y, z.y],
+      [x.z, correctedY.z, z.z],
+    ]);
+
+    return this;
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   ////////////////// Getters
   //////////////////////////////////////////////////////////////////////////////

@@ -2,7 +2,7 @@ import p5 from 'p5';
 
 declare module 'p5' {
   interface Vector {
-    rotate(theta: number, axis: p5.Vector): p5.Vector;
+    rotate(angle: number, axis: p5.Vector): p5.Vector;
   }
 }
 
