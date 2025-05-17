@@ -65,7 +65,7 @@ export class Circle {
       unitPoints.push(point);
     }
 
-    const segmentPoints = CoordinateSystem.transformPoints(
+    const segmentPoints = CoordinateSystem.transformLocalPointsToTargetCs(
       CoordinateSystem.getWorldAxes(),
       this.coordinateSystem,
       unitPoints,
@@ -119,14 +119,14 @@ export class Circle {
       const z = radius * Math.cos(phi);
 
       const local = new P5.Vector(x, y, z);
-      return cs.toWorld(local);
+      return cs.transformLocalPointToWorldCs(local);
     } else {
       const angle = Math.random() * 2 * Math.PI;
       const x = radius * Math.cos(angle);
       const y = radius * Math.sin(angle);
 
       const local = new P5.Vector(x, y, 0);
-      return cs.toWorld(local);
+      return cs.transformLocalPointToWorldCs(local);
     }
   }
 
@@ -165,7 +165,7 @@ export class Circle {
       const z = radius * Math.cos(phi);
 
       const local = new P5.Vector(x, y, z).mult(Math.cbrt(Math.random()));
-      return cs.toWorld(local);
+      return cs.transformLocalPointToWorldCs(local);
     } else {
       const angle = Math.random() * 2 * Math.PI;
       const r = radius * Math.sqrt(Math.random());
@@ -174,7 +174,7 @@ export class Circle {
       const y = r * Math.sin(angle);
 
       const local = new P5.Vector(x, y, 0);
-      return cs.toWorld(local);
+      return cs.transformLocalPointToWorldCs(local);
     }
   }
 
