@@ -11,6 +11,14 @@ export class CoordinateSystem {
     this.basis = basis; // each column is a basis vector in world coordinates
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  ////////////////// Constructors
+
+  ////////////////// Static construction is prefered method
+  ////////////////// as it is easier to understand than the creation of basis matrices
+
+  //////////////////////////////////////////////////////////////////////////////
+
   static fromOriginAndNormal(
     origin: p5.Vector,
     normal: p5.Vector,
@@ -61,15 +69,61 @@ export class CoordinateSystem {
     return new CoordinateSystem(origin, basis);
   }
 
-  static getWorldAxes() {
-    return this.fromOriginNormalX(
-      new p5.Vector(0, 0, 0),
-      new p5.Vector(0, 0, 1),
-      new p5.Vector(1, 0, 0),
-    );
+  //////////////////////////////////////////////////////////////////////////////
+  ////////////////// Transformations acting upon coordinate system
+
+  ////////////////// All transformations mutate the instance directly
+  ////////////////// and return it to enable method chaining
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  rotateCoordinateSystem(angle: number, axis?: p5.Vector): this {
+    // Default to the Z-axis if no axis is provided
+    const rotationAxis = (axis || this.getZAxis(1)).copy().normalize();
+
+    const cosA = Math.cos(angle);
+    const sinA = Math.sin(angle);
+    const oneMinusCosA = 1 - cosA;
+
+    const ux = rotationAxis.x;
+    const uy = rotationAxis.y;
+    const uz = rotationAxis.z;
+
+    // Rodrigues' rotation matrix
+    const rotationMatrix = math.matrix([
+      [
+        cosA + ux * ux * oneMinusCosA,
+        ux * uy * oneMinusCosA - uz * sinA,
+        ux * uz * oneMinusCosA + uy * sinA,
+      ],
+      [
+        uy * ux * oneMinusCosA + uz * sinA,
+        cosA + uy * uy * oneMinusCosA,
+        uy * uz * oneMinusCosA - ux * sinA,
+      ],
+      [
+        uz * ux * oneMinusCosA - uy * sinA,
+        uz * uy * oneMinusCosA + ux * sinA,
+        cosA + uz * uz * oneMinusCosA,
+      ],
+    ]);
+
+    // Mutate the basis in-place
+    this.basis = math.multiply(rotationMatrix, this.basis) as math.Matrix;
+
+    return this;
   }
 
-  toWorld(local: p5.Vector): p5.Vector {
+  translateCoordinateSystem(translation: p5.Vector): CoordinateSystem {
+    this.position.add(translation);
+    return this;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  ////////////////// Vector Projection Utilities
+  //////////////////////////////////////////////////////////////////////////////
+
+  transformLocalPointToWorldCs(local: p5.Vector): p5.Vector {
     local = local.copy();
     const localArr = [local.x, local.y, local.z];
 
@@ -85,11 +139,7 @@ export class CoordinateSystem {
     );
   }
 
-  // transformPoints(outputCs: CoordinateSystem, points: p5.Vector | p5.Vector[]) {
-  //   return CoordinateSystem.transformPoints(this, outputCs, points);
-  // }
-
-  static transformPoints(
+  static transformLocalPointsToTargetCs(
     inputCS: CoordinateSystem,
     outputCS: CoordinateSystem,
     points: p5.Vector | p5.Vector[],
@@ -139,42 +189,28 @@ export class CoordinateSystem {
     return transformed;
   }
 
-  rotateCoordinateSystem(angle: number, axis?: p5.Vector): CoordinateSystem {
-    // Default to the Z-axis if no axis is provided
-    const rotationAxis = (axis || this.getZAxis(1)).copy().normalize();
-    const u = rotationAxis.normalize();
+  //////////////////////////////////////////////////////////////////////////////
+  ////////////////// Setters
 
-    const cosA = Math.cos(angle);
-    const sinA = Math.sin(angle);
-    const oneMinusCosA = 1 - cosA;
+  ////////////////// All setters return "this" to enable method chaining
 
-    const ux = u.x,
-      uy = u.y,
-      uz = u.z;
+  //////////////////////////////////////////////////////////////////////////////
 
-    // Rodrigues' rotation matrix
-    const rotationMatrix = math.matrix([
-      [
-        cosA + ux * ux * oneMinusCosA,
-        ux * uy * oneMinusCosA - uz * sinA,
-        ux * uz * oneMinusCosA + uy * sinA,
-      ],
-      [
-        uy * ux * oneMinusCosA + uz * sinA,
-        cosA + uy * uy * oneMinusCosA,
-        uy * uz * oneMinusCosA - ux * sinA,
-      ],
-      [
-        uz * ux * oneMinusCosA - uy * sinA,
-        uz * uy * oneMinusCosA + ux * sinA,
-        cosA + uz * uz * oneMinusCosA,
-      ],
-    ]);
+  setPosition(newPosition: p5.Vector): CoordinateSystem {
+    this.position = newPosition.copy();
+    return this;
+  }
 
-    // Apply rotation to the basis
-    const newBasis = math.multiply(rotationMatrix, this.basis) as math.Matrix;
+  //////////////////////////////////////////////////////////////////////////////
+  ////////////////// Getters
+  //////////////////////////////////////////////////////////////////////////////
 
-    return new CoordinateSystem(this.position.copy(), newBasis);
+  static getWorldAxes() {
+    return this.fromOriginNormalX(
+      new p5.Vector(0, 0, 0),
+      new p5.Vector(0, 0, 1),
+      new p5.Vector(1, 0, 0),
+    );
   }
 
   getRenderAxes(length = 1): Line[] {
