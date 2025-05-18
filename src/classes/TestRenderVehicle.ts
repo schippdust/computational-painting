@@ -77,6 +77,7 @@ export class TestRenderVehicle extends Vehicle {
   }
 
   render(camera: Camera3D): TestRenderVehicle {
+    this.p5.stroke(255, 255, 255, 50);
     const renderCircle = new Circle(this.coordSystem, 10);
     renderCircle.renderSegmentCount = 8;
     renderCircle.renderProjected(this.p5, camera);
