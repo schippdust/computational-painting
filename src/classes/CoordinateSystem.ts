@@ -123,20 +123,26 @@ export class CoordinateSystem {
   ////////////////// Vector Projection Utilities
   //////////////////////////////////////////////////////////////////////////////
 
-  transformLocalPointToWorldCs(local: p5.Vector): p5.Vector {
-    local = local.copy();
-    const localArr = [local.x, local.y, local.z];
+  transformLocalPointsToWorldCs(local: p5.Vector | p5.Vector[]): p5.Vector[] {
+    const pointList = Array.isArray(local) ? local : [local];
+    const projectedPoints: p5.Vector[] = [];
+    for (let pt of pointList) {
+      const localPt = pt.copy();
+      const localArr = [localPt.x, localPt.y, localPt.z];
 
-    const rotated = math.multiply(this.basis, localArr) as math.Matrix;
-    const rotatedArr = (
-      math.flatten(rotated) as math.Matrix
-    ).toArray() as number[];
+      const rotated = math.multiply(this.basis, localArr) as math.Matrix;
+      const rotatedArr = (
+        math.flatten(rotated) as math.Matrix
+      ).toArray() as number[];
 
-    return new p5.Vector(
-      rotatedArr[0] + this.position.x,
-      rotatedArr[1] + this.position.y,
-      rotatedArr[2] + this.position.z,
-    );
+      const projectedPoint = new p5.Vector(
+        rotatedArr[0] + this.position.x,
+        rotatedArr[1] + this.position.y,
+        rotatedArr[2] + this.position.z,
+      );
+      projectedPoints.push(projectedPoint);
+    }
+    return projectedPoints;
   }
 
   static transformLocalPointsToTargetCs(
