@@ -9,6 +9,7 @@ import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
 import { PixelManager } from '@/classes/PixelManager';
 import { Vehicle } from '@/classes/Vehicle';
+import { TestRenderVehicle } from '@/classes/TestRenderVehicle';
 import { VehicleCollection } from '@/classes/VehicleCollection';
 import { WindSystem } from '@/classes/WindSystem';
 
@@ -25,7 +26,7 @@ const {
   axisVisibility,
 } = storeToRefs(appStore);
 
-const frameRate = ref(100);
+const frameRate = ref(40);
 const numberOfVehicles = ref(0);
 
 let cameraPos = new P5.Vector(2000, -2000, 4000);
@@ -56,7 +57,7 @@ onMounted(() => {
       ws.timeScale = 1;
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
       p5.background(0);
-      p5.frameRate(60);
+      p5.frameRate(frameRate.value);
     };
 
     p5.draw = () => {
@@ -82,12 +83,12 @@ onMounted(() => {
       const circle = new Circle(currentCoords, 150);
       // circle.renderProjected(p5, camera.value);
 
-      const edgePoints = circle.randomPointsOnSurface(10);
+      const edgePoints = circle.randomPointsOnSurface(2);
       // console.log(edgePoints);
-      const vehicles: Vehicle[] = [];
+      const vehicles: TestRenderVehicle[] = [];
 
       for (const pt of edgePoints) {
-        const v = new Vehicle(p5, pt.copy());
+        const v = new TestRenderVehicle(p5, pt.copy());
         v.phys.mass = 15;
         v.phys.maxVelocity = 50;
         v.phys.maxSteerForce = 20;
@@ -111,7 +112,8 @@ onMounted(() => {
         if (location == null) {
           return;
         }
-        p5.point(location.x, location.y);
+        let testRenderVehicle = v as TestRenderVehicle;
+        testRenderVehicle.render(camera.value);
       });
 
       const cursorRenderPos = camera.value.project(cursor.copy());

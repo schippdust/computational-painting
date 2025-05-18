@@ -122,11 +122,21 @@ export class Vehicle {
   }
 
   update(): Vehicle {
+    // storing previous data
+    prependUniqueWithLimit(
+      this.previousCoords,
+      this.coords,
+      this.maxNumberOfPreviousCoords,
+    );
+    this.previousUpDirection = this.phys.up.copy().normalize();
+    this.previousForward = this.phys.forward.copy().normalize();
+
+    // apply pseudo friction if relevant
     if (this.env.friction != null) {
       this.applyFriction();
     }
 
-    // Reset acceleration BEFORE applying it to velocity
+    // Limit acceleration BEFORE applying it to velocity
     this.phys.acceleration.limit(this.phys.maxSteerForce); // optional safety clamp
     this.phys.velocity = P5.Vector.add(
       this.phys.velocity,
@@ -135,29 +145,25 @@ export class Vehicle {
     this.phys.velocity.limit(this.phys.maxVelocity);
     // Reset acceleration so it doesn't carry into next frame
     this.phys.acceleration.mult(0);
-
-    // Store previous position
-    prependUniqueWithLimit(
-      this.previousCoords,
-      this.coords,
-      this.maxNumberOfPreviousCoords,
-    );
-
-    // Store previous up direction
-    this.previousUpDirection = this.phys.up.copy();
-
-    // Update position
+    // updating coordinate system based on new position, this could be handled more elegantly
     this.coordSystem.translateCoordinateSystem(this.phys.velocity);
+    this.coordSystem = CoordinateSystem.fromOriginAndNormal(
+      this.coords,
+      this.phys.velocity,
+    );
+    this.phys.forward = this.coordSystem.getZAxis(1);
 
-    // Update pitch
+    // Updating pitch based on new position and former up vector
     const pitchTarget = this.calculateTargetPitch();
-    const currentUp = this.phys.up.copy().normalize();
-    const angleBetween = currentUp.angleBetween(pitchTarget);
+    const previousUp = this.phys.up.copy().normalize();
+    const angleBetween = previousUp.angleBetween(pitchTarget);
+    // console.log(this.uuid,pitchTarget,previousUp,angleBetween)
 
     if (angleBetween > 1e-5) {
-      const rotationAxis = currentUp.copy().cross(pitchTarget).normalize();
+      // console.log('angle between was big enough')
+      const rotationAxis = previousUp.copy().cross(pitchTarget).normalize();
       const limitedAngle = Math.min(angleBetween, this.phys.maxPitchAdjustment);
-      const rotatedUp = currentUp
+      const rotatedUp = previousUp
         .copy()
         .rotate(limitedAngle, rotationAxis)
         .normalize();
@@ -178,6 +184,7 @@ export class Vehicle {
 
   private calculateTargetPitch(): P5.Vector {
     if (!this.previousForward || !this.previousUpDirection) {
+      console.log('skipping pitch calculation');
       return this.phys.up.copy();
     }
 
@@ -193,6 +200,7 @@ export class Vehicle {
 
     // Near 0 conditions will occur if the direction hasn't really changed
     if (pitchNormal.mag() < 1e-5) {
+      console.log('near 0 condition for pitch calcs');
       return this.phys.up.copy();
     }
 
