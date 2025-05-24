@@ -1,5 +1,5 @@
 import P5, { Vector } from 'p5';
-import { Line } from './Line';
+import { Line } from '../Geometry/Line';
 
 export class Camera3D {
   private pos: P5.Vector;

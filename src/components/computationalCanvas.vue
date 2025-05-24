@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import P5 from 'p5';
-import { drawAxes, pressSpaceToPause } from '@/classes/DrawingUtils';
-import { CoordinateSystem } from '@/classes/CoordinateSystem';
-import { Circle } from '@/classes/Circle';
-import { Line } from '@/classes/Line';
+import { drawAxes, pressSpaceToPause } from '@/classes/Rendering/DrawingUtils';
+import { CoordinateSystem } from '@/classes/Geometry/CoordinateSystem';
+import { Circle } from '@/classes/Geometry/Circle';
+import { Line } from '@/classes/Geometry/Line';
 
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
-import { PixelManager } from '@/classes/PixelManager';
-import { Vehicle } from '@/classes/Vehicle';
-import { TestRenderVehicle } from '@/classes/TestRenderVehicle';
-import { VehicleCollection } from '@/classes/VehicleCollection';
-import { WindSystem } from '@/classes/WindSystem';
+import { PixelManager } from '@/classes/SystemsAndManagement/PixelManager';
+import { Vehicle } from '@/classes/Agents/Vehicle';
+import { TestRenderVehicle } from '@/classes/Rendering/TestRenderVehicle';
+import { VehicleCollection } from '@/classes/SystemsAndManagement/VehicleCollection';
+import { WindSystem } from '@/classes/SystemsAndManagement/WindSystem';
 
 type ColorScheme = 'Black on White' | 'White on Black';
 
@@ -29,7 +29,7 @@ const {
 const frameRate = ref(40);
 const numberOfVehicles = ref(0);
 
-let cameraPos = new P5.Vector(2000, -2000, 4000);
+let cameraPos = new P5.Vector(5000, 0, 0);
 // let cameraPos = new P5.Vector(0, 10, 7500);
 let cameraFocus = new P5.Vector(0, 0, 0);
 let fovDegrees = 80;
@@ -41,12 +41,8 @@ onMounted(() => {
   function getSketchParams() {
     return {};
   }
-  let cycleRadians = 0;
-  let cycleIncrement = 0.01;
   let pm: PixelManager;
   let ws: WindSystem;
-  let isMouseDragging: boolean = false;
-  let previousPosition;
   const vehicleCollection = new VehicleCollection();
 
   const sketch = (p5: P5) => {
@@ -60,78 +56,7 @@ onMounted(() => {
       p5.frameRate(frameRate.value);
     };
 
-    p5.draw = () => {
-      console.log('new loop');
-      p5.stroke(255);
-      // p5.background(p5.color(255, 255, 255, 1));
-
-      const centerPoint = new P5.Vector(0, 0, 0);
-      const zUp = new P5.Vector(0, 0, 1);
-
-      const cursor = new P5.Vector(
-        (Math.cos(cycleRadians) * canvasWidth.value) / 2,
-        (Math.sin(cycleRadians) * canvasWidth.value) / 2,
-        0,
-      );
-
-      const direction = P5.Vector.sub(cursor.copy(), centerPoint.copy());
-      direction.rotate(p5.HALF_PI, zUp);
-      const currentCoords = CoordinateSystem.fromOriginAndNormal(
-        cursor.copy(),
-        direction.copy(),
-      );
-      const circle = new Circle(currentCoords, 450);
-      const renderCircle = new Circle(currentCoords, 50);
-      renderCircle.renderProjected(p5, camera.value);
-
-      const edgePoints = circle.randomPointsOnSurface(5);
-      // console.log(edgePoints);
-      const vehicles: TestRenderVehicle[] = [];
-
-      for (const pt of edgePoints) {
-        const v = new TestRenderVehicle(p5, pt.copy());
-        v.phys.mass = 15;
-        v.phys.maxVelocity = 50;
-        v.phys.maxSteerForce = 20;
-        v.lifeExpectancy = 150;
-        v.env.friction = 0.2;
-
-        // v.align(direction.copy());
-        vehicles.push(v);
-      }
-
-      vehicleCollection
-        .addVehicle(vehicles)
-        .seak(cursor, 0.1)
-        .avoid(cursor, 10)
-        .alignToNeighbors(300)
-        .separate(1200, 150)
-        .applyWind(ws, 450, 750)
-        .update();
-      vehicleCollection.vehicles.forEach((v) => {
-        const location = camera.value.project(v.coords.copy());
-        if (location == null) {
-          return;
-        }
-        let testRenderVehicle = v as TestRenderVehicle;
-        testRenderVehicle.render(camera.value);
-      });
-
-      const cursorRenderPos = camera.value.project(cursor.copy());
-      if (cursorRenderPos) {
-        p5.circle(cursorRenderPos.x, cursorRenderPos.y, 2);
-      }
-
-      cycleRadians += cycleIncrement;
-
-      // Utility Functions
-      if (axisVisibility.value) {
-        drawAxes(p5, camera.value, 100);
-      }
-
-      frameRate.value = Math.round(p5.frameRate());
-      numberOfVehicles.value = vehicleCollection.vehicles.length;
-    };
+    p5.draw = () => {};
 
     p5.mousePressed = () => {};
     p5.mouseDragged = () => {};

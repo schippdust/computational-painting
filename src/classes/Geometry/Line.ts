@@ -1,5 +1,5 @@
 import P5 from 'p5';
-import type { Camera3D } from './Camera3D';
+import type { Camera3D } from '../Core/Camera3D';
 
 export class Line {
   public starPoint: P5.Vector;

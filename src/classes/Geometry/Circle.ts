@@ -1,7 +1,7 @@
 import P5 from 'p5';
 import { Line } from './Line';
 import { CoordinateSystem } from './CoordinateSystem';
-import type { Camera3D } from './Camera3D';
+import type { Camera3D } from '../Core/Camera3D';
 
 export class Circle {
   public coordinateSystem: CoordinateSystem;

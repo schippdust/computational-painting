@@ -1,5 +1,5 @@
 import P5 from 'p5';
-import type { Vehicle } from './Vehicle';
+import type { Vehicle } from '../Agents/Vehicle';
 import { OcTree } from './VehicleOcTree';
 import type { WindSystem } from './WindSystem';
 

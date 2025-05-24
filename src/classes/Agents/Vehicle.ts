@@ -1,7 +1,7 @@
 import P5 from 'p5';
-import { prependUniqueWithLimit } from './CodeUtils';
-import type { WindSystem } from './WindSystem';
-import { CoordinateSystem } from './CoordinateSystem';
+import { prependUniqueWithLimit } from '../Core/CodeUtils';
+import type { WindSystem } from '../SystemsAndManagement/WindSystem';
+import { CoordinateSystem } from '../Geometry/CoordinateSystem';
 
 export interface VehiclePhysicalProps {
   velocity: P5.Vector;

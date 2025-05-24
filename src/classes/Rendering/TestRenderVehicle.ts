@@ -1,8 +1,8 @@
-import type { Camera3D } from './Camera3D';
-import { Vehicle } from './Vehicle';
-import { Line } from './Line';
+import type { Camera3D } from '../Core/Camera3D';
+import { Vehicle } from '../Agents/Vehicle';
+import { Line } from '../Geometry/Line';
 import P5, { Camera } from 'p5';
-import { Circle } from './Circle';
+import { Circle } from '../Geometry/Circle';
 
 export class TestRenderVehicle extends Vehicle {
   update(): TestRenderVehicle {

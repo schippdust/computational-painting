@@ -1,4 +1,4 @@
-import { Camera3D } from './Camera3D';
+import { Camera3D } from '../Core/Camera3D';
 import P5 from 'p5';
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
