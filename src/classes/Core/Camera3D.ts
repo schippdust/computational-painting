@@ -2,7 +2,7 @@ import P5, { Vector } from 'p5';
 import { Line } from '../Geometry/Line';
 
 export class Camera3D {
-  private pos: P5.Vector;
+  public pos: P5.Vector;
   private focus: P5.Vector;
   private up: P5.Vector;
   private fov: number;

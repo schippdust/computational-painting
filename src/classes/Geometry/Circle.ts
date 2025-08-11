@@ -53,7 +53,7 @@ export class Circle {
     return this.coordinateSystem.getZAxis();
   }
 
-  calculateSegments() {
+  private calculateSegments() {
     const segments: Line[] = [];
     const unitPoints: P5.Vector[] = [];
 

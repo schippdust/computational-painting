@@ -1,12 +1,12 @@
 import * as math from 'mathjs';
-import p5 from 'p5';
+import P5 from 'p5';
 import { Line } from './Line';
 
 export class CoordinateSystem {
-  private position: p5.Vector;
+  private position: P5.Vector;
   private basis: math.Matrix; // 3x3 rotation matrix (columns are basis vectors)
 
-  constructor(origin: p5.Vector, basis: math.Matrix) {
+  constructor(origin: P5.Vector, basis: math.Matrix) {
     this.position = origin;
     this.basis = basis; // each column is a basis vector in world coordinates
   }
@@ -20,19 +20,19 @@ export class CoordinateSystem {
   //////////////////////////////////////////////////////////////////////////////
 
   static fromOriginAndNormal(
-    origin: p5.Vector,
-    normal: p5.Vector,
+    origin: P5.Vector,
+    normal: P5.Vector,
   ): CoordinateSystem {
     origin = origin.copy();
     normal = normal.copy();
     const z = normal.normalize();
 
     // Define "up" manually as world Y axis
-    const up = new p5.Vector(0, 1, 0);
+    const up = new P5.Vector(0, 1, 0);
 
     // If normal is too close to up, use world X instead
     const dot = Math.abs(z.dot(up));
-    const fallback = new p5.Vector(1, 0, 0);
+    const fallback = new P5.Vector(1, 0, 0);
     const ref = dot < 0.99 ? up : fallback;
 
     const x = ref.copy().cross(z).normalize();
@@ -48,9 +48,9 @@ export class CoordinateSystem {
   }
 
   static fromOriginNormalX(
-    origin: p5.Vector,
-    normal: p5.Vector,
-    xAxis: p5.Vector,
+    origin: P5.Vector,
+    normal: P5.Vector,
+    xAxis: P5.Vector,
   ): CoordinateSystem {
     origin = origin.copy();
     normal = normal.copy();
@@ -69,6 +69,10 @@ export class CoordinateSystem {
     return new CoordinateSystem(origin, basis);
   }
 
+  clone(): CoordinateSystem {
+    return new CoordinateSystem(this.position.copy(), this.basis.clone());
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   ////////////////// Transformations acting upon coordinate system
 
@@ -77,7 +81,7 @@ export class CoordinateSystem {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  rotateCoordinateSystem(angle: number, axis?: p5.Vector): this {
+  rotateCoordinateSystem(angle: number, axis?: P5.Vector): this {
     // Default to the Z-axis if no axis is provided
     const rotationAxis = (axis || this.getZAxis(1)).copy().normalize();
 
@@ -114,8 +118,31 @@ export class CoordinateSystem {
     return this;
   }
 
-  translateCoordinateSystem(translation: p5.Vector): CoordinateSystem {
+  translateCoordinateSystem(translation: P5.Vector): CoordinateSystem {
     this.position.add(translation);
+    return this;
+  }
+
+  lookAt(target: P5.Vector, up?: P5.Vector): CoordinateSystem {
+    const forward = P5.Vector.sub(target, this.position).normalize();
+    let upVector = up ? up.copy().normalize() : new P5.Vector(0, 1, 0);
+
+    // If forward is too close to up, use world X instead
+    const dot = Math.abs(forward.dot(upVector));
+    const fallback = new P5.Vector(1, 0, 0);
+    if (dot > 0.99) {
+      upVector = fallback;
+    }
+
+    const right = forward.copy().cross(upVector).normalize();
+    const correctedUp = right.copy().cross(forward).normalize(); // ensure orthogonality
+
+    this.basis = math.matrix([
+      [right.x, correctedUp.x, forward.x],
+      [right.y, correctedUp.y, forward.y],
+      [right.z, correctedUp.z, forward.z],
+    ]);
+
     return this;
   }
 
@@ -123,9 +150,9 @@ export class CoordinateSystem {
   ////////////////// Vector Projection Utilities
   //////////////////////////////////////////////////////////////////////////////
 
-  transformLocalPointsToWorldCs(local: p5.Vector | p5.Vector[]): p5.Vector[] {
+  transformLocalPointsToWorldCs(local: P5.Vector | P5.Vector[]): P5.Vector[] {
     const pointList = Array.isArray(local) ? local : [local];
-    const projectedPoints: p5.Vector[] = [];
+    const projectedPoints: P5.Vector[] = [];
     for (let pt of pointList) {
       const localPt = pt.copy();
       const localArr = [localPt.x, localPt.y, localPt.z];
@@ -135,7 +162,7 @@ export class CoordinateSystem {
         math.flatten(rotated) as math.Matrix
       ).toArray() as number[];
 
-      const projectedPoint = new p5.Vector(
+      const projectedPoint = new P5.Vector(
         rotatedArr[0] + this.position.x,
         rotatedArr[1] + this.position.y,
         rotatedArr[2] + this.position.z,
@@ -148,10 +175,10 @@ export class CoordinateSystem {
   static transformLocalPointsToTargetCs(
     inputCS: CoordinateSystem,
     outputCS: CoordinateSystem,
-    points: p5.Vector | p5.Vector[],
-  ): p5.Vector[] {
+    points: P5.Vector | P5.Vector[],
+  ): P5.Vector[] {
     const pointList = Array.isArray(points) ? points : [points];
-    const transformed: p5.Vector[] = [];
+    const transformed: P5.Vector[] = [];
 
     const inputBasisInv = math.inv(inputCS.basis);
     const outputBasis = outputCS.basis;
@@ -189,7 +216,7 @@ export class CoordinateSystem {
       // Ensure it's a number[]
       const worldVec = toVector3(worldMatrix);
 
-      transformed.push(new p5.Vector(worldVec[0], worldVec[1], worldVec[2]));
+      transformed.push(new P5.Vector(worldVec[0], worldVec[1], worldVec[2]));
     }
 
     return transformed;
@@ -202,20 +229,20 @@ export class CoordinateSystem {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  setPosition(newPosition: p5.Vector): CoordinateSystem {
+  setPosition(newPosition: P5.Vector): CoordinateSystem {
     this.position = newPosition.copy();
     return this;
   }
 
   // this preserves the z axis
-  setYAxis(newYAxis: p5.Vector): CoordinateSystem {
+  setYAxis(newYAxis: P5.Vector): CoordinateSystem {
     const y = newYAxis.copy().normalize();
     const z = this.getZAxis(1).normalize();
     let x = y.copy().cross(z).normalize();
 
     // If y and z are parallel, fallback to a default orthogonal x
     if (x.mag() < 1e-6) {
-      const fallback = new p5.Vector(1, 0, 0);
+      const fallback = new P5.Vector(1, 0, 0);
       x = fallback.copy().cross(z).normalize();
     }
 
@@ -236,9 +263,9 @@ export class CoordinateSystem {
 
   static getWorldAxes() {
     return this.fromOriginNormalX(
-      new p5.Vector(0, 0, 0),
-      new p5.Vector(0, 0, 1),
-      new p5.Vector(1, 0, 0),
+      new P5.Vector(0, 0, 0),
+      new P5.Vector(0, 0, 1),
+      new P5.Vector(1, 0, 0),
     );
   }
 
@@ -249,48 +276,48 @@ export class CoordinateSystem {
 
     const xLine = new Line(
       this.position.copy(),
-      p5.Vector.add(this.position, xDir),
+      P5.Vector.add(this.position, xDir),
     );
     const yLine = new Line(
       this.position.copy(),
-      p5.Vector.add(this.position, yDir),
+      P5.Vector.add(this.position, yDir),
     );
     const zLine = new Line(
       this.position.copy(),
-      p5.Vector.add(this.position, zDir),
+      P5.Vector.add(this.position, zDir),
     );
 
     return [xLine, yLine, zLine];
   }
 
-  getXAxis(length = 1): p5.Vector {
+  getXAxis(length = 1): P5.Vector {
     const basisArray = this.basis.toArray() as number[][];
-    return new p5.Vector(
+    return new P5.Vector(
       basisArray[0][0],
       basisArray[1][0],
       basisArray[2][0],
     ).mult(length);
   }
 
-  getYAxis(length = 1): p5.Vector {
+  getYAxis(length = 1): P5.Vector {
     const basisArray = this.basis.toArray() as number[][];
-    return new p5.Vector(
+    return new P5.Vector(
       basisArray[0][1],
       basisArray[1][1],
       basisArray[2][1],
     ).mult(length);
   }
 
-  getZAxis(length = 1): p5.Vector {
+  getZAxis(length = 1): P5.Vector {
     const basisArray = this.basis.toArray() as number[][];
-    return new p5.Vector(
+    return new P5.Vector(
       basisArray[0][2],
       basisArray[1][2],
       basisArray[2][2],
     ).mult(length);
   }
 
-  getPosition(): p5.Vector {
+  getPosition(): P5.Vector {
     return this.position.copy();
   }
 }
