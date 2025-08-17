@@ -47,6 +47,23 @@ onMounted(() => {
   let pm: PixelManager;
   let ws: WindSystem;
   const vehicleCollection = new VehicleCollection();
+  const grid: P5.Vector[][][] = [];
+  const gridSize = 7; // Define the size of the grid
+  const spacing = 300; // Define the spacing between points
+  for (let i = 0; i < gridSize; i++) {
+    grid[i] = [];
+    for (let j = 0; j < gridSize; j++) {
+      grid[i][j] = [];
+      for (let k = 0; k < gridSize; k++) {
+        grid[i][j][k] = new P5.Vector(
+          i * spacing - (spacing * gridSize) / 2,
+          j * spacing - (spacing * gridSize) / 2,
+          k * spacing - (spacing * gridSize) / 2,
+        );
+      }
+    }
+  }
+  const gridVehicles = new VehicleCollection();
 
   const sketch = (p5: P5) => {
     p5.setup = () => {
@@ -57,11 +74,34 @@ onMounted(() => {
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
       p5.background(0);
       p5.frameRate(frameRate.value);
+      for (let i = 0; i < grid.length; i++) {
+        for (let j = 0; j < grid[i].length; j++) {
+          for (let k = 0; k < grid[i][j].length; k++) {
+            const v = grid[i][j][k];
+            const renderVehicle = new TestRenderVehicle(p5, v);
+            renderVehicle.lifeExpectancy = 100000;
+            renderVehicle.phys.mass = 1000;
+            gridVehicles.addVehicle(renderVehicle, false);
+          }
+        }
+      }
+      console.log('Grid vehicles initialized:', gridVehicles.vehicles.length);
     };
 
     p5.draw = () => {
       p5.stroke(255);
-
+      gridVehicles.vehicles.forEach((v) => {
+        let renderPos = camera.value.project(v.coords);
+        if (renderPos) {
+          p5.circle(renderPos.x, renderPos.y, 5);
+        }
+      });
+      gridVehicles
+        .applyWind(ws, 10, 750)
+        .separate(500, 1000)
+        .alignToNeighbors(1000, 500)
+        .update();
+      numberOfVehicles.value = gridVehicles.vehicles.length;
       numberOfFrames.value++;
     };
 

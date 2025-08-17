@@ -1,12 +1,13 @@
 import P5 from 'p5';
-import type { Vehicle } from '../Agents/Vehicle';
-import { OcTree } from './VehicleOcTree';
-import type { WindSystem } from './WindSystem';
+import type { Vehicle } from '../MarkMakingEntities/Vehicle';
+import { OcTree } from '../Core/VehicleOcTree';
+import type { WindSystem } from '../Core/WindSystem';
 
 export class VehicleCollection {
   public vehicles: Vehicle[] = [];
   private ocTree: OcTree | null = null;
   private ocTreeRebuilt: boolean = false;
+  public defaultLifeExpectancy: number | null = null;
 
   constructor(vehicles?: Vehicle[]) {
     if (vehicles) {

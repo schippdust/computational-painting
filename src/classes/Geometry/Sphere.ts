@@ -18,7 +18,7 @@ export class Sphere {
     // this.calculateSegments();
   }
 
-  get rednerSegmentCount() {
+  get renderSegmentCount() {
     return this._renderSegmentCount;
   }
 
@@ -36,8 +36,11 @@ export class Sphere {
   }
 
   set radius(radius: number) {
-    this._radius = radius;
-    // this.calculateSegments();
+    if (radius < 0) {
+      this._radius = radius;
+    } else {
+      throw new Error('Radius must be a positive number');
+    }
   }
 
   get volumne() {
@@ -191,7 +194,7 @@ export class Sphere {
       .clone()
       .lookAt(cameraPosition);
     const circle = new Circle(circleCoordinateSystem, this.radius);
-    circle.renderSegmentCount = this.rednerSegmentCount;
+    circle.renderSegmentCount = this.renderSegmentCount;
     return circle;
   }
 

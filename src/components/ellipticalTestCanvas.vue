@@ -7,11 +7,11 @@ import { Line } from '@/classes/Geometry/Line';
 
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
-import { PixelManager } from '@/classes/SystemsAndManagement/PixelManager';
-import { Vehicle } from '@/classes/Agents/Vehicle';
-import { TestRenderVehicle } from '@/classes/Rendering/TestRenderVehicle';
-import { VehicleCollection } from '@/classes/SystemsAndManagement/VehicleCollection';
-import { WindSystem } from '@/classes/SystemsAndManagement/WindSystem';
+import { PixelManager } from '@/classes/Core/PixelManager';
+import { Vehicle } from '@/classes/MarkMakingEntities/Vehicle';
+import { TestRenderVehicle } from '@/classes/Rendering/VehicleExtensions/TestRenderVehicle';
+import { VehicleCollection } from '@/classes/EntityManagement/VehicleCollection';
+import { WindSystem } from '@/classes/Core/WindSystem';
 
 type ColorScheme = 'Black on White' | 'White on Black';
 

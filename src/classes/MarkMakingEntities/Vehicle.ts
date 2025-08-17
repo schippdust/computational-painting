@@ -1,6 +1,6 @@
 import P5 from 'p5';
 import { prependUniqueWithLimit } from '../Core/CodeUtils';
-import type { WindSystem } from '../SystemsAndManagement/WindSystem';
+import type { WindSystem } from '../Core/WindSystem';
 import { CoordinateSystem } from '../Geometry/CoordinateSystem';
 
 export interface VehiclePhysicalProps {
@@ -15,7 +15,7 @@ export interface VehiclePhysicalProps {
   up: P5.Vector;
 }
 
-function createGenericPhysicalProps() {
+export function createGenericPhysicalProps() {
   return {
     velocity: new P5.Vector(0, 0, 0),
     acceleration: new P5.Vector(0, 0, 0),
