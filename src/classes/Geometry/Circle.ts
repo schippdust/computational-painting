@@ -174,6 +174,63 @@ export class Circle {
     }
   }
 
+  getPointOnCircle(radians: number): P5.Vector {
+    const localPoint = new P5.Vector(
+      this._radius * Math.cos(radians),
+      this._radius * Math.sin(radians),
+      0,
+    );
+    return this.coordinateSystem.transformLocalPointsToWorldCs(localPoint)[0];
+  }
+
+  getNearestPointOnCircle(point: P5.Vector): P5.Vector {
+    const localPoint = point.copy().sub(this.coordinateSystem.getPosition());
+    const angle = Math.atan2(localPoint.y, localPoint.x);
+    return this.getPointOnCircle(angle);
+  }
+
+  getTangentAtAngle(radians: number) {
+    const tangentPoint = this.getPointOnCircle(radians);
+    const tangentVector = new P5.Vector(
+      -Math.sin(radians),
+      Math.cos(radians),
+      0,
+    ).mult(this._radius);
+    return this.coordinateSystem
+      .transformLocalPointsToWorldCs(tangentVector)[0]
+      .add(tangentPoint);
+  }
+
+  getTangentAtPoint(point: P5.Vector): P5.Vector {
+    const nearestPoint = this.getNearestPointOnCircle(point);
+    const angle = Math.atan2(
+      nearestPoint.y - this.coordinateSystem.getPosition().y,
+      nearestPoint.x - this.coordinateSystem.getPosition().x,
+    );
+    return this.getTangentAtAngle(angle);
+  }
+
+  // gets a coordinate system aligned to world space
+  // at tangent point where z axis is aligned to the tangent
+  // moving in the direction of the base unit circle
+  getTangentCoordinateSystemAtRadians(radians: number): CoordinateSystem {
+    const tangentPoint = this.getPointOnCircle(radians);
+    // Tangent direction (z-axis)
+    const tangentVector = new P5.Vector(
+      -Math.sin(radians),
+      Math.cos(radians),
+      0,
+    ).normalize();
+    // X-axis: from tangent point to center
+    const toCenter = this.centerPoint.copy().sub(tangentPoint).normalize();
+    // Use fromOriginNormalX to set x-axis and z-axis
+    return CoordinateSystem.fromOriginNormalX(
+      tangentPoint,
+      tangentVector,
+      toCenter,
+    );
+  }
+
   randomPointsOnSurface(numberOfPoints: number, useSphere: boolean = false) {
     const points: P5.Vector[] = [];
     for (let i = 0; i < numberOfPoints; i++) {

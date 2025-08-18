@@ -10,20 +10,20 @@ export interface BrushtrokeSystemProps {
   branchContinuityProbability: number; // do not set to a number greater than 1
   secondaryBranchProbability: number; // do not set to a number greater than 1
   offsetScatterPotential: number;
-  brushVehiclePhys: VehiclePhysicalProps;
+  brushPhysProps: VehiclePhysicalProps;
 }
 
-export class BrushtrokeSystem extends VehicleSystem {
+export class BrushStrokeSystem extends VehicleSystem {
   public brushProps: BrushtrokeSystemProps;
   constructor(
     sketch: P5,
     coords: P5.Vector,
-    physicalProperties: VehiclePhysicalProps = createGenericPhysicalProps(),
+    physProps: VehiclePhysicalProps = createGenericPhysicalProps(),
     brushProps: BrushtrokeSystemProps,
     initialVelocityOverride: P5.Vector | null = null,
     upAxis: P5.Vector = new P5.Vector(0, 0, 1),
   ) {
-    super(sketch, coords, physicalProperties, upAxis);
+    super(sketch, coords, physProps, upAxis);
     this.brushProps = brushProps;
     if (initialVelocityOverride) {
       this.phys.velocity = initialVelocityOverride;
@@ -32,7 +32,7 @@ export class BrushtrokeSystem extends VehicleSystem {
     return this;
   }
 
-  offsetFromPosition(): BrushtrokeSystem {
+  offsetFromPosition(): BrushStrokeSystem {
     if (this.phys.velocity.mag() === 0) {
       const cursor = this.coords.copy();
       let offsetVector = this.phys.velocity.scatter(
@@ -51,7 +51,7 @@ export class BrushtrokeSystem extends VehicleSystem {
         const newVehicle = new Vehicle(
           this.p5,
           cursor.add(offsetVector),
-          this.brushProps.brushVehiclePhys,
+          this.brushProps.brushPhysProps,
         );
         offsetVector = cursor.scatter(this.brushProps.offsetScatterPotential);
         this.addVehicle(newVehicle);
@@ -61,12 +61,12 @@ export class BrushtrokeSystem extends VehicleSystem {
     return this;
   }
 
-  addVehicle(vehicles: Vehicle | Vehicle[]): BrushtrokeSystem {
+  addVehicle(vehicles: Vehicle | Vehicle[]): BrushStrokeSystem {
     this.systemVehicles.addVehicle(vehicles, false);
     return this;
   }
 
-  update(): BrushtrokeSystem {
+  update(): BrushStrokeSystem {
     super.update();
     if (Math.random() < this.brushProps.secondaryBranchProbability) {
       this.offsetFromPosition();

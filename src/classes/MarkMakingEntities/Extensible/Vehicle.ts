@@ -224,11 +224,12 @@ export class Vehicle {
     return newUp;
   }
 
-  setVelocity(velocity: P5.Vector) {
-    velocity = velocity.copy();
-    this.phys.velocity = velocity;
-    console.log(this.uuid, 'setting velocity', velocity);
-  }
+  //depricated
+  // setVelocity(velocity: P5.Vector) {
+  //   velocity = velocity.copy();
+  //   this.phys.velocity = velocity;
+  //   console.log(this.uuid, 'setting velocity', velocity);
+  // }
 
   applyFriction(): Vehicle {
     if (this.env.friction == null) {

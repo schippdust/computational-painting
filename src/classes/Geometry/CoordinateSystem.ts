@@ -4,8 +4,8 @@ import { Line } from './Line';
 
 export class CoordinateSystem {
   constructor(
-    private origin: P5.Vector,
-    private basis: math.Matrix,
+    protected origin: P5.Vector,
+    protected basis: math.Matrix,
   ) {
     // each column is a basis vector in world coordinates
   }
@@ -169,6 +169,15 @@ export class CoordinateSystem {
       projectedPoints.push(projectedPoint);
     }
     return projectedPoints;
+  }
+
+  transformLocalDirectionToWorld(local: P5.Vector): P5.Vector {
+    const localArr = [local.x, local.y, local.z];
+    const rotated = math.multiply(this.basis, localArr) as math.Matrix;
+    const rotatedArr = (
+      math.flatten(rotated) as math.Matrix
+    ).toArray() as number[];
+    return new P5.Vector(rotatedArr[0], rotatedArr[1], rotatedArr[2]);
   }
 
   static transformLocalPointsToTargetCs(
