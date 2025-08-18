@@ -1,5 +1,5 @@
 import P5 from 'p5';
-import type { Vehicle } from '../MarkMakingEntities/Vehicle';
+import type { Vehicle } from '../MarkMakingEntities/_Vehicle';
 import { OcTree } from '../Core/VehicleOcTree';
 import type { WindSystem } from '../Core/WindSystem';
 
@@ -7,7 +7,6 @@ export class VehicleCollection {
   public vehicles: Vehicle[] = [];
   private ocTree: OcTree | null = null;
   private ocTreeRebuilt: boolean = false;
-  public defaultLifeExpectancy: number | null = null;
 
   constructor(vehicles?: Vehicle[]) {
     if (vehicles) {
@@ -29,6 +28,11 @@ export class VehicleCollection {
       this.buildOcTree();
     }
 
+    return this;
+  }
+
+  transformAll(vectorTransformation: P5.Vector): VehicleCollection {
+    this.vehicles.forEach((v) => v.transform(vectorTransformation));
     return this;
   }
 

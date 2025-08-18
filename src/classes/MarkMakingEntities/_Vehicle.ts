@@ -43,10 +43,10 @@ export class Vehicle {
 
   // simulation variables
   public coordSystem: CoordinateSystem;
-  private previousCoords: P5.Vector[];
-  private previousUpDirection: P5.Vector | null;
-  private previousForward: P5.Vector | null;
-  private maxNumberOfPreviousCoords: number;
+  protected previousCoords: P5.Vector[];
+  protected previousUpDirection: P5.Vector | null;
+  protected previousForward: P5.Vector | null;
+  protected maxNumberOfPreviousCoords: number;
   public phys: VehiclePhysicalProps;
   public env: VehicleEnvironmentalProperties;
 
@@ -118,6 +118,11 @@ export class Vehicle {
         this.coordSystem.getYAxis(),
       );
     }
+    return this;
+  }
+
+  transform(vectorTransformation: P5.Vector): Vehicle {
+    this.coordSystem.translateCoordinateSystem(vectorTransformation);
     return this;
   }
 

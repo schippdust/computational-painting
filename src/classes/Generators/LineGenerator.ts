@@ -1,5 +1,5 @@
 import P5 from 'p5';
-import { Vehicle } from '../MarkMakingEntities/Vehicle';
+import { Vehicle } from '../MarkMakingEntities/_Vehicle';
 
 export class LineGenerator {
   private startPoint: P5.Vector;

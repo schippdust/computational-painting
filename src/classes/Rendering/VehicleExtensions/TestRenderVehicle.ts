@@ -1,5 +1,5 @@
 import type { Camera3D } from '../../Core/Camera3D';
-import { Vehicle } from '../../MarkMakingEntities/Vehicle';
+import { Vehicle } from '../../MarkMakingEntities/_Vehicle';
 import { Line } from '../../Geometry/Line';
 import P5, { Camera } from 'p5';
 import { Circle } from '../../Geometry/Circle';

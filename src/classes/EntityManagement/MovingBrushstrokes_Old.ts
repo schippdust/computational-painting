@@ -1,13 +1,13 @@
-import type { Camera3D } from '../../Core/Camera3D';
+import type { Camera3D } from '../Core/Camera3D';
 import {
   createGenericPhysicalProps,
   Vehicle,
-} from '../../MarkMakingEntities/Vehicle';
+} from '../MarkMakingEntities/_Vehicle';
 import P5 from 'p5';
-import { VehicleCollection } from '../../EntityManagement/VehicleCollection';
-import type { VehiclePhysicalProps } from '../../MarkMakingEntities/Vehicle';
-import { WindSystem } from '../../Core/WindSystem';
-import type { CoordinateSystem } from '../../Geometry/CoordinateSystem';
+import { VehicleCollection } from './_VehicleCollection';
+import type { VehiclePhysicalProps } from '../MarkMakingEntities/_Vehicle';
+import { WindSystem } from '../Core/WindSystem';
+import type { CoordinateSystem } from '../Geometry/CoordinateSystem';
 
 export class MovingBrushstrokes extends VehicleCollection {
   private sketch: P5;
