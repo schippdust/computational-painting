@@ -36,12 +36,12 @@ export class TestRenderVehicle extends Vehicle {
     ];
 
     // render lines as xyz axes
-    this.p5.stroke(0, 255, 0);
-    lines[0].renderProjected(this.p5, camera);
-    this.p5.stroke(255, 0, 0);
-    lines[1].renderProjected(this.p5, camera);
-    this.p5.stroke(0, 0, 255);
-    lines[2].renderProjected(this.p5, camera);
+    this.protected.stroke(0, 255, 0);
+    lines[0].renderProjected(this.protected, camera);
+    this.protected.stroke(255, 0, 0);
+    lines[1].renderProjected(this.protected, camera);
+    this.protected.stroke(0, 0, 255);
+    lines[2].renderProjected(this.protected, camera);
     return this;
   }
 
@@ -70,17 +70,17 @@ export class TestRenderVehicle extends Vehicle {
     ];
 
     for (const line of lines) {
-      line.renderProjected(this.p5, camera);
+      line.renderProjected(this.protected, camera);
     }
 
     return this;
   }
 
   render(camera: Camera3D): TestRenderVehicle {
-    this.p5.stroke(255, 255, 255, 50);
+    this.protected.stroke(255, 255, 255, 50);
     const renderCircle = new Circle(this.coordSystem, 10);
     renderCircle.renderSegmentCount = 8;
-    renderCircle.renderProjected(this.p5, camera);
+    renderCircle.renderProjected(this.protected, camera);
     return this;
   }
 }

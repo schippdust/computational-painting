@@ -8,7 +8,7 @@ import { VehicleCollection } from './_VehicleCollection';
 import type { WindSystem } from '../Core/WindSystem';
 
 export class VehicleSystem extends Vehicle {
-  public collection: VehicleCollection = new VehicleCollection();
+  public systemVehicles: VehicleCollection = new VehicleCollection();
 
   constructor(
     sketch: P5,
@@ -23,15 +23,20 @@ export class VehicleSystem extends Vehicle {
     vehicles: Vehicle | Vehicle[],
     rebuildOcTree: boolean = true,
   ): VehicleSystem {
-    this.collection.addVehicle(vehicles, rebuildOcTree);
+    this.systemVehicles.addVehicle(vehicles, rebuildOcTree);
     return this;
   }
 
   update(): VehicleSystem {
+    // updates the system based on all forces that have been applied at the system level,
+    // then transforms all subvehicles based on change in the system's position,
+    // then updates all subvehicles based on forces that have been applied at the sublevel
     super.update();
-    const changeInPosition = this.coords.copy().sub(this.previousCoords[0]);
-    this.collection.transformAll(changeInPosition);
-    this.collection.update();
+    if (this.previousCoords.length === 0) {
+      const changeInPosition = this.coords.copy().sub(this.previousCoords[0]);
+      this.systemVehicles.transformAll(changeInPosition);
+    }
+    this.systemVehicles.update();
     return this;
   }
 }

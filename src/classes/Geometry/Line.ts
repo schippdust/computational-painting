@@ -2,12 +2,10 @@ import P5 from 'p5';
 import type { Camera3D } from '../Core/Camera3D';
 
 export class Line {
-  public starPoint: P5.Vector;
-  public endPoint: P5.Vector;
-  constructor(startPoint: P5.Vector, endPoint: P5.Vector) {
-    this.starPoint = startPoint;
-    this.endPoint = endPoint;
-  }
+  constructor(
+    public starPoint: P5.Vector,
+    public endPoint: P5.Vector,
+  ) {}
 
   render(p5: P5) {
     p5.line(

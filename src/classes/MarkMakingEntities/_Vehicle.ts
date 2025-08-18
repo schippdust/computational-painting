@@ -35,7 +35,7 @@ export interface VehicleEnvironmentalProperties {
 
 export class Vehicle {
   public uuid: string;
-  public p5: P5;
+  protected p5: P5;
 
   // characteristics
   public lifeExpectancy: number;

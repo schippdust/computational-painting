@@ -49,7 +49,7 @@ export class BrushtrokeSystem extends VehicleSystem {
           continueOffsetting = false;
         }
         const newVehicle = new Vehicle(
-          this.p5,
+          this.protected,
           cursor.add(offsetVector),
           this.brushProps.brushVehiclePhys,
         );
@@ -62,7 +62,7 @@ export class BrushtrokeSystem extends VehicleSystem {
   }
 
   addVehicle(vehicles: Vehicle | Vehicle[]): BrushtrokeSystem {
-    this.collection.addVehicle(vehicles, false);
+    this.systemVehicles.addVehicle(vehicles, false);
     return this;
   }
 

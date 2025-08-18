@@ -1,10 +1,9 @@
 import P5 from 'p5';
 
 export class PixelManager {
-  private p5: P5;
   private pixels: number[];
 
-  constructor(p5: P5) {
+  constructor(private p5: P5) {
     this.p5 = p5;
     this.pixels = [];
   }

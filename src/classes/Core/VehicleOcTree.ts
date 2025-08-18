@@ -2,17 +2,14 @@ import P5 from 'p5';
 import { Vehicle } from '../MarkMakingEntities/_Vehicle';
 
 class OcTreeNode {
-  boundary: P5.Vector; // center of cube
-  halfSize: number;
-  capacity: number;
   vehicles: Vehicle[];
   divided: boolean;
   children: OcTreeNode[];
-
-  constructor(boundary: P5.Vector, halfSize: number, capacity: number = 4) {
-    this.boundary = boundary;
-    this.halfSize = halfSize;
-    this.capacity = capacity;
+  constructor(
+    public boundary: P5.Vector,
+    public halfSize: number,
+    public capacity: number = 4,
+  ) {
     this.vehicles = [];
     this.divided = false;
     this.children = [];

@@ -1,18 +1,11 @@
 import P5 from 'p5';
 
 export class WindSystem {
-  private p5: P5;
-  private uvSeparation: number;
-  public noiseScale: number;
-  public timeScale: number;
-  public time: number | undefined;
-
-  constructor(p5: P5) {
-    this.p5 = p5;
-    this.noiseScale = 0.01;
-    this.timeScale = 0.01;
-    this.time = undefined;
-    this.uvSeparation = 50000;
+  public noiseScale: number = 0.01;
+  public timeScale: number = 0.01;
+  public time: number | undefined = undefined;
+  private uvSeparation: number = 50000;
+  constructor(private p5: P5) {
     this.setNoiseDetail(4);
   }
 

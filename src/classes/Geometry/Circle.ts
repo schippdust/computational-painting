@@ -4,16 +4,12 @@ import { CoordinateSystem } from './CoordinateSystem';
 import type { Camera3D } from '../Core/Camera3D';
 
 export class Circle {
-  public coordinateSystem: CoordinateSystem;
-  private _radius: number;
-  private _renderSegmentCount: number;
-  public renderSegments: Line[];
-
-  constructor(coordinateSystem: CoordinateSystem, radius: number) {
-    this.coordinateSystem = coordinateSystem;
-    this._radius = radius;
-    this._renderSegmentCount = 16;
-    this.renderSegments = [];
+  public renderSegments: Line[] = [];
+  private _renderSegmentCount: number = 16;
+  constructor(
+    public coordinateSystem: CoordinateSystem,
+    private _radius: number,
+  ) {
     this.calculateSegments();
   }
 

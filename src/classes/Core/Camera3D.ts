@@ -2,32 +2,20 @@ import P5, { Vector } from 'p5';
 import { Line } from '../Geometry/Line';
 
 export class Camera3D {
-  public pos: P5.Vector;
-  private focus: P5.Vector;
-  private up: P5.Vector;
   private fov: number;
   private aspect: number;
-  private canvasWidth: number;
-  private canvasHeight: number;
-  private near: number;
 
   constructor(
-    canvasWidth: number,
-    canvasHeight: number,
-    pos = new P5.Vector(1000, 1000, 500),
-    focus = new P5.Vector(0, 0, 0),
-    up = new P5.Vector(0, 0, 1),
+    private canvasWidth: number,
+    private canvasHeight: number,
+    public pos = new P5.Vector(1000, 1000, 500),
+    private focus = new P5.Vector(0, 0, 0),
+    private up = new P5.Vector(0, 0, 1),
     fovDegrees = 60,
-    near = 1,
+    private near = 1,
   ) {
-    this.canvasWidth = canvasWidth;
-    this.canvasHeight = canvasHeight;
     this.aspect = canvasWidth / canvasHeight;
-    this.pos = pos;
-    this.focus = focus;
-    this.up = up;
     this.fov = fovDegrees * (Math.PI / 180);
-    this.near = near;
   }
 
   project(point: P5.Vector): P5.Vector | null {
