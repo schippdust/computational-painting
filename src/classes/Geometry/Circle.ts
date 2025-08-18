@@ -278,7 +278,7 @@ export class Circle {
   renderProjected(p5: P5, camera: Camera3D) {
     const cameraProjectedSegments = camera.renderLines(this.renderSegments);
     for (const segment of cameraProjectedSegments) {
-      segment.render(p5);
+      segment.render2D(p5);
     }
   }
 }
