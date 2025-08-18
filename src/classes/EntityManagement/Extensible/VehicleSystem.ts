@@ -2,10 +2,10 @@ import {
   createGenericPhysicalProps,
   Vehicle,
   type VehiclePhysicalProps,
-} from '../MarkMakingEntities/_Vehicle';
+} from '../../MarkMakingEntities/Extensible/Vehicle';
 import P5 from 'p5';
-import { VehicleCollection } from './_VehicleCollection';
-import type { WindSystem } from '../Core/WindSystem';
+import { VehicleCollection } from './VehicleCollection';
+import type { WindSystem } from '../../Core/WindSystem';
 
 export class VehicleSystem extends Vehicle {
   public systemVehicles: VehicleCollection = new VehicleCollection();

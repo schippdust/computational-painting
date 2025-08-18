@@ -2,10 +2,10 @@ import type { Camera3D } from '../Core/Camera3D';
 import {
   createGenericPhysicalProps,
   Vehicle,
-} from '../MarkMakingEntities/_Vehicle';
+} from '../MarkMakingEntities/Extensible/Vehicle';
 import P5 from 'p5';
-import { VehicleCollection } from './_VehicleCollection';
-import type { VehiclePhysicalProps } from '../MarkMakingEntities/_Vehicle';
+import { VehicleCollection } from './Extensible/VehicleCollection';
+import type { VehiclePhysicalProps } from '../MarkMakingEntities/Extensible/Vehicle';
 import { WindSystem } from '../Core/WindSystem';
 import type { CoordinateSystem } from '../Geometry/CoordinateSystem';
 

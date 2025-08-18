@@ -1,7 +1,7 @@
 import P5 from 'p5';
-import type { Vehicle } from '../MarkMakingEntities/_Vehicle';
-import { OcTree } from '../Core/VehicleOcTree';
-import type { WindSystem } from '../Core/WindSystem';
+import type { Vehicle } from '../../MarkMakingEntities/Extensible/Vehicle';
+import { OcTree } from '../../Core/VehicleOcTree';
+import type { WindSystem } from '../../Core/WindSystem';
 
 export class VehicleCollection {
   public vehicles: Vehicle[] = [];

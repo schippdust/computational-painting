@@ -1,5 +1,5 @@
 import P5 from 'p5';
-import { Vehicle } from '../MarkMakingEntities/_Vehicle';
+import { Vehicle } from '../MarkMakingEntities/Extensible/Vehicle';
 
 class OcTreeNode {
   vehicles: Vehicle[];

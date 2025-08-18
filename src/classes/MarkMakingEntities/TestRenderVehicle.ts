@@ -1,8 +1,8 @@
-import type { Camera3D } from '../../Core/Camera3D';
-import { Vehicle } from '../../MarkMakingEntities/_Vehicle';
-import { Line } from '../../Geometry/Line';
+import type { Camera3D } from '../Core/Camera3D';
+import { Vehicle } from './Extensible/Vehicle';
+import { Line } from '../Geometry/Line';
 import P5, { Camera } from 'p5';
-import { Circle } from '../../Geometry/Circle';
+import { Circle } from '../Geometry/Circle';
 
 export class TestRenderVehicle extends Vehicle {
   update(): TestRenderVehicle {
@@ -36,12 +36,12 @@ export class TestRenderVehicle extends Vehicle {
     ];
 
     // render lines as xyz axes
-    this.protected.stroke(0, 255, 0);
-    lines[0].renderProjected(this.protected, camera);
-    this.protected.stroke(255, 0, 0);
-    lines[1].renderProjected(this.protected, camera);
-    this.protected.stroke(0, 0, 255);
-    lines[2].renderProjected(this.protected, camera);
+    this.p5.stroke(0, 255, 0);
+    lines[0].renderProjected(this.p5, camera);
+    this.p5.stroke(255, 0, 0);
+    lines[1].renderProjected(this.p5, camera);
+    this.p5.stroke(0, 0, 255);
+    lines[2].renderProjected(this.p5, camera);
     return this;
   }
 
@@ -70,17 +70,17 @@ export class TestRenderVehicle extends Vehicle {
     ];
 
     for (const line of lines) {
-      line.renderProjected(this.protected, camera);
+      line.renderProjected(this.p5, camera);
     }
 
     return this;
   }
 
   render(camera: Camera3D): TestRenderVehicle {
-    this.protected.stroke(255, 255, 255, 50);
+    this.p5.stroke(255, 255, 255, 50);
     const renderCircle = new Circle(this.coordSystem, 10);
     renderCircle.renderSegmentCount = 8;
-    renderCircle.renderProjected(this.protected, camera);
+    renderCircle.renderProjected(this.p5, camera);
     return this;
   }
 }

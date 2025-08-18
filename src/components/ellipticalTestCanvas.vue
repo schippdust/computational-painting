@@ -8,9 +8,10 @@ import { Line } from '@/classes/Geometry/Line';
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
 import { PixelManager } from '@/classes/Core/PixelManager';
-import { Vehicle } from '@/classes/MarkMakingEntities/_Vehicle';
-import { TestRenderVehicle } from '@/classes/Rendering/VehicleExtensions/TestRenderVehicle';
-import { VehicleCollection } from '@/classes/EntityManagement/_VehicleCollection';
+import { Vehicle } from '@/classes/MarkMakingEntities/Extensible/Vehicle';
+// import { TestRenderVehicle } from '@/classes/Rendering/VehicleExtensions/TestRenderVehicle';
+import { TestRenderVehicle } from '@/classes/MarkMakingEntities/TestRenderVehicle'; // <-- Update this path if the file exists elsewhere, e.g. '@/classes/MarkMakingEntities/Extensible/TestRenderVehicle'
+import { VehicleCollection } from '@/classes/EntityManagement/Extensible/VehicleCollection';
 import { WindSystem } from '@/classes/Core/WindSystem';
 
 type ColorScheme = 'Black on White' | 'White on Black';

@@ -2,8 +2,8 @@ import {
   createGenericPhysicalProps,
   Vehicle,
   type VehiclePhysicalProps,
-} from '@/classes/MarkMakingEntities/_Vehicle';
-import { VehicleSystem } from '../_VehicleSystem';
+} from '@/classes/MarkMakingEntities/Extensible/Vehicle';
+import { VehicleSystem } from '../Extensible/VehicleSystem';
 import P5 from 'p5';
 
 export interface BrushtrokeSystemProps {
@@ -49,7 +49,7 @@ export class BrushtrokeSystem extends VehicleSystem {
           continueOffsetting = false;
         }
         const newVehicle = new Vehicle(
-          this.protected,
+          this.p5,
           cursor.add(offsetVector),
           this.brushProps.brushVehiclePhys,
         );
