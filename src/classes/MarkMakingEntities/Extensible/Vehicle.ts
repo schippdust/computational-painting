@@ -15,7 +15,7 @@ export interface VehiclePhysicalProps {
   up: P5.Vector;
 }
 
-export function createGenericPhysicalProps() {
+export function createGenericPhysicalProps(): VehiclePhysicalProps {
   return {
     velocity: new P5.Vector(0, 0, 0),
     acceleration: new P5.Vector(0, 0, 0),

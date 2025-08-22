@@ -24,7 +24,7 @@ export class VehicleCollection {
     for (const vehicle of vehicleList) {
       this.vehicles.push(vehicle);
     }
-    if (rebuildOcTree) {
+    if (rebuildOcTree && this.vehicles.length > 1) {
       this.buildOcTree();
     }
 
@@ -37,6 +37,7 @@ export class VehicleCollection {
   }
 
   buildOcTree(): VehicleCollection {
+    console.log('building octree for', this.vehicles.length, 'vehicles');
     this.ocTree = new OcTree(this.vehicles);
     this.ocTreeRebuilt = true;
     return this;
