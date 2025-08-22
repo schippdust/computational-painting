@@ -24,6 +24,7 @@ import {
   BrushStrokeSystem,
   type BrushtrokeSystemProps,
 } from '@/classes/EntityManagement/VehicleSystems/BrushStrokeSystem';
+import { DotRenderer } from '@/classes/Rendering/Renderers/DotRenderer';
 
 type ColorScheme = 'Black on White' | 'White on Black';
 
@@ -57,14 +58,13 @@ onMounted(() => {
   function getSketchParams() {
     return {};
   }
-  let pm: PixelManager;
-  let ws: WindSystem;
+  let dotRenderer: DotRenderer;
   let testGenerator: CircleGenerator;
   let generatorProps: CircleGeneratorProps = {
     startAngle: 0,
-    endAngle: Math.PI * 2,
-    angleStep: Math.PI / 100,
-    velocityAtGeneration: new P5.Vector(0, 0, 0),
+    endAngle: Math.PI * 3.5,
+    angleStep: Math.PI / 1000,
+    velocityAtGeneration: new P5.Vector(5, 0, 15),
   };
   let brushStrokeSystemProps: BrushtrokeSystemProps = {
     branchContinuityProbability: 0.5,
@@ -76,10 +76,6 @@ onMounted(() => {
 
   const sketch = (p5: P5) => {
     p5.setup = () => {
-      // pm = new PixelManager(p5);
-      // ws = new WindSystem(p5);
-      // ws.noiseScale = 0.0001;
-      // ws.timeScale = 0.001;
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
       p5.background(0);
       p5.frameRate(frameRate.value);
@@ -88,10 +84,10 @@ onMounted(() => {
           new P5.Vector(0, 0, 0),
           new P5.Vector(0, 0, 1),
         ),
-        100,
+        1200,
       );
-
       testGenerator = new CircleGenerator(p5, circle, generatorProps);
+      dotRenderer = new DotRenderer(p5, 3, [255, 255, 255], camera.value);
     };
 
     p5.draw = () => {
@@ -102,9 +98,16 @@ onMounted(() => {
         undefined,
         brushStrokeSystemProps,
       );
-      let testVehicle = new Vehicle(p5, new P5.Vector(0, 0, 0));
+      const vehicleProps = createGenericPhysicalProps();
+      vehicleProps.maxVelocity = 1000;
+      let testVehicle = new Vehicle(p5, new P5.Vector(0, 0, 0), vehicleProps);
       testGenerator.generateVehicle(testVehicle);
+      if (testGenerator.generatedVehicles.vehicles.length > 1) {
+        testGenerator.generatedVehicles.flock(2000);
+      }
+
       testGenerator.generatedVehicles.update();
+      dotRenderer.renderVehicles(testGenerator.generatedVehicles.vehicles);
       numberOfFrames.value++;
     };
 

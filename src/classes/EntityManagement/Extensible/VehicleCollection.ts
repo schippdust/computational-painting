@@ -45,9 +45,16 @@ export class VehicleCollection {
 
   update(): VehicleCollection {
     this.vehicles.forEach((v) => v.update());
+    const updatedVehicleCount = this.vehicles.length;
     this.vehicles = this.vehicles.filter((v) => {
       return v.age < v.lifeExpectancy;
     });
+    const stillLivingCount = this.vehicles.length;
+    // if (updatedVehicleCount !== stillLivingCount) {
+    //   console.log(
+    //     `VehicleCollection: ${updatedVehicleCount - stillLivingCount} vehicles died.`,
+    //   );
+    // }
     this.ocTreeRebuilt = false;
     return this;
   }
