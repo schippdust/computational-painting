@@ -412,6 +412,47 @@ export class Vehicle {
     return this;
   }
 
+  duplicate(): Vehicle {
+    // Create copies of physical properties
+    const copiedPhysicalProps: VehiclePhysicalProps = {
+      velocity: this.phys.velocity.copy(),
+      acceleration: this.phys.acceleration.copy(),
+      mass: this.phys.mass,
+      maxVelocity: this.phys.maxVelocity,
+      maxSteerForce: this.phys.maxSteerForce,
+      maxPitchAdjustment: this.phys.maxPitchAdjustment,
+      aggregateSteer: this.phys.aggregateSteer.copy(),
+      forward: this.phys.forward.copy(),
+      up: this.phys.up.copy(),
+    };
+
+    // Create a new vehicle with the copied properties
+    const newVehicle = new Vehicle(
+      this.p5,
+      this.coords.copy(),
+      copiedPhysicalProps,
+      this.phys.up.copy(),
+    );
+
+    // Copy other properties
+    newVehicle.lifeExpectancy = this.lifeExpectancy;
+    newVehicle.age = this.age;
+    newVehicle.env.friction = this.env.friction;
+    newVehicle.constrainMovementOrthogonally = this.constrainMovementOrthogonally;
+    newVehicle.desiredSeparation = this.desiredSeparation;
+
+    // Copy previous coordinates and directions if they exist
+    newVehicle.previousCoords = this.previousCoords.map(coord => coord.copy());
+    if (this.previousUpDirection) {
+      newVehicle.previousUpDirection = this.previousUpDirection.copy();
+    }
+    if (this.previousForward) {
+      newVehicle.previousForward = this.previousForward.copy();
+    }
+
+    return newVehicle;
+  }
+
   // creating simple debugging object, customize as needed
   toJson() {
     let coords = this.coords;
