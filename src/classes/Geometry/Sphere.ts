@@ -199,6 +199,71 @@ export class Sphere {
     return circle.renderSegments;
   }
 
+  /**
+   * Generate a random direction within a cone
+   * @param forwardDirection The axis of the cone (will be normalized)
+   * @param upDirection A direction perpendicular to forward that helps define the cone orientation (will be normalized)
+   * @param minAngleDegrees Minimum angle from the forward direction (degrees)
+   * @param maxAngleDegrees Maximum angle from the forward direction (degrees)
+   * @returns A random direction within the cone
+   */
+  static randomDirectionInCone(
+    forwardDirection: P5.Vector,
+    upDirection: P5.Vector,
+    minAngleDegrees: number,
+    maxAngleDegrees: number,
+  ): P5.Vector {
+    // Convert angles from degrees to radians
+    const minAngle = (minAngleDegrees * Math.PI) / 180;
+    const maxAngle = (maxAngleDegrees * Math.PI) / 180;
+
+    // Random angle within the cone (polar angle from forward axis)
+    const coneAngle = minAngle + Math.random() * (maxAngle - minAngle);
+
+    // Random azimuthal angle around the forward axis
+    const azimuth = Math.random() * 2 * Math.PI;
+
+    // Get the forward direction (normalized)
+    let forward = forwardDirection.copy().normalize();
+    if (forward.mag() < 0.001) {
+      forward = new P5.Vector(0, 0, 1); // default forward if not moving
+    }
+
+    let up = upDirection.copy().normalize();
+
+    // Create an orthonormal basis with forward as the z-axis
+    // Find a vector perpendicular to forward
+    let xAxis = up.copy().cross(forward).normalize();
+    if (xAxis.mag() < 0.001) {
+      // If forward and up are nearly parallel, create a different perpendicular
+      xAxis = new P5.Vector(1, 0, 0);
+      if (Math.abs(forward.x) > 0.9) {
+        xAxis = new P5.Vector(0, 1, 0);
+      }
+      xAxis = xAxis.sub(forward.copy().mult(forward.dot(xAxis))).normalize();
+    }
+
+    // Create another perpendicular vector
+    const yAxis = forward.copy().cross(xAxis).normalize();
+
+    // Create the direction within the cone
+    // Start with a direction in the x-y plane at the azimuthal angle
+    const coneDirectionInPlane = xAxis
+      .copy()
+      .mult(Math.cos(azimuth))
+      .add(yAxis.copy().mult(Math.sin(azimuth)))
+      .normalize();
+
+    // Rotate toward the forward axis by the cone angle
+    const branchDirection = forward
+      .copy()
+      .mult(Math.cos(coneAngle))
+      .add(coneDirectionInPlane.copy().mult(Math.sin(coneAngle)))
+      .normalize();
+
+    return branchDirection;
+  }
+
   transform(vector: P5.Vector): Sphere {
     this.coordinateSystem.translateCoordinateSystem(vector);
     return this;

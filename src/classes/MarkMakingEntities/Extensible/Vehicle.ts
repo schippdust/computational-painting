@@ -438,11 +438,14 @@ export class Vehicle {
     newVehicle.lifeExpectancy = this.lifeExpectancy;
     newVehicle.age = this.age;
     newVehicle.env.friction = this.env.friction;
-    newVehicle.constrainMovementOrthogonally = this.constrainMovementOrthogonally;
+    newVehicle.constrainMovementOrthogonally =
+      this.constrainMovementOrthogonally;
     newVehicle.desiredSeparation = this.desiredSeparation;
 
     // Copy previous coordinates and directions if they exist
-    newVehicle.previousCoords = this.previousCoords.map(coord => coord.copy());
+    newVehicle.previousCoords = this.previousCoords.map((coord) =>
+      coord.copy(),
+    );
     if (this.previousUpDirection) {
       newVehicle.previousUpDirection = this.previousUpDirection.copy();
     }
