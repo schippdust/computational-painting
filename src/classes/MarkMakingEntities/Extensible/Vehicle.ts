@@ -7,6 +7,7 @@ export interface VehiclePhysicalProps {
   velocity: P5.Vector;
   acceleration: P5.Vector;
   mass: number;
+  useMaxVelocity: boolean;
   maxVelocity: number;
   maxSteerForce: number;
   maxPitchAdjustment: number; // in radians
@@ -20,6 +21,7 @@ export function createGenericPhysicalProps(): VehiclePhysicalProps {
     velocity: new P5.Vector(0, 0, 0),
     acceleration: new P5.Vector(0, 0, 0),
     mass: 10,
+    useMaxVelocity: false,
     maxVelocity: 10,
     maxSteerForce: 10,
     maxPitchAdjustment: Math.PI / 12, // radians
@@ -147,7 +149,9 @@ export class Vehicle {
       this.phys.velocity,
       this.phys.acceleration,
     );
-    this.phys.velocity.limit(this.phys.maxVelocity);
+    if (this.phys.useMaxVelocity) {
+      this.phys.velocity.limit(this.phys.maxVelocity);
+    }
     // Reset acceleration so it doesn't carry into next frame
     this.phys.acceleration.mult(0);
     // updating coordinate system based on new position, this could be handled more elegantly
@@ -236,7 +240,7 @@ export class Vehicle {
       return this;
     }
     const friction = P5.Vector.copy(this.phys.velocity);
-    friction.mult(-1).normalize().mult(this.env.friction);
+    friction.mult(-1).mult(this.env.friction);
     this.applyForce(friction);
     return this;
   }
@@ -418,6 +422,7 @@ export class Vehicle {
       velocity: this.phys.velocity.copy(),
       acceleration: this.phys.acceleration.copy(),
       mass: this.phys.mass,
+      useMaxVelocity: this.phys.useMaxVelocity,
       maxVelocity: this.phys.maxVelocity,
       maxSteerForce: this.phys.maxSteerForce,
       maxPitchAdjustment: this.phys.maxPitchAdjustment,

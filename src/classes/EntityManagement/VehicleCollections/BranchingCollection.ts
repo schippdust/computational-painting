@@ -17,10 +17,10 @@ export interface BranchingCollectionProps {
 
 export function createGenericBranchingCollectionProps(): BranchingCollectionProps {
   return {
-    highProbabilityOfBranching: 0.3,
-    lowProbabilityOfBranching: 0.05,
-    maxSpreadAngle: 50,
-    minSpreadAngle: 10,
+    highProbabilityOfBranching: 0.03,
+    lowProbabilityOfBranching: 0.005,
+    maxSpreadAngle: 75,
+    minSpreadAngle: 35,
     branchingForceStrength: 5,
     minNumberOfBranches: 2,
     maxNumberOfBranches: 5,
@@ -71,8 +71,11 @@ export class BranchingCollection extends VehicleCollection {
         // Create and apply forces to each branch
         for (let i = 0; i < numberOfBranches; i++) {
           const branch = vehicle.duplicate();
+          branch.age = 0;
+          branch.lifeExpectancy =
+            vehicle.lifeExpectancy * Math.random() * 0.5 + 0.75;
           const branchForce = this.generateRandomBranchingForce(vehicle);
-          branch.applyForce(branchForce);
+          branch.velocity = branchForce.setMag(vehicle.phys.velocity.mag());
           newVehicles.push(branch);
         }
 
@@ -81,6 +84,7 @@ export class BranchingCollection extends VehicleCollection {
     }
 
     // Replace branching vehicles in the main collection
+    this.addVehicle(newVehicles, false);
     this.vehicles = this.vehicles.filter((v) => !vehiclesToRemove.has(v.uuid));
     this.vehicles.push(...newVehicles);
 

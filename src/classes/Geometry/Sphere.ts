@@ -61,8 +61,10 @@ export class Sphere {
 
   randomPointInside(): P5.Vector {
     const theta = Math.random() * Math.PI * 2;
-    const phi = Math.random() * Math.PI;
-    const r = Math.random() * this._radius;
+    // Account for sin(phi) in the volume element by using arccos distribution
+    const phi = Math.acos(1 - 2 * Math.random());
+    // Account for r^2 in the volume element by using cube root
+    const r = this._radius * Math.cbrt(Math.random());
     const x = r * Math.sin(phi) * Math.cos(theta);
     const y = r * Math.sin(phi) * Math.sin(theta);
     const z = r * Math.cos(phi);
