@@ -85,7 +85,7 @@ onMounted(() => {
 
         // Apply desired upward movement (seek upward)
         const upwardTarget = vehicle.coords.copy().add(new P5.Vector(0, 0, 1));
-        vehicle.seak(upwardTarget, 1);
+        vehicle.seek(upwardTarget, 1);
       }
 
       // Update the branching collection (handles branching)

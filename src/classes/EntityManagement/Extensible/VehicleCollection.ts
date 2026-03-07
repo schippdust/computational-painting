@@ -116,9 +116,9 @@ export class VehicleCollection {
           target,
           awarenessDistance,
         );
-        relevantVehicles.forEach((v) => v.seak(target, multiplier));
+        relevantVehicles.forEach((v) => v.seek(target, multiplier));
       } else {
-        this.vehicles.forEach((v) => v.seak(target, multiplier));
+        this.vehicles.forEach((v) => v.seek(target, multiplier));
       }
     }
     return this;

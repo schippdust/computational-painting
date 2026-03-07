@@ -103,7 +103,7 @@ onMounted(() => {
 
       vehicleCollection
         .addVehicle(vehicles)
-        .seak(cursor, 0.1)
+        .seek(cursor, 0.1)
         .avoid(cursor, 10)
         .alignToNeighbors(300)
         .separate(1200, 150)

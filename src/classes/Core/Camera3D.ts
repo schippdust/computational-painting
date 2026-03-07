@@ -1,10 +1,25 @@
 import P5, { Vector } from 'p5';
 import { Line } from '../Geometry/Line';
 
+/**
+ * A 3D perspective camera that projects 3D world coordinates to 2D screen coordinates.
+ * Implements perspective projection with configurable field of view, aspect ratio, and near clipping plane.
+ * Uses a right-handed coordinate system with forward/right/up basis vectors.
+ */
 export class Camera3D {
   private fov: number;
   private aspect: number;
 
+  /**
+   * Creates a new Camera3D instance.
+   * @param canvasWidth The width of the rendering canvas in pixels
+   * @param canvasHeight The height of the rendering canvas in pixels
+   * @param pos The camera position in world space (default: (1000, 1000, 500))
+   * @param focus The point the camera looks toward in world space (default: (0, 0, 0))
+   * @param up The up direction vector in world space (default: (0, 0, 1))
+   * @param fovDegrees The vertical field of view in degrees (default: 60)
+   * @param near The near clipping plane distance (default: 1)
+   */
   constructor(
     private canvasWidth: number,
     private canvasHeight: number,
@@ -18,6 +33,13 @@ export class Camera3D {
     this.fov = fovDegrees * (Math.PI / 180);
   }
 
+  /**
+   * Projects a 3D point in world space to 2D screen coordinates using perspective projection.
+   * Points behind the camera (closer than the near clipping plane) return null.
+   * Process: world → camera space basis transformation → perspective divide → NDC → screen space.
+   * @param point A 3D point in world coordinates
+   * @returns The 2D screen coordinates, or null if the point is behind the near clipping plane
+   */
   project(point: P5.Vector): P5.Vector | null {
     // Step 1: Orthonormal basis
     point = point.copy();
@@ -49,6 +71,13 @@ export class Camera3D {
     return new P5.Vector(screenX, screenY);
   }
 
+  /**
+   * Projects one or more lines from world space to screen space.
+   * Lines with endpoints behind the near clipping plane are culled.
+   * Efficiently handles both single lines and arrays of lines.
+   * @param line A single Line or array of Lines in world coordinates
+   * @returns An array of projected Line objects in screen coordinates
+   */
   renderLines(line: Line | Line[]): Line[] {
     const lineList = Array.isArray(line) ? line : [line];
     const linesOut: Line[] = [];
@@ -63,20 +92,39 @@ export class Camera3D {
     return linesOut;
   }
 
+  /**
+   * Sets the camera position in world space.
+   * @param pos The new camera position
+   */
   setPosition(pos: P5.Vector) {
     pos = pos.copy();
     this.pos = pos;
   }
 
+  /**
+   * Sets the point the camera looks toward.
+   * Updates the camera's forward direction to point at the focus position.
+   * @param focus The new focus point in world coordinates
+   */
   lookAt(focus: P5.Vector) {
     focus = focus.copy();
     this.focus = focus;
   }
 
+  /**
+   * Sets the vertical field of view of the camera.
+   * @param degrees The field of view angle in degrees
+   */
   setFOV(degrees: number) {
     this.fov = degrees * (Math.PI / 180);
   }
 
+  /**
+   * Updates the canvas dimensions and recalculates the aspect ratio.
+   * Call this when the canvas is resized to maintain correct perspective proportions.
+   * @param width The new canvas width in pixels
+   * @param height The new canvas height in pixels
+   */
   updateCanvasSize(width: number, height: number) {
     this.canvasWidth = width;
     this.canvasHeight = height;

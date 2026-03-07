@@ -5,16 +5,56 @@ import type { WindSystem } from '../../Core/WindSystem';
 import { VehicleCollection } from '../Extensible/VehicleCollection';
 import { Sphere } from '../../Geometry/Sphere';
 
+/**
+ * Configuration properties for branching behavior in BranchingCollection.
+ * Controls probability, geometry, and characteristics of vehicle branching.
+ */
 export interface BranchingCollectionProps {
+  /**
+   * Branching probability at end of vehicle lifecycle (higher age = higher probability).
+   * Valid range: 0-1. Recommend values between 0.01-0.1.
+   */
   highProbabilityOfBranching: number;
+  /**
+   * Branching probability for new/young vehicles (lower age = higher probability).
+   * Valid range: 0-1. Recommend values between 0.001-0.01, lower than highProbabilityOfBranching.
+   */
   lowProbabilityOfBranching: number;
-  maxSpreadAngle: number; //degrees
-  minSpreadAngle: number; //degrees
+  /**
+   * Maximum spread angle in degrees for branch divergence from parent direction.
+   * Defines the outer boundary of the cone around the parent's forward direction.
+   * Recommend: 45-90 degrees.
+   */
+  maxSpreadAngle: number;
+  /**
+   * Minimum spread angle in degrees for branch divergence from parent direction.
+   * Defines the inner boundary of the cone around the parent's forward direction.
+   * Recommend: 15-45 degrees, less than maxSpreadAngle.
+   */
+  minSpreadAngle: number;
+  /**
+   * Scale factor for the branching force direction vector.
+   * Higher values produce more aggressive divergence from parent trajectory.
+   * Recommend: 2-10.
+   */
   branchingForceStrength: number;
+  /**
+   * Minimum number of branches created when a vehicle branches.
+   * Recommend: 2-3.
+   */
   minNumberOfBranches: number;
+  /**
+   * Maximum number of branches created when a vehicle branches.
+   * Recommend: 3-6. Should be greater than minNumberOfBranches.
+   */
   maxNumberOfBranches: number;
 }
 
+/**
+ * Factory function creating default branching collection properties.
+ * Provides sensible defaults for organic-looking branching structures.
+ * @returns Default BranchingCollectionProps with moderate branching behavior
+ */
 export function createGenericBranchingCollectionProps(): BranchingCollectionProps {
   return {
     highProbabilityOfBranching: 0.03,
@@ -27,10 +67,21 @@ export function createGenericBranchingCollectionProps(): BranchingCollectionProp
   };
 }
 
+/**
+ * A vehicle collection that implements organic branching behavior.
+ * Vehicles probabilistically branch into multiple child vehicles at various points
+ * in their lifecycle. Branching probability increases with vehicle age, creating
+ * naturally-looking tree-like or vascular structures.
+ */
 export class BranchingCollection extends VehicleCollection {
   public branches: VehicleCollection[] = [];
   public props: BranchingCollectionProps;
 
+  /**
+   * Creates a new BranchingCollection with optional initial vehicles and properties.
+   * @param vehicles Optional array of initial vehicles for the collection
+   * @param props Branching behavior configuration (default: generic branching properties)
+   */
   constructor(
     vehicles?: Vehicle[],
     props: BranchingCollectionProps = createGenericBranchingCollectionProps(),
@@ -39,6 +90,13 @@ export class BranchingCollection extends VehicleCollection {
     this.props = props;
   }
 
+  /**
+   * Updates all vehicles and processes branching.
+   * For each vehicle, calculates branching probability based on age relative to lifespan.
+   * Creates new branch vehicles from old vehicles and maintains the collection.
+   * This method mutates the instance and returns it for method chaining.
+   * @returns This BranchingCollection instance for method chaining
+   */
   update(): BranchingCollection {
     super.update();
 

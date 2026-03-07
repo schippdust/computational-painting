@@ -4,9 +4,20 @@ import { CoordinateSystem } from './CoordinateSystem';
 import type { Camera3D } from '../Core/Camera3D';
 import { Circle } from './Circle';
 
+/**
+ * Represents a sphere in 3D space defined by a coordinate system and radius.
+ * Provides utilities for random point generation, surface/containment queries,
+ * occlusion testing, and silhouette computation for camera frustum culling.
+ */
 export class Sphere {
   public renderSegements: Line[] = [];
   private _renderSegmentCount: number = 16;
+
+  /**
+   * Creates a new Sphere instance.
+   * @param coordinateSystem The coordinate system defining the sphere's center and orientation
+   * @param _radius The radius of the sphere
+   */
   constructor(
     public coordinateSystem: CoordinateSystem,
     private _radius: number,
@@ -14,10 +25,20 @@ export class Sphere {
     // this.calculateSegments();
   }
 
+  /**
+   * Gets the number of segments used to render the sphere.
+   * @returns The current render segment count
+   */
   get renderSegmentCount() {
     return this._renderSegmentCount;
   }
 
+  /**
+   * Sets the number of segments used to render the sphere.
+   * Must be at least 8 segments for a valid sphere representation.
+   * @param segments The number of segments (must be >= 8)
+   * @throws Error if segments < 8
+   */
   set renderSegmentCount(segments: number) {
     if (segments >= 8) {
       this._renderSegmentCount = segments;
@@ -27,26 +48,49 @@ export class Sphere {
     }
   }
 
+  /**
+   * Gets the radius of the sphere.
+   * @returns The current radius value
+   */
   get radius() {
     return this._radius;
   }
 
+  /**
+   * Sets the radius of the sphere.
+   * Must be a positive number.
+   * @param radius The new radius value (must be positive)
+   * @throws Error if radius <= 0
+   */
   set radius(radius: number) {
-    if (radius < 0) {
+    if (radius > 0) {
       this._radius = radius;
     } else {
       throw new Error('Radius must be a positive number');
     }
   }
 
+  /**
+   * Calculates the volume of the sphere (4/3 * π * r³).
+   * @returns The volume of the sphere
+   */
   get volumne() {
     return (4 / 3) * Math.PI * this._radius ** 3;
   }
 
+  /**
+   * Gets the center point of the sphere (the origin of its coordinate system).
+   * @returns The center point in world coordinates
+   */
   get centerPoint() {
     return this.coordinateSystem.getPosition();
   }
 
+  /**
+   * Generates a random point uniformly distributed on the sphere's surface.
+   * Uses spherical coordinates with proper distribution (accounting for sin(phi) in the volume element).
+   * @returns A random point on the sphere's surface
+   */
   randomPointOnSurface(): P5.Vector {
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.random() * Math.PI;
@@ -59,6 +103,13 @@ export class Sphere {
       .add(new P5.Vector(x, y, z));
   }
 
+  /**
+   * Generates a random point uniformly distributed inside the sphere's volume.
+   * Uses spherical coordinates with proper distribution corrections:
+   * - arccos distribution for phi to account for sin(phi) in volume element
+   * - cube root for radius to account for r² in volume element
+   * @returns A random point inside the sphere
+   */
   randomPointInside(): P5.Vector {
     const theta = Math.random() * Math.PI * 2;
     // Account for sin(phi) in the volume element by using arccos distribution
@@ -74,6 +125,12 @@ export class Sphere {
       .add(new P5.Vector(x, y, z));
   }
 
+  /**
+   * Finds the nearest point on the sphere's surface to a given point.
+   * Projects the point onto the sphere along the direction from center to point.
+   * @param point The reference point
+   * @returns The closest point on the sphere's surface
+   */
   nearestPointOnSurface(point: P5.Vector): P5.Vector {
     const direction = P5.Vector.sub(
       point,
@@ -85,11 +142,23 @@ export class Sphere {
       .add(direction.mult(this._radius));
   }
 
+  /**
+   * Tests whether a point is inside the sphere.
+   * @param point The point to test
+   * @returns True if the point is inside the sphere, false otherwise
+   */
   isPointInside(point: P5.Vector): boolean {
     const distance = P5.Vector.dist(point, this.coordinateSystem.getPosition());
     return distance < this._radius;
   }
 
+  /**
+   * Tests whether a point is obscured by the sphere from an observation point.
+   * Uses the sphere's silhouette cone projected from the observer's position.
+   * @param point The point to test for occlusion
+   * @param observationPoint The observer's position
+   * @returns True if the point is obscured by the sphere, false otherwise
+   */
   isPointObscured(point: P5.Vector, observationPoint: P5.Vector): boolean {
     const toPoint = P5.Vector.sub(point, observationPoint);
     const toCenter = P5.Vector.sub(
@@ -112,6 +181,13 @@ export class Sphere {
     );
   }
 
+  /**
+   * Tests whether a line segment is obscured by the sphere's silhouette cone.
+   * Returns true if the line is fully or partially obscured.
+   * @param line The line segment to test
+   * @param observationPoint The observer's position
+   * @returns True if the line is obscured by the sphere, false if fully visible
+   */
   isLineObscured(line: Line, observationPoint: P5.Vector): boolean {
     // Use silhouette cone from observationPoint
     const center = this.coordinateSystem.getPosition();
@@ -141,6 +217,13 @@ export class Sphere {
     return false;
   }
 
+  /**
+   * Clips a line segment against the sphere's silhouette cone, removing obscured portions.
+   * Returns an array of visible line segments (usually 0, 1, or 2 segments).
+   * @param line The line segment to clip
+   * @param observationPoint The observer's position
+   * @returns An array of line segments representing the visible portions
+   */
   obscureLine(line: Line, observationPoint: P5.Vector): Line[] {
     // Returns visible segments of the line, hiding parts obscured by the sphere's silhouette cone
     const center = this.coordinateSystem.getPosition();
@@ -186,6 +269,13 @@ export class Sphere {
     }
   }
 
+  /**
+   * Computes the silhouette circle of the sphere as seen from an observation point.
+   * The silhouette circle is the circle on the sphere's surface where the normal is perpendicular
+   * to the view direction, defining the outline of the sphere's projection.
+   * @param observationPoint The observer's position
+   * @returns A Circle object representing the silhouette
+   */
   sillhouetteCircle(observationPoint: P5.Vector): Circle {
     const cameraPosition = observationPoint;
     const circleCoordinateSystem = this.coordinateSystem
@@ -196,18 +286,25 @@ export class Sphere {
     return circle;
   }
 
+  /**
+   * Gets the silhouette line segments of the sphere as seen from an observation point.
+   * @param observationPoint The observer's position
+   * @returns An array of Line segments representing the silhouette outline
+   */
   sillhouetteSegments(observationPoint: P5.Vector): Line[] {
     const circle = this.sillhouetteCircle(observationPoint);
     return circle.renderSegments;
   }
 
   /**
-   * Generate a random direction within a cone
+   * Generates a random direction within a cone from a forward direction.
+   * Useful for spreading rays, particles, or branching patterns within a constrained angular range.
+   * Properly accounts for angular distribution within the cone.
    * @param forwardDirection The axis of the cone (will be normalized)
    * @param upDirection A direction perpendicular to forward that helps define the cone orientation (will be normalized)
-   * @param minAngleDegrees Minimum angle from the forward direction (degrees)
-   * @param maxAngleDegrees Maximum angle from the forward direction (degrees)
-   * @returns A random direction within the cone
+   * @param minAngleDegrees Minimum angle from the forward direction in degrees
+   * @param maxAngleDegrees Maximum angle from the forward direction in degrees
+   * @returns A random direction vector within the cone
    */
   static randomDirectionInCone(
     forwardDirection: P5.Vector,
@@ -266,11 +363,23 @@ export class Sphere {
     return branchDirection;
   }
 
+  /**
+   * Translates the sphere's position by a given vector.
+   * This method mutates the instance and returns it for method chaining.
+   * @param vector The translation vector to apply
+   * @returns This Sphere instance for method chaining
+   */
   transform(vector: P5.Vector): Sphere {
     this.coordinateSystem.translateCoordinateSystem(vector);
     return this;
   }
 
+  /**
+   * Updates the sphere's coordinate system.
+   * This method mutates the instance and returns it for method chaining.
+   * @param newCoordinateSystem The new coordinate system
+   * @returns This Sphere instance for method chaining
+   */
   updateCoordinateSystem(newCoordinateSystem: CoordinateSystem): Sphere {
     this.coordinateSystem = newCoordinateSystem;
     return this;

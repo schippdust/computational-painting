@@ -5,18 +5,51 @@ import type { VehiclePhysicalProps } from '../MarkMakingEntities/Extensible/Vehi
 import { createGenericPhysicalProps } from '../MarkMakingEntities/Extensible/Vehicle';
 import type { Circle } from '../Geometry/Circle';
 
+/**
+ * Configuration properties for CircleGenerator.
+ * Defines the angular traversal parameters and initial velocity for generated vehicles.
+ */
 export interface CircleGeneratorProps {
-  startAngle: number; // in radians
-  endAngle: number; // in radians
-  angleStep: number; //in radians
-  velocityAtGeneration: P5.Vector; // velocity of the vehicle when generated, (0,0,1) vector would be aligned to the tangent of the circle
+  /**
+   * Starting angle in radians for vehicle generation (0 = circle center direction).
+   */
+  startAngle: number;
+  /**
+   * Ending angle in radians for vehicle generation (defines traversal range).
+   */
+  endAngle: number;
+  /**
+   * Angular step size in radians (positive = counterclockwise, negative = clockwise).
+   * Determines spacing between generated vehicles along the circle.
+   */
+  angleStep: number;
+  /**
+   * Local velocity vector at generation time, expressed in the tangent coordinate system.
+   * For example: (0,0,1) vector aligned to circle tangent, (1,0,0) radially outward.
+   */
+  velocityAtGeneration: P5.Vector;
 }
 
+/**
+ * Generates vehicles distributed along a circle perimeter at regular angular intervals.
+ * Vehicles are positioned at specified angles and oriented according to the circle's
+ * local tangent coordinate system. Useful for creating circular formations and paths.
+ * 
+ * The generator traverses from startAngle to endAngle in steps of angleStep.
+ * Positive angleStep traverses counterclockwise; negative traverses clockwise.
+ */
 export class CircleGenerator {
   private currentStep: number;
   public complete: boolean = false;
   public generatedVehicles: VehicleCollection = new VehicleCollection();
 
+  /**
+   * Creates a new CircleGenerator for distributing vehicles along a circle.
+   * @param sketch The p5.js sketch instance for vector utilities and randomization
+   * @param circle The Circle geometry to generate vehicles along
+   * @param props Angular traversal and velocity configuration
+   * @param vehicleProps Physical properties template for generated vehicles (default: generic physical properties)
+   */
   constructor(
     protected sketch: P5,
     public circle: Circle,
@@ -26,6 +59,17 @@ export class CircleGenerator {
     this.currentStep = props.startAngle;
   }
 
+  /**
+   * Generates a single vehicle at the current angular position on the circle.
+   * Positions the vehicle at the current angle and orients it using the tangent
+   * coordinate system. The velocity is transformed from local to world space.
+   * Automatically increments the angle and marks complete when endAngle is reached.
+   * 
+   * This method mutates the provided vehicle and updates the generator state.
+   * @param vehicle The Vehicle instance to position and add to the collection
+   * @param rebuildOcTree Whether to rebuild spatial partitioning after adding (default: true)
+   * @returns This CircleGenerator instance for method chaining
+   */
   generateVehicle(vehicle: Vehicle, rebuildOcTree = true): CircleGenerator {
     if (this.complete) {
       // console.log('generator has died');

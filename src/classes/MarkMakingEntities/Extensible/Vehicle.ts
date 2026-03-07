@@ -3,6 +3,10 @@ import { prependUniqueWithLimit } from '../../Core/CodeUtils';
 import type { WindSystem } from '../../Core/WindSystem';
 import { CoordinateSystem } from '../../Geometry/CoordinateSystem';
 
+/**
+ * Physical properties of a vehicle including kinematics, mass, and steering constraints.
+ * Defines velocity, acceleration, angular limits, and directional vectors for 3D movement.
+ */
 export interface VehiclePhysicalProps {
   velocity: P5.Vector;
   acceleration: P5.Vector;
@@ -16,6 +20,11 @@ export interface VehiclePhysicalProps {
   up: P5.Vector;
 }
 
+/**
+ * Creates a new VehiclePhysicalProps object with sensible default values.
+ * Provides a template for vehicle initialization with standard mass, velocity limits, and orientation.
+ * @returns A VehiclePhysicalProps object with default values
+ */
 export function createGenericPhysicalProps(): VehiclePhysicalProps {
   return {
     velocity: new P5.Vector(0, 0, 0),
@@ -31,10 +40,19 @@ export function createGenericPhysicalProps(): VehiclePhysicalProps {
   };
 }
 
+/**
+ * Environmental properties affecting vehicle behavior.
+ * Currently includes friction (damping) but extensible for other environmental factors.
+ */
 export interface VehicleEnvironmentalProperties {
   friction: number | null; // friction number from 0 to 1 will reduce motion by that amount
 }
 
+/**
+ * A simulated agent or "vehicle" capable of movement, steering, and flocking behaviors.
+ * Integrates physics simulation with behavioral steering and path tracking.
+ * Maintains position via CoordinateSystem, tracks history, and supports various steering behaviors.
+ */
 export class Vehicle {
   public uuid: string;
   protected p5: P5;
@@ -56,6 +74,13 @@ export class Vehicle {
   public constrainMovementOrthogonally: boolean;
   public desiredSeparation: number;
 
+  /**
+   * Creates a new Vehicle.
+   * @param sketch The p5 instance
+   * @param coords The initial position in world space
+   * @param physicalProperties Physical/kinematic properties (default: generic properties)
+   * @param upAxis The initial up direction for the vehicle's coordinate system (default: +Z)
+   */
   constructor(
     sketch: P5,
     coords: P5.Vector,
@@ -82,19 +107,42 @@ export class Vehicle {
     this.desiredSeparation = 40;
   }
 
+  /**
+   * Gets the current position of the vehicle in world space.
+   * @returns The vehicle's position
+   */
   get coords(): P5.Vector {
     return this.coordSystem.getPosition();
   }
 
+  /**
+   * Tests whether the vehicle has exceeded its lifespan.
+   * @returns True if age >= lifeExpectancy, false otherwise
+   */
   get isDead(): boolean {
     return this.age >= this.lifeExpectancy;
   }
 
+  /**
+   * Sets the vehicle's velocity and updates the forward direction to match.
+   * The forward vector is normalized from the velocity vector.
+   * @param velocityVector The new velocity vector
+   */
   set velocity(velocityVector: P5.Vector) {
     this.phys.velocity = velocityVector.copy();
     this.phys.forward = velocityVector.copy().normalize();
   }
 
+  /**
+   * Randomly relocates the vehicle to a position within a specified radius.
+   * Optionally randomizes the up direction for 3D orientation variation.
+   * This method mutates the instance and returns it for method chaining.
+   * @param fromCoord The center position from which to randomize
+   * @param maxDist The maximum distance to randomize in each direction
+   * @param is3D If true, randomizes Z coordinate; if false, keeps Z = 0 (default: true)
+   * @param randomizeUp If true, randomizes the up direction for 3D variation (default: true)
+   * @returns This Vehicle instance for method chaining
+   */
   randomizeLocation(
     fromCoord: P5.Vector,
     maxDist: number,
@@ -123,11 +171,24 @@ export class Vehicle {
     return this;
   }
 
+  /**
+   * Applies a translation to the vehicle's position.
+   * This method mutates the instance and returns it for method chaining.
+   * @param vectorTransformation The translation vector to apply
+   * @returns This Vehicle instance for method chaining
+   */
   transform(vectorTransformation: P5.Vector): Vehicle {
     this.coordSystem.translateCoordinateSystem(vectorTransformation);
     return this;
   }
 
+  /**
+   * Updates the vehicle's physics and age in a single frame.
+   * Applies forces, updates velocity and position, adjusts pitch toward target orientation,
+   * stores historical data, and increments age.
+   * This method mutates the instance and returns it for method chaining.
+   * @returns This Vehicle instance for method chaining
+   */
   update(): Vehicle {
     // storing previous data
     prependUniqueWithLimit(
@@ -154,7 +215,7 @@ export class Vehicle {
     }
     // Reset acceleration so it doesn't carry into next frame
     this.phys.acceleration.mult(0);
-    // updating coordinate system based on new position, this could be handled more elegantly
+    // Update coordinate system based on new position and velocity direction
     this.coordSystem.translateCoordinateSystem(this.phys.velocity);
     this.coordSystem = CoordinateSystem.fromOriginAndNormal(
       this.coords,
@@ -162,14 +223,13 @@ export class Vehicle {
     );
     this.phys.forward = this.coordSystem.getZAxis(1);
 
-    // Updating pitch based on new position and former up vector
+    // Update pitch (up direction) based on forward direction changes
     const pitchTarget = this.calculateTargetPitch();
     const previousUp = this.phys.up.copy().normalize();
     const angleBetween = previousUp.angleBetween(pitchTarget);
-    // console.log(this.uuid,pitchTarget,previousUp,angleBetween)
+    const angleThreshold = 1e-5;
 
-    if (angleBetween > 1e-5) {
-      // console.log('angle between was big enough')
+    if (angleBetween > angleThreshold) {
       const rotationAxis = previousUp.copy().cross(pitchTarget).normalize();
       const limitedAngle = Math.min(angleBetween, this.phys.maxPitchAdjustment);
       const rotatedUp = previousUp
@@ -179,11 +239,10 @@ export class Vehicle {
       this.phys.up = rotatedUp;
       this.coordSystem.setYAxis(rotatedUp);
     }
-    // rotate coordinate system up to the maxPitchAdjustment to attempt to match the pitch target
-    // set up to be equal to a normalized version of this vector
 
-    // Stop near-zero velocities
-    if (this.phys.velocity.mag() < 0.00001) {
+    // Stop near-zero velocities to avoid numerical drift
+    const velocityThreshold = 1e-5;
+    if (this.phys.velocity.mag() < velocityThreshold) {
       this.phys.velocity.mult(0);
     }
 
@@ -191,9 +250,17 @@ export class Vehicle {
     return this;
   }
 
+  /**
+   * Calculates the target pitch (up direction) based on forward direction changes.
+   * Uses the pitch plane defined by previous and current forward vectors.
+   * Ensures smooth orientation transitions frame-to-frame.
+   * @returns The target up direction vector for pitch adjustment
+   * @private
+   */
   private calculateTargetPitch(): P5.Vector {
+    const minMagnitudeThreshold = 1e-5; // Threshold for near-zero cross product conditions
+    
     if (!this.previousForward || !this.previousUpDirection) {
-      console.log('skipping pitch calculation');
       return this.phys.up.copy();
     }
 
@@ -207,13 +274,12 @@ export class Vehicle {
       .cross(currentForward)
       .normalize();
 
-    // Near 0 conditions will occur if the direction hasn't really changed
-    if (pitchNormal.mag() < 1e-5) {
-      console.log('near 0 condition for pitch calcs');
+    // Skip adjustment if direction hasn't meaningfully changed
+    if (pitchNormal.mag() < minMagnitudeThreshold) {
       return this.phys.up.copy();
     }
 
-    // Project the previous up direction onto the pitch plane with some fun vector math
+    // Project the previous up direction onto the pitch plane
     const dot = previousUp.dot(pitchNormal);
     const projectedUp = previousUp
       .copy()
@@ -228,13 +294,12 @@ export class Vehicle {
     return newUp;
   }
 
-  //depricated
-  // setVelocity(velocity: P5.Vector) {
-  //   velocity = velocity.copy();
-  //   this.phys.velocity = velocity;
-  //   console.log(this.uuid, 'setting velocity', velocity);
-  // }
-
+  /**
+   * Applies drag/friction to reduce the vehicle's velocity.
+   * Uses the environmental friction coefficient (0-1) to dampen motion.
+   * This method mutates the instance and returns it for method chaining.
+   * @returns This Vehicle instance for method chaining
+   */
   applyFriction(): Vehicle {
     if (this.env.friction == null) {
       return this;
@@ -245,6 +310,15 @@ export class Vehicle {
     return this;
   }
 
+  /**
+   * Applies wind force from a wind system to the vehicle.
+   * Combines directional wind and eddies at the vehicle's current position.
+   * This method mutates the instance and returns it for method chaining.
+   * @param windSystem The wind system to sample from
+   * @param directionalWindMultiplier Scale factor for global wind (default: 1)
+   * @param eddyMultiplier Scale factor for local turbulence (default: 1)
+   * @returns This Vehicle instance for method chaining
+   */
   applyWind(
     windSystem: WindSystem,
     directionalWindMultiplier = 1,
@@ -259,24 +333,53 @@ export class Vehicle {
     return this;
   }
 
+  /**
+   * Applies a force to the vehicle by converting it to acceleration (F = ma).
+   * Accumulates into the aggregated acceleration for the update step.
+   * This method mutates the instance and returns it for method chaining.
+   * @param force The force vector to apply
+   * @returns This Vehicle instance for method chaining
+   */
   applyForce(force: P5.Vector): Vehicle {
     const acceleration = force.copy().div(this.phys.mass);
     this.phys.acceleration.add(acceleration);
     return this;
   }
 
+  /**
+   * Applies the accumulated steering force and then resets it to zero.
+   * Called after all steering behaviors have contributed to the aggregateSteer.
+   * This method mutates the instance and returns it for method chaining.
+   * @returns This Vehicle instance for method chaining
+   */
   applyAggregateSteerForce(): Vehicle {
     this.applyForce(this.phys.aggregateSteer);
     this.phys.aggregateSteer.mult(0);
     return this;
   }
 
-  seak(targetPosition: P5.Vector, multiplier: number = 1): Vehicle {
+  /**
+   * Seeks toward a target position with a given steering force multiplier.
+   * Steering force scales with the desired velocity direction.
+   * This method mutates the instance and returns it for method chaining.
+   * @param targetPosition The position to seek toward
+   * @param multiplier Scale factor for steering strength (default: 1)
+   * @returns This Vehicle instance for method chaining
+   */
+  seek(targetPosition: P5.Vector, multiplier: number = 1): Vehicle {
     const desiredVelocity = P5.Vector.sub(targetPosition, this.coords);
     this.steer(desiredVelocity, multiplier);
     return this;
   }
 
+  /**
+   * Applies a steering force in a specified direction.
+   * Returns immediately if direction has zero magnitude.
+   * This method mutates the instance and returns it for method chaining.
+   * @param direction The direction to steer toward (will be normalized)
+   * @param multiplier Scale factor for steering strength (default: 1)
+   * @returns This Vehicle instance for method chaining
+   */
   steer(direction: P5.Vector, multiplier: number = 1): Vehicle {
     direction = direction.copy();
     if (direction.mag() == 0) {
@@ -290,6 +393,14 @@ export class Vehicle {
     return this;
   }
 
+  /**
+   * Arrives at a target position with smooth deceleration.
+   * Reduces velocity as the vehicle approaches to avoid overshooting.
+   * Uses maxVelocity and maxSteerForce to calculate deceleration distance.
+   * This method mutates the instance and returns it for method chaining.
+   * @param targetPosition The position to arrive at
+   * @returns This Vehicle instance for method chaining
+   */
   arrive(targetPosition: P5.Vector): Vehicle {
     const desiredVelocity = P5.Vector.sub(targetPosition, this.coords);
     const desiredMagnitude = desiredVelocity.mag();
@@ -316,6 +427,16 @@ export class Vehicle {
     return this;
   }
 
+  /**
+   * Avoids a target position by steering away if too close.
+   * Avoidance force increases as proximity decreases.
+   * Returns immediately if already at or beyond the desired closest distance.
+   * This method mutates the instance and returns it for method chaining.
+   * @param targetPosition The position to avoid
+   * @param desiredClosestDistance The minimum acceptable distance
+   * @param multiplier Scale factor for avoidance strength (default: 1)
+   * @returns This Vehicle instance for method chaining
+   */
   avoid(
     targetPosition: P5.Vector,
     desiredClosestDistance: number,
@@ -329,8 +450,9 @@ export class Vehicle {
         this.coords,
         targetPosition,
       ).normalize();
+      const minDistance = 0.001; // Prevent division by zero when exactly at target
       if (distanceBetween == 0) {
-        distanceBetween = 0.001;
+        distanceBetween = minDistance;
       }
       const closenessRatio = distanceBetween / desiredClosestDistance;
       steerDirection.div(closenessRatio);
@@ -339,6 +461,15 @@ export class Vehicle {
     }
   }
 
+  /**
+   * Steers to maintain separation from nearby vehicles.
+   * Calculates a repelling force based on proximity and desired separation distance.
+   * Returns immediately if no other vehicles are provided.
+   * This method mutates the instance and returns it for method chaining.
+   * @param otherVehicleCoords Array of positions to maintain separation from
+   * @param separateMultiplier Scale factor for separation strength (default: 0.5)
+   * @returns This Vehicle instance for method chaining
+   */
   separate(
     otherVehicleCoords: P5.Vector[],
     separateMultiplier: number = 0.5,
@@ -368,6 +499,14 @@ export class Vehicle {
     return this;
   }
 
+  /**
+   * Aligns the vehicle with the average direction of nearby neighbors.
+   * Takes either a single vector or array of alignment vectors.
+   * This method mutates the instance and returns it for method chaining.
+   * @param alignmentVectors Single vector or array of velocity/direction vectors to align with
+   * @param alignMultiplier Scale factor for alignment strength (default: 5)
+   * @returns This Vehicle instance for method chaining
+   */
   align(
     alignmentVectors: P5.Vector[] | P5.Vector,
     alignMultiplier: number = 5,
@@ -387,6 +526,14 @@ export class Vehicle {
     return this;
   }
 
+  /**
+   * Steers toward the center of mass of nearby vehicles.
+   * Implements cohesion behavior for flocking/group dynamics.
+   * This method mutates the instance and returns it for method chaining.
+   * @param otherVehicleCoords Array of positions to cohere toward
+   * @param cohereMultiplier Scale factor for cohesion strength (default: 5)
+   * @returns This Vehicle instance for method chaining
+   */
   cohere(
     otherVehicleCoords: P5.Vector[],
     cohereMultiplier: number = 5,
@@ -399,10 +546,21 @@ export class Vehicle {
       sumVect.add(v);
     }
     sumVect.div(otherVehicleCoords.length);
-    this.seak(sumVect, cohereMultiplier);
+    this.seek(sumVect, cohereMultiplier);
     return this;
   }
 
+  /**
+   * Applies combined flocking behavior: separation, alignment, and cohesion.
+   * This is the classic boid behavior from Reynolds' flocking algorithm.
+   * This method mutates the instance and returns it for method chaining.
+   * @param neighborCoords Array of nearby vehicle positions for separation and cohesion
+   * @param neighborVelocities Array of nearby vehicle velocities for alignment
+   * @param separateMultiplier Scale factor for separation behavior
+   * @param alignMultiplier Scale factor for alignment behavior
+   * @param cohereMultiplier Scale factor for cohesion behavior
+   * @returns This Vehicle instance for method chaining
+   */
   flock(
     neighborCoords: P5.Vector[],
     neighborVelocities: P5.Vector[],
@@ -416,6 +574,12 @@ export class Vehicle {
     return this;
   }
 
+  /**
+   * Creates a deep copy of this vehicle with all its properties and state.
+   * Includes physical properties, environmental settings, and historical trajectory data.
+   * The new vehicle will have a different UUID but otherwise identical configuration.
+   * @returns A new Vehicle instance that is an independent copy of this one
+   */
   duplicate(): Vehicle {
     // Create copies of physical properties
     const copiedPhysicalProps: VehiclePhysicalProps = {
@@ -461,6 +625,11 @@ export class Vehicle {
     return newVehicle;
   }
 
+  /**
+   * Serializes the vehicle's state to a simple JSON object for debugging.
+   * Includes UUID, age, position, velocity, and up direction.
+   * @returns A plain object with serialized vehicle data
+   */
   // creating simple debugging object, customize as needed
   toJson() {
     let coords = this.coords;
