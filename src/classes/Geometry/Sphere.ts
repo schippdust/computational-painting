@@ -245,23 +245,85 @@ export class Sphere {
     if (!obscured1 && !obscured2) return [line];
     // If both obscured, return nothing
     if (obscured1 && obscured2) return [];
+
     // Otherwise, clip at intersection with cone
-    // Find intersection t along the segment
     const d = P5.Vector.sub(p2, p1);
     const OP1 = P5.Vector.sub(p1, observationPoint);
-    const OP2 = P5.Vector.sub(p2, observationPoint);
-    // Solve quadratic for t where OP = OP1 + t*(OP2-OP1) is on the cone
-    const V = P5.Vector.sub(OP2, OP1);
-    const a = V.dot(OCn) * V.dot(OCn) - cosAlpha * cosAlpha * V.dot(V);
-    const b =
-      2 * (V.dot(OCn) * OP1.dot(OCn) - cosAlpha * cosAlpha * V.dot(OP1));
-    const c = OP1.dot(OCn) * OP1.dot(OCn) - cosAlpha * cosAlpha * OP1.dot(OP1);
+    const V = d.copy();
+
+    // Solve quadratic: |OP1 + t*V|^2 * cosAlpha^2 = (OP1 + t*V) . OCn)^2
+    const V_dot_OCn = V.dot(OCn);
+    const OP1_dot_OCn = OP1.dot(OCn);
+    const V_dot_V = V.dot(V);
+    const OP1_dot_V = OP1.dot(V);
+    const cosSq = cosAlpha * cosAlpha;
+
+    const a = V_dot_OCn * V_dot_OCn - cosSq * V_dot_V;
+    const b = 2 * (V_dot_OCn * OP1_dot_OCn - cosSq * OP1_dot_V);
+    const c = OP1_dot_OCn * OP1_dot_OCn - cosSq * OP1.dot(OP1);
+
+    // Handle degenerate case where a ≈ 0 (line nearly parallel to cone)
+    const epsilon = 1e-10;
+    if (Math.abs(a) < epsilon) {
+      if (Math.abs(b) > epsilon) {
+        const t = -c / b;
+        if (t >= 0 && t <= 1) {
+          const pt = P5.Vector.add(p1, d.copy().mult(t));
+          if (obscured1) {
+            return [new Line(pt, p2.copy())];
+          } else {
+            return [new Line(p1.copy(), pt)];
+          }
+        }
+      }
+      return [line];
+    }
+
     const disc = b * b - 4 * a * c;
-    if (disc < 0) return [line]; // should not happen if one endpoint is inside
+    if (disc < 0) return [line];
+
     const sqrtDisc = Math.sqrt(disc);
-    let t = (-b + (obscured1 ? 1 : -1) * sqrtDisc) / (2 * a);
-    t = Math.max(0, Math.min(1, t));
-    const pt = P5.Vector.add(p1, d.copy().mult(t));
+    const t1_raw = (-b - sqrtDisc) / (2 * a);
+    const t2_raw = (-b + sqrtDisc) / (2 * a);
+
+    // Collect all roots that fall within or very close to [0, 1]
+    const candidateTs: number[] = [];
+
+    if (t1_raw >= -epsilon && t1_raw <= 1 + epsilon) {
+      candidateTs.push(t1_raw);
+    }
+    if (
+      t2_raw >= -epsilon &&
+      t2_raw <= 1 + epsilon &&
+      Math.abs(t2_raw - t1_raw) > epsilon
+    ) {
+      candidateTs.push(t2_raw);
+    }
+
+    if (candidateTs.length === 0) return [line];
+
+    // For each candidate, clamp it to [0, 1]
+    const clampedTs = candidateTs.map((t) => Math.max(0, Math.min(1, t)));
+
+    // Remove duplicates (roots that clamp to the same value)
+    const uniqueTs: number[] = [];
+    for (const t of clampedTs) {
+      if (
+        uniqueTs.length === 0 ||
+        Math.abs(t - uniqueTs[uniqueTs.length - 1]) > epsilon
+      ) {
+        uniqueTs.push(t);
+      }
+    }
+
+    if (uniqueTs.length === 0) return [line];
+
+    // Select the appropriate intersection based on which endpoint is obscured
+    // If p1 is obscured, use the largest t (closest to p2, the visible endpoint)
+    // If p1 is visible, use the smallest t (closest to p1, the visible endpoint)
+    const selectedT = obscured1 ? Math.max(...uniqueTs) : Math.min(...uniqueTs);
+    const pt = P5.Vector.add(p1, d.copy().mult(selectedT));
+
     if (obscured1) {
       return [new Line(pt, p2.copy())];
     } else {
