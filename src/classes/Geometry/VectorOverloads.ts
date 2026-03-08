@@ -32,10 +32,10 @@ declare module 'p5' {
  * The rotation axis is randomly selected perpendicular to the vector,
  * unless the vector is nearly parallel to the random axis, in which case
  * a default axis (1, 0, 0) is used.
- * 
+ *
  * Useful for adding directional jitter and creating variation in
  * computational art and generative geometry without changing magnitude.
- * 
+ *
  * This method mutates the instance and returns it for method chaining.
  * @param ratio Scatter intensity from 0 to 1, where 1 = ±π radians (maximum perturbation)
  * @returns This vector instance after scatter transformation (mutated)
@@ -61,13 +61,13 @@ p5.Vector.prototype.scatter = function (ratio: number): p5.Vector {
 
 /**
  * Rotates the vector around an arbitrary 3D axis or around the Z-axis if no axis provided.
- * 
+ *
  * 2D Mode (no axis): Rotates in the XY plane by rotating around the Z-axis.
- * 
+ *
  * 3D Mode (with axis): Uses Rodrigues' rotation formula for arbitrary axis rotation.
  * Rodrigues' formula: v_rot = v*cos(θ) + (k×v)*sin(θ) + k*(k·v)*(1-cos(θ))
  * where k is the normalized rotation axis and θ is the rotation angle.
- * 
+ *
  * This method mutates the instance and returns it for method chaining.
  * @param angle Rotation angle in radians
  * @param axis Optional 3D axis to rotate around; if omitted, rotates around Z-axis (2D rotation)

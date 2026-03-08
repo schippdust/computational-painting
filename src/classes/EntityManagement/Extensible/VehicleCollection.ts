@@ -3,11 +3,20 @@ import type { Vehicle } from '../../MarkMakingEntities/Extensible/Vehicle';
 import { OcTree } from '../../Core/VehicleOcTree';
 import type { WindSystem } from '../../Core/WindSystem';
 
+/**
+ * Manages a collection of vehicles with batch operations for physics, steering, and flocking.
+ * Provides efficient spatial queries via octree and method chaining for fluent API usage.
+ * Supports group operations: forces, wind, steering behaviors, flocking, and persistent forces.
+ */
 export class VehicleCollection {
   public vehicles: Vehicle[] = [];
   private ocTree: OcTree | null = null;
   private ocTreeRebuilt: boolean = false;
 
+  /**
+   * Creates a new VehicleCollection with optional initial vehicles.
+   * @param vehicles Optional array of Vehicle instances to initialize the collection
+   */
   constructor(vehicles?: Vehicle[]) {
     if (vehicles) {
       this.vehicles = vehicles;
@@ -293,6 +302,59 @@ export class VehicleCollection {
         );
       });
     }
+    return this;
+  }
+
+  /**
+   * Adds one or more persistent steer forces to all vehicles in the collection.
+   * Persistent forces are applied every frame to all vehicles and retained upon duplication.
+   * This method mutates all vehicles and returns it for method chaining.
+   * @param forces A single force vector or array of force vectors to add to all vehicles
+   * @param preventDuplicates If true (default), prevents adding forces that already exist in each vehicle (using approximate equality)
+   * @returns This VehicleCollection instance for method chaining
+   */
+  addPersistentSteerForceAll(
+    forces: P5.Vector | P5.Vector[],
+    preventDuplicates: boolean = true,
+  ): VehicleCollection {
+    this.vehicles.forEach((v) =>
+      v.addPersistentSteerForce(forces, preventDuplicates),
+    );
+    return this;
+  }
+
+  /**
+   * Removes a specific persistent steer force from all vehicles in the collection.
+   * Searches for forces matching the given vector (using approximate equality) and removes them.
+   * This method mutates all vehicles and returns it for method chaining.
+   * @param force The force vector to remove from all vehicles
+   * @returns This VehicleCollection instance for method chaining
+   */
+  removePersistentSteerForceAll(force: P5.Vector): VehicleCollection {
+    this.vehicles.forEach((v) => v.removePersistentSteerForce(force));
+    return this;
+  }
+
+  /**
+   * Removes multiple persistent steer forces from all vehicles in the collection.
+   * Removes forces matching the given vectors (using approximate equality) from all vehicles.
+   * This method mutates all vehicles and returns it for method chaining.
+   * @param forces Array of force vectors to remove from all vehicles
+   * @returns This VehicleCollection instance for method chaining
+   */
+  removePersistentSteerForcesAll(forces: P5.Vector[]): VehicleCollection {
+    this.vehicles.forEach((v) => v.removePersistentSteerForces(forces));
+    return this;
+  }
+
+  /**
+   * Removes all persistent steer forces from all vehicles in the collection.
+   * Clears all persistent forces from every vehicle in the collection.
+   * This method mutates all vehicles and returns it for method chaining.
+   * @returns This VehicleCollection instance for method chaining
+   */
+  clearPersistentSteerForcesAll(): VehicleCollection {
+    this.vehicles.forEach((v) => v.clearPersistentSteerForces());
     return this;
   }
 }

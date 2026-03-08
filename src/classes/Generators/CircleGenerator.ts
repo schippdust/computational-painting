@@ -34,7 +34,7 @@ export interface CircleGeneratorProps {
  * Generates vehicles distributed along a circle perimeter at regular angular intervals.
  * Vehicles are positioned at specified angles and oriented according to the circle's
  * local tangent coordinate system. Useful for creating circular formations and paths.
- * 
+ *
  * The generator traverses from startAngle to endAngle in steps of angleStep.
  * Positive angleStep traverses counterclockwise; negative traverses clockwise.
  */
@@ -64,7 +64,7 @@ export class CircleGenerator {
    * Positions the vehicle at the current angle and orients it using the tangent
    * coordinate system. The velocity is transformed from local to world space.
    * Automatically increments the angle and marks complete when endAngle is reached.
-   * 
+   *
    * This method mutates the provided vehicle and updates the generator state.
    * @param vehicle The Vehicle instance to position and add to the collection
    * @param rebuildOcTree Whether to rebuild spatial partitioning after adding (default: true)

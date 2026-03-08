@@ -12,7 +12,7 @@ import type { WindSystem } from '../../Core/WindSystem';
  * Acts as a container system where the parent vehicle's position changes are
  * propagated to all contained sub-vehicles. Useful for creating grouped formations
  * and hierarchical vehicle structures.
- * 
+ *
  * Update sequence: (1) Update system-level physics, (2) Transform all sub-vehicles
  * by the change in system position, (3) Update sub-vehicles with their own physics.
  */

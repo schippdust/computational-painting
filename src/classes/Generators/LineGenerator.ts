@@ -35,7 +35,7 @@ export interface LineGeneratorProps {
  * Vehicles are positioned at specified points along the line and oriented according
  * to the line's local coordinate system (tangent, normal, binormal).
  * Useful for creating linear formations and stroke-like patterns.
- * 
+ *
  * The generator traverses from startT to endT in steps of tStep (t ∈ [0, 1]).
  * Positive tStep traverses toward the end; negative tStep traverses toward the start.
  */
@@ -65,7 +65,7 @@ export class LineGenerator {
    * Positions each vehicle at the current parametric position and orients it using
    * the line's coordinate system. Velocity is transformed from local to world space.
    * Automatically increments the parameter and marks complete when endT is reached.
-   * 
+   *
    * Warns if tStep is zero (would cause infinite loop). This method mutates the
    * provided vehicle and updates the generator state.
    * @param vehicle The Vehicle instance to position and add to the collection

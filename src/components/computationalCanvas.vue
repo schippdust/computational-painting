@@ -26,7 +26,7 @@ const frameRate = ref(40);
 const numberOfFrames = ref(0);
 const numberOfVehicles = ref(0);
 
-let cameraPos = new P5.Vector(4000, -4000, 6000); // angled
+let cameraPos = new P5.Vector(8000, -8000, 9000); // angled
 let cameraFocus = new P5.Vector(0, 0, 0);
 let fovDegrees = 80;
 appStore.setCameraPosition(cameraPos);
@@ -39,19 +39,21 @@ onMounted(() => {
   let windSystem: WindSystem;
   let generationSphere: Sphere;
   let initialVelocityMagnitude = 5;
-  const maxVehicles = 2000;
-  const flockingSearchRadius = 2000;
+  const maxVehicles = 3000;
+  const persistentSteerForceMagnitude = 1; // Magnitude of radial outward persistent steer force
+  const flockingSearchRadius = 5000;
+  const friction = 0.2;
 
   const sketch = (p5: P5) => {
     p5.setup = () => {
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
-      p5.background(0);
+      p5.background(255);
       p5.frameRate(frameRate.value);
 
       // Initialize the sphere for point generation
       generationSphere = new Sphere(
         CoordinateSystem.fromOriginAndNormal(
-          new P5.Vector(0, 0, -2500),
+          new P5.Vector(0, 0, 0),
           new P5.Vector(0, 0, 1),
         ),
         5000,
@@ -69,34 +71,23 @@ onMounted(() => {
       windSystem.setNoiseDetail(2, 0.5);
 
       // Initialize renderer
-      dotRenderer = new DotRenderer(p5, 3, [255, 255, 255], camera.value);
+      dotRenderer = new DotRenderer(p5, 5, [0, 0, 0], camera.value);
       dotRenderer.dotSize = 1;
     };
 
     p5.draw = () => {
-      p5.stroke(255);
-
       // Remove dead vehicles before processing
-
-      // Update all vehicles with forces and behaviors
-      for (const vehicle of branchingCollection.vehicles) {
-        // Apply wind force
-        // vehicle.applyWind(windSystem);
-
-        // Apply desired upward movement (seek upward)
-        const upwardTarget = vehicle.coords.copy().add(new P5.Vector(0, 0, 1));
-        vehicle.seek(upwardTarget, 1);
-      }
+      branchingCollection.applyWind(windSystem, 0.1, 0.01);
+      // Update all vehicles with forces and behaviors (persistent steer forces applied in vehicle.update())
 
       // Update the branching collection (handles branching)
       if (branchingCollection.vehicles.length > 1) {
         console.log('flocking');
-        branchingCollection.flock(flockingSearchRadius, 0.001, 0.001, 0.001);
+        branchingCollection.flock(flockingSearchRadius, 1.5, 0.1, 0.1);
       }
       branchingCollection.update();
 
-      // Generate new vehicles only if we're below the maximum
-      if (branchingCollection.vehicles.length < maxVehicles) {
+      function generateNewVehicle() {
         const newPosition = generationSphere.randomPointInside();
         const newVehicle = new Vehicle(
           p5,
@@ -104,11 +95,39 @@ onMounted(() => {
           createGenericPhysicalProps(),
         );
         newVehicle.lifeExpectancy = 750;
-        newVehicle.env.friction = 0.2;
+        newVehicle.env.friction = friction;
         // Set initial velocity upward
         newVehicle.velocity = new P5.Vector(0, 0, initialVelocityMagnitude);
-        newVehicle.desiredSeparation = flockingSearchRadius / 1.5;
+        newVehicle.desiredSeparation = flockingSearchRadius;
+        newVehicle.phys.maxSteerForce = 1;
+
+        // Calculate persistent steer force direction from sphere center to vehicle position
+        const sphereCenter = generationSphere.coordinateSystem.getPosition();
+        let steerDirection = P5.Vector.sub(newPosition, sphereCenter);
+
+        // If vehicle is at sphere center, use random direction
+        if (steerDirection.mag() < 0.001) {
+          steerDirection = P5.Vector.random3D();
+        } else {
+          steerDirection.normalize();
+        }
+
+        // Create and assign persistent steer force with configured magnitude
+        const persistentSteerForce = steerDirection.mult(
+          persistentSteerForceMagnitude,
+        );
+        newVehicle.addPersistentSteerForce(persistentSteerForce);
+
         branchingCollection.vehicles.push(newVehicle);
+      }
+
+      // Generate new vehicles only if we're below the maximum
+      while (branchingCollection.vehicles.length < 100) {
+        generateNewVehicle();
+      }
+      if (branchingCollection.vehicles.length < maxVehicles) {
+        generateNewVehicle();
+        generateNewVehicle();
       }
 
       // Render all vehicles

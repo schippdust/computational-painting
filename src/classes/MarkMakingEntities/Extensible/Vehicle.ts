@@ -73,6 +73,7 @@ export class Vehicle {
   // behavior variables
   public constrainMovementOrthogonally: boolean;
   public desiredSeparation: number;
+  protected persistentSteerForces: P5.Vector[] = [];
 
   /**
    * Creates a new Vehicle.
@@ -105,6 +106,7 @@ export class Vehicle {
 
     this.constrainMovementOrthogonally = false;
     this.desiredSeparation = 40;
+    this.persistentSteerForces = [];
   }
 
   /**
@@ -199,6 +201,11 @@ export class Vehicle {
     this.previousUpDirection = this.phys.up.copy().normalize();
     this.previousForward = this.phys.forward.copy().normalize();
 
+    // Apply persistent steer forces at the beginning of the update
+    for (const steerForce of this.persistentSteerForces) {
+      this.applyForce(steerForce.copy());
+    }
+
     // apply pseudo friction if relevant
     if (this.env.friction != null) {
       this.applyFriction();
@@ -259,7 +266,7 @@ export class Vehicle {
    */
   private calculateTargetPitch(): P5.Vector {
     const minMagnitudeThreshold = 1e-5; // Threshold for near-zero cross product conditions
-    
+
     if (!this.previousForward || !this.previousUpDirection) {
       return this.phys.up.copy();
     }
@@ -341,7 +348,10 @@ export class Vehicle {
    * @returns This Vehicle instance for method chaining
    */
   applyForce(force: P5.Vector): Vehicle {
-    const acceleration = force.copy().div(this.phys.mass);
+    const acceleration = force
+      .copy()
+      .div(this.phys.mass)
+      .limit(this.phys.maxSteerForce);
     this.phys.acceleration.add(acceleration);
     return this;
   }
@@ -622,7 +632,93 @@ export class Vehicle {
       newVehicle.previousForward = this.previousForward.copy();
     }
 
+    // Copy persistent steer forces
+    newVehicle.persistentSteerForces = this.persistentSteerForces.map((force) =>
+      force.copy(),
+    );
+
     return newVehicle;
+  }
+
+  /**
+   * Adds one or more persistent steer forces to be applied every frame.
+   * Persistent forces are retained across updates and duplications, providing
+   * continuous acceleration or steering influence. The forces are applied sequentially
+   * at the beginning of each update cycle.
+   * This method mutates the instance and returns it for method chaining.
+   * @param forces A single force vector or array of force vectors to add
+   * @param preventDuplicates If true (default), prevents adding forces that already exist (using approximate equality)
+   * @returns This Vehicle instance for method chaining
+   */
+  addPersistentSteerForce(
+    forces: P5.Vector | P5.Vector[],
+    preventDuplicates: boolean = true,
+  ): Vehicle {
+    const forcesToAdd = Array.isArray(forces) ? forces : [forces];
+    const tolerance = 1e-6;
+
+    for (const force of forcesToAdd) {
+      // Check for duplicates if prevention is enabled
+      let isDuplicate = false;
+      if (preventDuplicates) {
+        isDuplicate = this.persistentSteerForces.some((existing) => {
+          const dx = Math.abs(existing.x - force.x);
+          const dy = Math.abs(existing.y - force.y);
+          const dz = Math.abs(existing.z - force.z);
+          return dx <= tolerance && dy <= tolerance && dz <= tolerance;
+        });
+      }
+
+      // Only add if not a duplicate (or if duplicates are allowed)
+      if (!isDuplicate) {
+        this.persistentSteerForces.push(force.copy());
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Removes a specific persistent steer force by vector value.
+   * Searches for the first force matching the given vector (using approximate equality)
+   * and removes it. If not found, returns without error.
+   * This method mutates the instance and returns it for method chaining.
+   * @param force The force vector to remove
+   * @returns This Vehicle instance for method chaining
+   */
+  removePersistentSteerForce(force: P5.Vector): Vehicle {
+    const tolerance = 1e-6;
+    this.persistentSteerForces = this.persistentSteerForces.filter((f) => {
+      const dx = Math.abs(f.x - force.x);
+      const dy = Math.abs(f.y - force.y);
+      const dz = Math.abs(f.z - force.z);
+      return dx > tolerance || dy > tolerance || dz > tolerance;
+    });
+    return this;
+  }
+
+  /**
+   * Removes multiple persistent steer forces from the list.
+   * Removes all forces matching the given vectors (using approximate equality).
+   * This method mutates the instance and returns it for method chaining.
+   * @param forces Array of force vectors to remove
+   * @returns This Vehicle instance for method chaining
+   */
+  removePersistentSteerForces(forces: P5.Vector[]): Vehicle {
+    for (const force of forces) {
+      this.removePersistentSteerForce(force);
+    }
+    return this;
+  }
+
+  /**
+   * Removes all persistent steer forces from the vehicle.
+   * Clears the entire persistent steer forces array.
+   * This method mutates the instance and returns it for method chaining.
+   * @returns This Vehicle instance for method chaining
+   */
+  clearPersistentSteerForces(): Vehicle {
+    this.persistentSteerForces = [];
+    return this;
   }
 
   /**
