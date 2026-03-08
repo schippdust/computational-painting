@@ -103,7 +103,7 @@ onMounted(() => {
       windSystem.setNoiseDetail(4, 0.2);
 
       // Initialize renderer
-      dotRenderer = new DotRenderer(p5, 5, [0, 0, 0], camera.value);
+      dotRenderer = new DotRenderer(p5, 5, 15000, [0, 0, 0], camera.value);
       dotRenderer.dotSize = 1;
     };
 
