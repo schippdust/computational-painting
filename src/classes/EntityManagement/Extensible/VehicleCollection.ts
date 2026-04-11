@@ -11,7 +11,6 @@ import type { WindSystem } from '../../Core/WindSystem';
 export class VehicleCollection {
   public vehicles: Vehicle[] = [];
   private ocTree: OcTree | null = null;
-  private ocTreeRebuilt: boolean = false;
 
   /**
    * Creates a new VehicleCollection with optional initial vehicles.
@@ -21,6 +20,39 @@ export class VehicleCollection {
     if (vehicles) {
       this.vehicles = vehicles;
     }
+  }
+
+  /** Number of vehicles currently in the collection. */
+  get count(): number {
+    return this.vehicles.length;
+  }
+
+  /** True when the collection contains no vehicles. */
+  get isEmpty(): boolean {
+    return this.vehicles.length === 0;
+  }
+
+  /**
+   * Removes a vehicle from the collection by UUID.
+   * Does nothing if no vehicle with that UUID exists.
+   * This method mutates the instance and returns it for method chaining.
+   * @param uuid The UUID of the vehicle to remove
+   * @returns This VehicleCollection instance for method chaining
+   */
+  removeVehicle(uuid: string): VehicleCollection {
+    this.vehicles = this.vehicles.filter((v) => v.uuid !== uuid);
+    return this;
+  }
+
+  /**
+   * Removes all vehicles from the collection and clears the octree.
+   * This method mutates the instance and returns it for method chaining.
+   * @returns This VehicleCollection instance for method chaining
+   */
+  clear(): VehicleCollection {
+    this.vehicles = [];
+    this.ocTree = null;
+    return this;
   }
 
   addVehicle(
@@ -46,25 +78,16 @@ export class VehicleCollection {
   }
 
   buildOcTree(): VehicleCollection {
-    console.log('building octree for', this.vehicles.length, 'vehicles');
     this.ocTree = new OcTree(this.vehicles);
-    this.ocTreeRebuilt = true;
     return this;
   }
 
   update(): VehicleCollection {
     this.vehicles.forEach((v) => v.update());
-    const updatedVehicleCount = this.vehicles.length;
-    this.vehicles = this.vehicles.filter((v) => {
-      return v.age < v.lifeExpectancy;
-    });
-    const stillLivingCount = this.vehicles.length;
-    // if (updatedVehicleCount !== stillLivingCount) {
-    //   console.log(
-    //     `VehicleCollection: ${updatedVehicleCount - stillLivingCount} vehicles died.`,
-    //   );
-    // }
-    this.ocTreeRebuilt = false;
+    this.vehicles = this.vehicles.filter((v) => v.age < v.lifeExpectancy);
+    // Invalidate the octree — vehicles have moved and dead ones have been removed.
+    // It will be rebuilt lazily on the next spatial query.
+    this.ocTree = null;
     return this;
   }
 
@@ -100,35 +123,14 @@ export class VehicleCollection {
     return this;
   }
 
-  seak(
+  seek(
     targetPosition: P5.Vector | P5.Vector[],
     multiplier: number = 1,
     awarenessDistance: number | null = null,
   ): VehicleCollection {
-    const targetList = Array.isArray(targetPosition)
-      ? targetPosition
-      : [targetPosition];
-    for (const target of targetList) {
-      if (
-        this.ocTree == null &&
-        awarenessDistance != null &&
-        awarenessDistance > 0
-      ) {
-        this.buildOcTree();
-      }
-      if (
-        this.ocTree != null &&
-        awarenessDistance != null &&
-        awarenessDistance > 0
-      ) {
-        const relevantVehicles = this.ocTree.queryNeighbors(
-          target,
-          awarenessDistance,
-        );
-        relevantVehicles.forEach((v) => v.seek(target, multiplier));
-      } else {
-        this.vehicles.forEach((v) => v.seek(target, multiplier));
-      }
+    const targets = Array.isArray(targetPosition) ? targetPosition : [targetPosition];
+    for (const target of targets) {
+      this.vehiclesInRange(target, awarenessDistance).forEach((v) => v.seek(target, multiplier));
     }
     return this;
   }
@@ -137,30 +139,9 @@ export class VehicleCollection {
     targetPosition: P5.Vector | P5.Vector[],
     awarenessDistance: number | null = null,
   ): VehicleCollection {
-    const targetPositionList = Array.isArray(targetPosition)
-      ? targetPosition
-      : [targetPosition];
-    for (const pos of targetPositionList) {
-      if (
-        this.ocTree == null &&
-        awarenessDistance != null &&
-        awarenessDistance > 0
-      ) {
-        this.buildOcTree();
-      }
-      if (
-        this.ocTree != null &&
-        awarenessDistance != null &&
-        awarenessDistance > 0
-      ) {
-        const relevantVehicles = this.ocTree.queryNeighbors(
-          pos,
-          awarenessDistance,
-        );
-        relevantVehicles.forEach((v) => v.arrive(pos));
-      } else {
-        this.vehicles.forEach((v) => v.arrive(pos));
-      }
+    const targets = Array.isArray(targetPosition) ? targetPosition : [targetPosition];
+    for (const target of targets) {
+      this.vehiclesInRange(target, awarenessDistance).forEach((v) => v.arrive(target));
     }
     return this;
   }
@@ -171,34 +152,11 @@ export class VehicleCollection {
     awarenessDistance: number | null = null,
     multiplier: number = 1,
   ): VehicleCollection {
-    const targetPositionList = Array.isArray(targetPosition)
-      ? targetPosition
-      : [targetPosition];
-    for (const pos of targetPositionList) {
-      if (
-        this.ocTree == null &&
-        awarenessDistance != null &&
-        awarenessDistance > 0
-      ) {
-        this.buildOcTree();
-      }
-      if (
-        this.ocTree != null &&
-        awarenessDistance != null &&
-        awarenessDistance > 0
-      ) {
-        const relevantVehicles = this.ocTree.queryNeighbors(
-          pos,
-          awarenessDistance,
-        );
-        relevantVehicles.forEach((v) =>
-          v.avoid(pos, desiredClosestDistance, multiplier),
-        );
-      } else {
-        this.vehicles.forEach((v) =>
-          v.avoid(pos, desiredClosestDistance, multiplier),
-        );
-      }
+    const targets = Array.isArray(targetPosition) ? targetPosition : [targetPosition];
+    for (const target of targets) {
+      this.vehiclesInRange(target, awarenessDistance).forEach((v) =>
+        v.avoid(target, desiredClosestDistance, multiplier),
+      );
     }
     return this;
   }
@@ -207,17 +165,10 @@ export class VehicleCollection {
     neighborDistance: number,
     separateMultiplier: number = 1,
   ): VehicleCollection {
-    if (this.ocTree == null) {
-      this.buildOcTree();
-    }
-    if (this.ocTree != null) {
-      const ocTree = this.ocTree;
+    const ocTree = this.requireOcTree();
+    if (ocTree) {
       this.vehicles.forEach((v) => {
-        const neighbors = ocTree.queryNeighbors(v, neighborDistance);
-        v.separate(
-          neighbors.map((n) => n.coords),
-          separateMultiplier,
-        );
+        v.separate(ocTree.queryNeighbors(v, neighborDistance).map((n) => n.coords), separateMultiplier);
       });
     }
     return this;
@@ -226,30 +177,20 @@ export class VehicleCollection {
   alignToVectors(
     alignmentVectors: P5.Vector | P5.Vector[],
     alignMultiplier: number = 1,
-  ) {
-    const vectorList = Array.isArray(alignmentVectors)
-      ? alignmentVectors
-      : [alignmentVectors];
-    this.vehicles.forEach((v) => {
-      v.align(vectorList, alignMultiplier);
-    });
+  ): VehicleCollection {
+    const vectorList = Array.isArray(alignmentVectors) ? alignmentVectors : [alignmentVectors];
+    this.vehicles.forEach((v) => v.align(vectorList, alignMultiplier));
+    return this;
   }
 
   alignToNeighbors(
     neighborDistance: number,
     alignMultiplier: number = 1,
   ): VehicleCollection {
-    if (this.ocTree == null) {
-      this.buildOcTree();
-    }
-    if (this.ocTree != null) {
-      const ocTree = this.ocTree;
+    const ocTree = this.requireOcTree();
+    if (ocTree) {
       this.vehicles.forEach((v) => {
-        const neighbors = ocTree.queryNeighbors(v, neighborDistance);
-        v.align(
-          neighbors.map((n) => n.phys.velocity),
-          alignMultiplier,
-        );
+        v.align(ocTree.queryNeighbors(v, neighborDistance).map((n) => n.phys.velocity), alignMultiplier);
       });
     }
     return this;
@@ -259,17 +200,10 @@ export class VehicleCollection {
     neighborDistance: number,
     cohereMultiplier: number = 1,
   ): VehicleCollection {
-    if (this.ocTree == null) {
-      this.buildOcTree();
-    }
-    if (this.ocTree != null) {
-      const ocTree = this.ocTree;
+    const ocTree = this.requireOcTree();
+    if (ocTree) {
       this.vehicles.forEach((v) => {
-        const neighbors = ocTree.queryNeighbors(v, neighborDistance);
-        v.cohere(
-          neighbors.map((n) => n.coords),
-          cohereMultiplier,
-        );
+        v.cohere(ocTree.queryNeighbors(v, neighborDistance).map((n) => n.coords), cohereMultiplier);
       });
     }
     return this;
@@ -281,28 +215,44 @@ export class VehicleCollection {
     alignMultiplier: number = 5,
     cohereMultiplier: number = 5,
   ): VehicleCollection {
-    if (this.ocTree == null) {
-      this.buildOcTree();
-    }
-    if (this.ocTree != null) {
-      const ocTree = this.ocTree;
+    const ocTree = this.requireOcTree();
+    if (ocTree) {
       this.vehicles.forEach((v) => {
         const neighbors = ocTree.queryNeighbors(v, neighborDistance);
-        v.separate(
-          neighbors.map((n) => n.coords),
-          separateMultiplier,
-        );
-        v.align(
-          neighbors.map((n) => n.phys.velocity),
-          alignMultiplier,
-        );
-        v.cohere(
-          neighbors.map((n) => n.coords),
-          cohereMultiplier,
-        );
+        v.separate(neighbors.map((n) => n.coords), separateMultiplier);
+        v.align(neighbors.map((n) => n.phys.velocity), alignMultiplier);
+        v.cohere(neighbors.map((n) => n.coords), cohereMultiplier);
       });
     }
     return this;
+  }
+
+  /**
+   * Returns the vehicles within a given radius of a center point.
+   * If radius is null or zero, returns all vehicles in the collection.
+   * Builds the octree lazily when a radius is provided.
+   * @param center The position to query around
+   * @param radius Search radius, or null to include all vehicles
+   * @returns Array of vehicles within range (or all vehicles if no radius)
+   * @private
+   */
+  private vehiclesInRange(center: P5.Vector, radius: number | null): Vehicle[] {
+    if (radius != null && radius > 0) {
+      if (this.ocTree == null) this.buildOcTree();
+      if (this.ocTree != null) return this.ocTree.queryNeighbors(center, radius);
+    }
+    return this.vehicles;
+  }
+
+  /**
+   * Ensures the octree is built, constructing it lazily if absent.
+   * Returns null if the collection has fewer than two vehicles (octree not needed).
+   * @returns The current OcTree instance, or null if unavailable
+   * @private
+   */
+  private requireOcTree(): OcTree | null {
+    if (this.ocTree == null && this.vehicles.length > 1) this.buildOcTree();
+    return this.ocTree;
   }
 
   /**

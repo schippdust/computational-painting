@@ -60,6 +60,25 @@ export class CircleGenerator {
   }
 
   /**
+   * Generates all remaining vehicles along the circle in one call.
+   * Calls the provided factory to produce a fresh Vehicle for each angular step.
+   * Marks the generator complete when finished.
+   * This method mutates the generator state and returns it for method chaining.
+   * @param vehicleFactory A function that returns a new Vehicle instance for each position
+   * @param rebuildOcTree Whether to rebuild the octree after all vehicles are added (default: true)
+   * @returns This CircleGenerator instance for method chaining
+   */
+  generateAll(vehicleFactory: () => Vehicle, rebuildOcTree = true): CircleGenerator {
+    while (!this.complete) {
+      this.generateVehicle(vehicleFactory(), false);
+    }
+    if (rebuildOcTree && this.generatedVehicles.count > 1) {
+      this.generatedVehicles.buildOcTree();
+    }
+    return this;
+  }
+
+  /**
    * Generates a single vehicle at the current angular position on the circle.
    * Positions the vehicle at the current angle and orients it using the tangent
    * coordinate system. The velocity is transformed from local to world space.
