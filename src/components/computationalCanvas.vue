@@ -54,7 +54,7 @@ onMounted(() => {
   const sketch = (p5: P5) => {
     p5.setup = () => {
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
-      p5.background(255);
+      p5.background(0);
       p5.frameRate(frameRate.value);
 
       // Initialize multiple spheres for point generation
@@ -103,7 +103,13 @@ onMounted(() => {
       windSystem.setNoiseDetail(4, 0.2);
 
       // Initialize renderer
-      dotRenderer = new DotRenderer(p5, 5, 15000, [0, 0, 0], camera.value);
+      dotRenderer = new DotRenderer(
+        p5,
+        5,
+        15000,
+        [255, 255, 255],
+        camera.value,
+      );
       dotRenderer.dotSize = 1;
     };
 
