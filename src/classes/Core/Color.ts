@@ -1,6 +1,5 @@
 import d3 from 'd3';
 import * as d3Color from 'd3-color';
-import P5 from 'p5';
 
 export class ColorManager {
   constructor(public colorPalette: d3Color.Color[] = []) {}
@@ -12,38 +11,6 @@ export class ColorManager {
     }
     const color = d3Color.rgb(rgb[0], rgb[1], rgb[2]);
     return color;
-  }
-
-  static d3ColorToP5Color(
-    color: d3Color.Color | d3Color.Color[],
-  ): P5.Color | P5.Color[] {
-    if (Array.isArray(color)) {
-      return color.map((c) => {
-        const colorOut = new P5.Color();
-        const rgbColor = c.formatRgb();
-        const rgbValues = rgbColor.match(/\d+/g);
-        if (rgbValues && rgbValues.length === 3) {
-          colorOut.setRed(parseInt(rgbValues[0], 10));
-          colorOut.setGreen(parseInt(rgbValues[1], 10));
-          colorOut.setBlue(parseInt(rgbValues[2], 10));
-        } else {
-          console.warn('Invalid RGB format:', rgbColor);
-        }
-        return colorOut;
-      });
-    } else {
-      const colorOut = new P5.Color();
-      const rgbColor = color.formatRgb();
-      const rgbValues = rgbColor.match(/\d+/g);
-      if (rgbValues && rgbValues.length === 3) {
-        colorOut.setRed(parseInt(rgbValues[0], 10));
-        colorOut.setGreen(parseInt(rgbValues[1], 10));
-        colorOut.setBlue(parseInt(rgbValues[2], 10));
-      } else {
-        console.warn('Invalid RGB format:', rgbColor);
-      }
-      return colorOut;
-    }
   }
 
   addColor(

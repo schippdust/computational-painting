@@ -1,5 +1,4 @@
 import { mapNumber } from '@/stores/utilityFunctions';
-import { Vector } from 'p5';
 import p5 from 'p5';
 
 export class CanvasThreads {
@@ -25,7 +24,7 @@ export class CanvasThreads {
   }
 
   //thread width _ _ | _ _ _ thread spacing
-  calcOpacityAtPoint(point: Vector): number {
+  calcOpacityAtPoint(point: p5.Vector): number {
     if (
       point.x < 0 ||
       point.y < 0 ||
@@ -43,7 +42,7 @@ export class CanvasThreads {
     return (xOpacity + yOpacity) / 2;
   }
 
-  calcOpacityAtPointGivenVector(point: Vector, direction: Vector) {
+  calcOpacityAtPointGivenVector(point: p5.Vector, direction: p5.Vector) {
     if (
       point.x < 0 ||
       point.y < 0 ||

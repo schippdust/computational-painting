@@ -3,7 +3,7 @@ import P5 from 'p5';
 import { pressSpaceToPause } from '@/classes/Rendering/DrawingUtils';
 import { CoordinateSystem } from '@/classes/Geometry/CoordinateSystem';
 import { Sphere } from '@/classes/Geometry/Sphere';
-import '@/classes/Geometry/VectorOverloads';
+
 
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';

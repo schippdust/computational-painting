@@ -1,4 +1,4 @@
-import P5, { Vector } from 'p5';
+import P5 from 'p5';
 import { Line } from '../Geometry/Line';
 
 /**
@@ -44,9 +44,9 @@ export class Camera3D {
     // Step 1: Orthonormal basis
     point = point.copy();
     const forward = P5.Vector.sub(this.focus, this.pos).normalize(); // forward: into screen (Y)
-    const right = forward.copy().cross(this.up.copy()) as Vector; // right: X
+    const right = forward.copy().cross(this.up.copy()) as P5.Vector; // right: X
     right.normalize();
-    const camUp = right.copy().cross(forward.copy()) as Vector; // camUp: Z
+    const camUp = right.copy().cross(forward.copy()) as P5.Vector; // camUp: Z
     camUp.normalize();
 
     // Step 2: Transform point into camera space
