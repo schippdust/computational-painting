@@ -5,6 +5,7 @@ import {
 } from '@/classes/MarkMakingEntities/Extensible/Vehicle';
 import { VehicleSystem } from '../Extensible/VehicleSystem';
 import P5 from 'p5';
+import { scatter } from '@/classes/Geometry/VectorOverloads';
 
 /**
  * Configuration properties for brush stroke effects in BrushStrokeSystem.
@@ -82,7 +83,8 @@ export class BrushStrokeSystem extends VehicleSystem {
   offsetFromPosition(): BrushStrokeSystem {
     if (this.phys.velocity.mag() === 0) {
       const cursor = this.coords.copy();
-      let offsetVector = this.phys.velocity.scatter(
+      let offsetVector = scatter(
+        this.phys.velocity,
         this.brushProps.offsetScatterPotential,
       );
       let continueOffsetting = true;
@@ -100,7 +102,7 @@ export class BrushStrokeSystem extends VehicleSystem {
           cursor.add(offsetVector),
           this.brushProps.brushPhysProps,
         );
-        offsetVector = cursor.scatter(this.brushProps.offsetScatterPotential);
+        offsetVector = scatter(cursor, this.brushProps.offsetScatterPotential);
         this.addVehicle(newVehicle);
         attempts++;
       }

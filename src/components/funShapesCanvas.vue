@@ -5,7 +5,7 @@ import { CoordinateSystem } from '@/classes/Geometry/CoordinateSystem';
 import { Circle } from '@/classes/Geometry/Circle';
 import { Line } from '@/classes/Geometry/Line';
 import { Sphere } from '@/classes/Geometry/Sphere';
-import '@/classes/Geometry/VectorOverloads';
+
 
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
@@ -52,7 +52,7 @@ appStore.setCameraPosition(cameraPos);
 appStore.setCameraTarget(cameraFocus);
 appStore.setCameraFOV(fovDegrees);
 
-console.log(typeof P5.Vector.prototype.scatter);
+
 
 onMounted(() => {
   function getSketchParams() {
@@ -87,7 +87,7 @@ onMounted(() => {
         1200,
       );
       testGenerator = new CircleGenerator(p5, circle, generatorProps);
-      dotRenderer = new DotRenderer(p5, 3, [255, 255, 255], camera.value);
+      dotRenderer = new DotRenderer(p5, 3, 15000, [255, 255, 255], camera.value);
     };
 
     p5.draw = () => {

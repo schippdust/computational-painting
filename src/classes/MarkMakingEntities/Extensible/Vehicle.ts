@@ -2,6 +2,7 @@ import P5 from 'p5';
 import { prependUniqueWithLimit } from '../../Core/CodeUtils';
 import type { WindSystem } from '../../Core/WindSystem';
 import { CoordinateSystem } from '../../Geometry/CoordinateSystem';
+import { rotate3D } from '../../Geometry/VectorOverloads';
 
 /**
  * Physical properties of a vehicle including kinematics, mass, and steering constraints.
@@ -239,10 +240,11 @@ export class Vehicle {
     if (angleBetween > angleThreshold) {
       const rotationAxis = previousUp.copy().cross(pitchTarget).normalize();
       const limitedAngle = Math.min(angleBetween, this.phys.maxPitchAdjustment);
-      const rotatedUp = previousUp
-        .copy()
-        .rotate(limitedAngle, rotationAxis)
-        .normalize();
+      const rotatedUp = rotate3D(
+        previousUp.copy(),
+        limitedAngle,
+        rotationAxis,
+      ).normalize();
       this.phys.up = rotatedUp;
       this.coordSystem.setYAxis(rotatedUp);
     }

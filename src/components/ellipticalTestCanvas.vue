@@ -4,6 +4,7 @@ import { drawAxes, pressSpaceToPause } from '@/classes/Rendering/DrawingUtils';
 import { CoordinateSystem } from '@/classes/Geometry/CoordinateSystem';
 import { Circle } from '@/classes/Geometry/Circle';
 import { Line } from '@/classes/Geometry/Line';
+import { rotate3D } from '@/classes/Geometry/VectorOverloads';
 
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
@@ -76,7 +77,7 @@ onMounted(() => {
       );
 
       const direction = P5.Vector.sub(cursor.copy(), centerPoint.copy());
-      direction.rotate(p5.HALF_PI, zUp);
+      rotate3D(direction, p5.HALF_PI, zUp);
       const currentCoords = CoordinateSystem.fromOriginAndNormal(
         cursor.copy(),
         direction.copy(),
