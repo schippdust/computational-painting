@@ -61,6 +61,21 @@ export class LineGenerator {
   }
 
   /**
+   * Generates all remaining vehicles along the line in one call.
+   * Calls the provided factory to produce a fresh Vehicle for each step.
+   * Marks the generator complete when finished.
+   * This method mutates the generator state and returns it for method chaining.
+   * @param vehicleFactory A function that returns a new Vehicle instance for each position
+   * @returns This LineGenerator instance for method chaining
+   */
+  generateAll(vehicleFactory: () => Vehicle): LineGenerator {
+    while (!this.complete) {
+      this.generateVehicles(vehicleFactory());
+    }
+    return this;
+  }
+
+  /**
    * Generates vehicles sequentially along the line from startT to endT.
    * Positions each vehicle at the current parametric position and orients it using
    * the line's coordinate system. Velocity is transformed from local to world space.

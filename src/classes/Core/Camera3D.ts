@@ -72,6 +72,17 @@ export class Camera3D {
   }
 
   /**
+   * Projects multiple 3D points to 2D screen coordinates in one call.
+   * Useful for batch rendering where individual project() calls would be verbose.
+   * Points behind the near clipping plane are returned as null at their index.
+   * @param points An array of 3D points in world coordinates
+   * @returns An array of 2D screen coordinate vectors (or null for culled points), same order as input
+   */
+  projectMany(points: P5.Vector[]): (P5.Vector | null)[] {
+    return points.map((p) => this.project(p));
+  }
+
+  /**
    * Projects one or more lines from world space to screen space.
    * Lines with endpoints behind the near clipping plane are culled.
    * Efficiently handles both single lines and arrays of lines.
@@ -82,7 +93,7 @@ export class Camera3D {
     const lineList = Array.isArray(line) ? line : [line];
     const linesOut: Line[] = [];
     for (const line of lineList) {
-      const projectedStartPoint = this.project(line.starPoint);
+      const projectedStartPoint = this.project(line.startPoint);
       const projectedEndPoint = this.project(line.endPoint);
       if (projectedStartPoint == null || projectedEndPoint == null) {
         continue;

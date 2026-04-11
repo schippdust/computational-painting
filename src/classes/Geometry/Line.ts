@@ -10,11 +10,11 @@ import { CoordinateSystem } from './CoordinateSystem';
 export class Line {
   /**
    * Creates a new Line instance.
-   * @param starPoint The starting point of the line segment
+   * @param startPoint The starting point of the line segment
    * @param endPoint The ending point of the line segment
    */
   constructor(
-    public starPoint: P5.Vector,
+    public startPoint: P5.Vector,
     public endPoint: P5.Vector,
   ) {}
 
@@ -24,7 +24,7 @@ export class Line {
    * @returns A point interpolated along the line at parameter t
    */
   getPointAtParam(t: number): P5.Vector {
-    return this.starPoint.copy().lerp(this.endPoint, t);
+    return this.startPoint.copy().lerp(this.endPoint, t);
   }
 
   /**
@@ -34,8 +34,8 @@ export class Line {
    * @returns The closest point on the line segment to the given point
    */
   getNearestPoint(point: P5.Vector): P5.Vector {
-    const lineVector = this.endPoint.copy().sub(this.starPoint);
-    const pointVector = point.copy().sub(this.starPoint);
+    const lineVector = this.endPoint.copy().sub(this.startPoint);
+    const pointVector = point.copy().sub(this.startPoint);
     let t = pointVector.dot(lineVector) / lineVector.magSq();
     t = Math.max(0, Math.min(1, t));
     return this.getPointAtParam(t);
@@ -50,12 +50,7 @@ export class Line {
    */
   getCoordinateSystemAtParam(t: number): CoordinateSystem {
     const position = this.getPointAtParam(t);
-    const tangent = this.endPoint.copy().sub(this.starPoint).normalize();
-    let arbitrary = new P5.Vector(0, 0, 1);
-    if (Math.abs(tangent.dot(arbitrary)) > 0.99) {
-      arbitrary = new P5.Vector(1, 0, 0);
-    }
-    const normal = tangent.copy().cross(arbitrary).normalize();
+    const { tangent, normal } = this.tangentBasis();
     return CoordinateSystem.fromOriginNormalX(position, tangent, normal);
   }
 
@@ -67,13 +62,24 @@ export class Line {
    */
   getCoordinateSystemAtNearestPoint(point: P5.Vector): CoordinateSystem {
     const nearestPoint = this.getNearestPoint(point);
-    const tangent = this.endPoint.copy().sub(this.starPoint).normalize();
+    const { tangent, normal } = this.tangentBasis();
+    return CoordinateSystem.fromOriginNormalX(nearestPoint, tangent, normal);
+  }
+
+  /**
+   * Computes the tangent direction and an orthogonal normal for this line.
+   * Chooses an arbitrary reference vector that avoids degeneracy with the tangent.
+   * @returns The normalized tangent and a perpendicular normal vector
+   * @private
+   */
+  private tangentBasis(): { tangent: P5.Vector; normal: P5.Vector } {
+    const tangent = this.endPoint.copy().sub(this.startPoint).normalize();
     let arbitrary = new P5.Vector(0, 0, 1);
     if (Math.abs(tangent.dot(arbitrary)) > 0.99) {
       arbitrary = new P5.Vector(1, 0, 0);
     }
     const normal = tangent.copy().cross(arbitrary).normalize();
-    return CoordinateSystem.fromOriginNormalX(nearestPoint, tangent, normal);
+    return { tangent, normal };
   }
 
   /**
@@ -81,18 +87,18 @@ export class Line {
    * @returns The length of the line segment
    */
   getLength(): number {
-    return this.starPoint.dist(this.endPoint);
+    return this.startPoint.dist(this.endPoint);
   }
 
   /**
    * Renders the line directly in 2D space using the p5 graphics context.
-   * Draws a line from starPoint to endPoint using the current stroke settings.
+   * Draws a line from startPoint to endPoint using the current stroke settings.
    * @param p5 The p5 instance to use for rendering
    */
   render2D(p5: P5) {
     p5.line(
-      this.starPoint.x,
-      this.starPoint.y,
+      this.startPoint.x,
+      this.startPoint.y,
       this.endPoint.x,
       this.endPoint.y,
     );
@@ -108,8 +114,8 @@ export class Line {
     const projectedLines = camera.renderLines(this);
     for (const line of projectedLines) {
       p5.line(
-        line.starPoint.x,
-        line.starPoint.y,
+        line.startPoint.x,
+        line.startPoint.y,
         line.endPoint.x,
         line.endPoint.y,
       );

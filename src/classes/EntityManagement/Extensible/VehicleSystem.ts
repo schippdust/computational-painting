@@ -63,7 +63,7 @@ export class VehicleSystem extends Vehicle {
     // then transforms all subvehicles based on change in the system's position,
     // then updates all subvehicles based on forces that have been applied at the sublevel
     super.update();
-    if (this.previousCoords.length === 0) {
+    if (this.previousCoords.length > 0) {
       const changeInPosition = this.coords.copy().sub(this.previousCoords[0]);
       this.systemVehicles.transformAll(changeInPosition);
     }

@@ -142,7 +142,6 @@ export class BranchingCollection extends VehicleCollection {
     }
 
     // Replace branching vehicles in the main collection
-    this.addVehicle(newVehicles, false);
     this.vehicles = this.vehicles.filter((v) => !vehiclesToRemove.has(v.uuid));
     this.vehicles.push(...newVehicles);
 

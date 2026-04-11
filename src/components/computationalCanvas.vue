@@ -42,9 +42,9 @@ onMounted(() => {
   let renderingSpheres: Sphere[] = [];
   let silhouettesRendered = false;
   let initialVelocityMagnitude = 5;
-  const maxVehicles = 3000;
+  const maxVehicles = 1000;
   const persistentSteerForceMagnitude = 0.5; // Magnitude of radial outward persistent steer force
-  const flockingSearchRadius = 5000;
+  const flockingSearchRadius = 2400;
   const friction = 0.2;
   const numberOfSpheres = 5;
   const individualSphereMinRadius = 1000;
@@ -120,7 +120,7 @@ onMounted(() => {
         const cameraPos = camera.value.pos;
         for (let i = 0; i < renderingSpheres.length; i++) {
           const renderingSphere = renderingSpheres[i];
-          const silhouetteCircle = renderingSphere.sillhouetteCircle(cameraPos);
+          const silhouetteCircle = renderingSphere.silhouetteCircle(cameraPos);
           silhouetteCircle.renderSegmentCount = 100;
 
           // Get all visible segments by checking against other rendering spheres
@@ -201,7 +201,7 @@ onMounted(() => {
         );
         newVehicle.addPersistentSteerForce(persistentSteerForce);
 
-        branchingCollection.vehicles.push(newVehicle);
+        branchingCollection.addVehicle(newVehicle, false);
       }
 
       // Generate new vehicles only if we're below the maximum

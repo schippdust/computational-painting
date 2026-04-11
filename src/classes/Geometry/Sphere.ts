@@ -10,7 +10,7 @@ import { Circle } from './Circle';
  * occlusion testing, and silhouette computation for camera frustum culling.
  */
 export class Sphere {
-  public renderSegements: Line[] = [];
+  public renderSegments: Line[] = [];
   private _renderSegmentCount: number = 16;
 
   /**
@@ -74,7 +74,7 @@ export class Sphere {
    * Calculates the volume of the sphere (4/3 * π * r³).
    * @returns The volume of the sphere
    */
-  get volumne() {
+  get volume() {
     return (4 / 3) * Math.PI * this._radius ** 3;
   }
 
@@ -93,7 +93,7 @@ export class Sphere {
    */
   randomPointOnSurface(): P5.Vector {
     const theta = Math.random() * Math.PI * 2;
-    const phi = Math.random() * Math.PI;
+    const phi = Math.acos(1 - 2 * Math.random());
     const x = this._radius * Math.sin(phi) * Math.cos(theta);
     const y = this._radius * Math.sin(phi) * Math.sin(theta);
     const z = this._radius * Math.cos(phi);
@@ -123,6 +123,32 @@ export class Sphere {
       .getPosition()
       .copy()
       .add(new P5.Vector(x, y, z));
+  }
+
+  /**
+   * Generates multiple random points uniformly distributed on the sphere's surface.
+   * @param count How many points to generate
+   * @returns An array of random points on the sphere's surface
+   */
+  randomPointsOnSurface(count: number): P5.Vector[] {
+    const points: P5.Vector[] = [];
+    for (let i = 0; i < count; i++) {
+      points.push(this.randomPointOnSurface());
+    }
+    return points;
+  }
+
+  /**
+   * Generates multiple random points uniformly distributed inside the sphere's volume.
+   * @param count How many points to generate
+   * @returns An array of random points inside the sphere
+   */
+  randomPointsInside(count: number): P5.Vector[] {
+    const points: P5.Vector[] = [];
+    for (let i = 0; i < count; i++) {
+      points.push(this.randomPointInside());
+    }
+    return points;
   }
 
   /**
@@ -192,7 +218,7 @@ export class Sphere {
     // Use silhouette cone from observationPoint
     const center = this.coordinateSystem.getPosition();
     const r = this._radius;
-    const p1 = line.starPoint;
+    const p1 = line.startPoint;
     const p2 = line.endPoint;
     // Vector from observer to sphere center
     const OC = P5.Vector.sub(center, observationPoint);
@@ -228,7 +254,7 @@ export class Sphere {
     // Returns visible segments of the line, hiding parts obscured by the sphere's silhouette cone
     const center = this.coordinateSystem.getPosition();
     const r = this._radius;
-    const p1 = line.starPoint;
+    const p1 = line.startPoint;
     const p2 = line.endPoint;
     const OC = P5.Vector.sub(center, observationPoint);
     const OCmag = OC.mag();
@@ -338,7 +364,7 @@ export class Sphere {
    * @param observationPoint The observer's position
    * @returns A Circle object representing the silhouette
    */
-  sillhouetteCircle(observationPoint: P5.Vector): Circle {
+  silhouetteCircle(observationPoint: P5.Vector): Circle {
     const cameraPosition = observationPoint;
     const circleCoordinateSystem = this.coordinateSystem
       .clone()
@@ -353,8 +379,8 @@ export class Sphere {
    * @param observationPoint The observer's position
    * @returns An array of Line segments representing the silhouette outline
    */
-  sillhouetteSegments(observationPoint: P5.Vector): Line[] {
-    const circle = this.sillhouetteCircle(observationPoint);
+  silhouetteSegments(observationPoint: P5.Vector): Line[] {
+    const circle = this.silhouetteCircle(observationPoint);
     return circle.renderSegments;
   }
 
