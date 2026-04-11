@@ -8,13 +8,11 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     ComputationalCanvas: typeof import('./components/computationalCanvas.vue')['default']
-    copy: typeof import('./components/computationalCanvas copy.vue')['default']
     EllipticalTestCanvas: typeof import('./components/ellipticalTestCanvas.vue')['default']
     FunShapesCanvas: typeof import('./components/funShapesCanvas.vue')['default']
     GridBlowingInWind: typeof import('./components/gridBlowingInWind.vue')['default']
     InitializationInputs: typeof import('./components/initializationInputs.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    TemplateCanvas: typeof import('./components/templateCanvas.vue')['default']
   }
 }
