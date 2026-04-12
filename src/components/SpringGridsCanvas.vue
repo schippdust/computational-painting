@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import P5 from 'p5';
 import { pressSpaceToPause } from '@/classes/Rendering/DrawingUtils';
-import { DotRenderer } from '@/classes/Rendering/Renderers/DotRenderer';
+import { VehicleDotRenderer } from '@/classes/Rendering/VehicleRenderers/VehicleDotRenderer';
 import { VehicleCollection } from '@/classes/EntityManagement/Extensible/VehicleCollection';
 import { GridGenerator } from '@/classes/Generators/InstanceGenerators/GridGenerator';
 import { createGenericPhysicalProps } from '@/classes/MarkMakingEntities/Extensible/Vehicle';
@@ -52,7 +52,7 @@ const numberOfVehicles = ref(0);
 defineExpose({ frameRate, numberOfFrames, numberOfVehicles });
 
 let p5Instance: P5 | null = null;
-let dotRenderer: DotRenderer | null = null;
+let dotRenderer: VehicleDotRenderer | null = null;
 
 watch(pauseCanvas, (paused) => {
   if (!p5Instance) return;
@@ -141,7 +141,7 @@ onMounted(() => {
         springAttractors.push(position);
       }
 
-      dotRenderer = new DotRenderer(
+      dotRenderer = new VehicleDotRenderer(
         p5,
         6,
         3000,

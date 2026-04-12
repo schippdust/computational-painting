@@ -23,7 +23,7 @@ import {
   BrushStrokeSystem,
   type BrushtrokeSystemProps,
 } from '@/classes/EntityManagement/VehicleSystems/BrushStrokeSystem';
-import { DotRenderer } from '@/classes/Rendering/Renderers/DotRenderer';
+import { VehicleDotRenderer } from '@/classes/Rendering/VehicleRenderers/VehicleDotRenderer';
 
 type ColorScheme = 'Black on White' | 'White on Black';
 
@@ -55,7 +55,7 @@ onMounted(() => {
   function getSketchParams() {
     return {};
   }
-  let dotRenderer: DotRenderer;
+  let dotRenderer: VehicleDotRenderer;
   let testGenerator: CircleGenerator;
   let generatorProps: CircleGeneratorProps = {
     startAngle: 0,
@@ -84,7 +84,7 @@ onMounted(() => {
         1200,
       );
       testGenerator = new CircleGenerator(p5, circle, generatorProps);
-      dotRenderer = new DotRenderer(
+      dotRenderer = new VehicleDotRenderer(
         p5,
         3,
         15000,

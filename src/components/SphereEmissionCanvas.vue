@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import P5 from 'p5';
 import { pressSpaceToPause } from '@/classes/Rendering/DrawingUtils';
-import { DotRenderer } from '@/classes/Rendering/Renderers/DotRenderer';
+import { VehicleDotRenderer } from '@/classes/Rendering/VehicleRenderers/VehicleDotRenderer';
 import { Sphere } from '@/classes/Geometry/Sphere';
 import { CoordinateSystem } from '@/classes/Geometry/CoordinateSystem';
 import {
@@ -37,7 +37,7 @@ const numberOfVehicles = ref(0);
 defineExpose({ frameRate, numberOfFrames, numberOfVehicles });
 
 let p5Instance: P5 | null = null;
-let dotRenderer: DotRenderer | null = null;
+let dotRenderer: VehicleDotRenderer | null = null;
 
 watch(pauseCanvas, (paused) => {
   if (!p5Instance) return;
@@ -84,7 +84,7 @@ onMounted(() => {
       p5.background(backgroundColor.value);
       p5.frameRate(frameRate.value);
 
-      dotRenderer = new DotRenderer(
+      dotRenderer = new VehicleDotRenderer(
         p5,
         4,
         sphereRadius * 4,

@@ -4,13 +4,14 @@ A generative art application where physics-driven agents leave permanent marks o
 
 ## Rules Files
 
-| File                                          | Contents                                                                                         |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| [Architecture](.claude/rules/architecture.md) | Tech stack, app structure, data flow, drawing philosophy                                         |
-| [Conventions](.claude/rules/conventions.md)   | TypeScript/Vue style, naming, method chaining, JSDoc                                             |
-| [Classes](.claude/rules/classes.md)           | Class hierarchy, folder anatomy, extension patterns                                              |
-| [p5 Patterns](.claude/rules/p5-patterns.md)   | p5.js usage patterns specific to this project                                                    |
-| [p5 Vehicles](.claude/rules/p5-vehicles.md)   | Vehicle/VehicleCollection physics pipeline, force ordering, springs, lifetime, flat-grid caveats |
+| File                                          | Contents                                                                                                                           |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| [Architecture](.claude/rules/architecture.md) | Tech stack, app structure, data flow, drawing philosophy                                                                           |
+| [Conventions](.claude/rules/conventions.md)   | TypeScript/Vue style, naming, method chaining, JSDoc                                                                               |
+| [Classes](.claude/rules/classes.md)           | Class hierarchy, folder anatomy, extension patterns                                                                                |
+| [p5 Patterns](.claude/rules/p5-patterns.md)   | p5.js usage patterns specific to this project                                                                                      |
+| [p5 Vehicles](.claude/rules/p5-vehicles.md)   | Vehicle/VehicleCollection physics pipeline, force ordering, springs, lifetime, flat-grid caveats                                   |
+| [p5 Rendering](.claude/rules/p5-rendering.md) | Renderer folder layout, GeometryRenderers vs VehicleRenderers vs PhysicsRenderers, distance scaling, camera projection, draw order |
 
 ## Commands
 

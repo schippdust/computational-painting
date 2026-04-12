@@ -15,7 +15,7 @@ import {
   BranchingCollection,
   createGenericBranchingCollectionProps,
 } from '@/classes/EntityManagement/VehicleCollections/BranchingCollection';
-import { DotRenderer } from '@/classes/Rendering/Renderers/DotRenderer';
+import { VehicleDotRenderer } from '@/classes/Rendering/VehicleRenderers/VehicleDotRenderer';
 import { dot } from 'mathjs';
 
 const appStore = useAppStore();
@@ -46,7 +46,7 @@ defineExpose({ frameRate, numberOfFrames, numberOfVehicles });
 
 // Keep the p5 loop in sync with the store's pause state (toggled by toolbar or spacebar).
 let p5Instance: P5 | null = null;
-let dotRenderer: DotRenderer | null = null;
+let dotRenderer: VehicleDotRenderer | null = null;
 
 watch(pauseCanvas, (paused) => {
   if (!p5Instance) return;
@@ -140,7 +140,7 @@ onMounted(() => {
       windSystem.setNoiseDetail(4, 0.2);
 
       // Initialize renderer
-      dotRenderer = new DotRenderer(
+      dotRenderer = new VehicleDotRenderer(
         p5,
         5,
         15000,
