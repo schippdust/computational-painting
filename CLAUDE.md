@@ -21,6 +21,26 @@ npm run lint       # ESLint with auto-fix
 npm run format     # Prettier
 ```
 
+## Scaffolding a New Canvas
+
+Use the `new-canvas` script to create a new iteration in one step:
+
+```bash
+npm run new-canvas -- <kebab-name> ["description"] [--group "Group Name"]
+# e.g.
+npm run new-canvas -- wind-particles "Particles steered by curl noise" --group "Wind Fields"
+npm run new-canvas -- branching-lines --group "Branching Spheres"
+npm run new-canvas -- my-canvas   # no --group → placed in "Uncategorized"
+```
+
+This creates three things:
+
+1. **`src/components/<PascalName>Canvas.vue`** — p5 sketch boilerplate with `setup`/`draw`/`keyPressed` stubs, camera + store wiring, pause sync watcher, `defineExpose` for stats, and a frame counter. Fill in the `TODO` sections.
+2. **`src/pages/<kebab-name>.vue`** — full-viewport route page with `CanvasToolbar` on the left, `CanvasInitOverlay` shown until the user confirms canvas settings, and the canvas component mounted after.
+3. **Registry entry in `src/canvasRegistry.ts`** — drives the gallery on the landing page (`/`). The `group` field clusters this iteration under its theme in the accordion gallery.
+
+The route is live immediately at `http://localhost:3000/<kebab-name>` once the dev server is running. The script will abort without writing anything if any of the target files already exist.
+
 ## Quick Orientation
 
 - Canvas components live in `src/components/` — each is a self-contained p5 sketch mounted on `onMounted`

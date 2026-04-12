@@ -40,6 +40,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       never
     >;
+    '/sphere-emission': RouteRecordInfo<
+      '/sphere-emission',
+      '/sphere-emission',
+      Record<never, never>,
+      Record<never, never>,
+      never
+    >;
   }
 
   /**
@@ -59,6 +66,10 @@ declare module 'vue-router/auto-routes' {
     };
     'src/pages/computational-canvas.vue': {
       routes: '/computational-canvas';
+      views: never;
+    };
+    'src/pages/sphere-emission.vue': {
+      routes: '/sphere-emission';
       views: never;
     };
   }

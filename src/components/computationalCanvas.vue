@@ -19,22 +19,60 @@ import { DotRenderer } from '@/classes/Rendering/Renderers/DotRenderer';
 import { dot } from 'mathjs';
 
 const appStore = useAppStore();
-const { canvasHeight, canvasWidth, pauseCanvas, camera } =
-  storeToRefs(appStore);
+const {
+  canvasHeight,
+  canvasWidth,
+  pauseCanvas,
+  camera,
+  primaryColor,
+  secondaryColor,
+  backgroundColor,
+} = storeToRefs(appStore);
+
+/** Convert a CSS hex color string to a p5-compatible [r, g, b] array. */
+function hexToRgb(hex: string): [number, number, number] {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/i.exec(hex);
+  return m
+    ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)]
+    : [255, 255, 255];
+}
 
 const frameRate = ref(40);
 const numberOfFrames = ref(0);
 const numberOfVehicles = ref(0);
 
-let cameraPos = new P5.Vector(8000, -8000, 9000); // angled
-let cameraFocus = new P5.Vector(0, 0, 0);
-let fovDegrees = 80;
-appStore.setCameraPosition(cameraPos);
-appStore.setCameraTarget(cameraFocus);
-appStore.setCameraFOV(fovDegrees);
+// Expose stats so the parent page can display them in the toolbar slot if desired.
+defineExpose({ frameRate, numberOfFrames, numberOfVehicles });
+
+// Keep the p5 loop in sync with the store's pause state (toggled by toolbar or spacebar).
+let p5Instance: P5 | null = null;
+let dotRenderer: DotRenderer | null = null;
+
+watch(pauseCanvas, (paused) => {
+  if (!p5Instance) return;
+  if (paused) p5Instance.noLoop();
+  else p5Instance.loop();
+});
+
+// Update dot color immediately when primaryColor changes — future marks use the new color.
+watch(primaryColor, (newColor) => {
+  if (dotRenderer) dotRenderer.color = hexToRgb(newColor);
+});
+
+// Clearing the canvas with the new background color when backgroundColor changes.
+watch(backgroundColor, (newColor) => {
+  p5Instance?.background(newColor);
+});
+
+onUnmounted(() => {
+  // p5.remove() stops the animation loop, removes the canvas element from the DOM,
+  // and frees all p5 event listeners — full cleanup on navigation.
+  p5Instance?.remove();
+  p5Instance = null;
+  dotRenderer = null;
+});
 
 onMounted(() => {
-  let dotRenderer: DotRenderer;
   let branchingCollection: BranchingCollection;
   let windSystem: WindSystem;
   let generationSpheres: Sphere[] = [];
@@ -43,7 +81,7 @@ onMounted(() => {
   let initialVelocityMagnitude = 5;
   const maxVehicles = 1000;
   const persistentSteerForceMagnitude = 0.5; // Magnitude of radial outward persistent steer force
-  const flockingSearchRadius = 5000;
+  const flockingSearchRadius = 1500;
   const friction = 0.2;
   const numberOfSpheres = 5;
   const individualSphereMinRadius = 1000;
@@ -53,7 +91,7 @@ onMounted(() => {
   const sketch = (p5: P5) => {
     p5.setup = () => {
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
-      p5.background(0);
+      p5.background(backgroundColor.value);
       p5.frameRate(frameRate.value);
 
       // Initialize multiple spheres for point generation
@@ -106,7 +144,7 @@ onMounted(() => {
         p5,
         5,
         15000,
-        [255, 255, 255],
+        hexToRgb(primaryColor.value),
         camera.value,
       );
       dotRenderer.dotSize = 1;
@@ -115,6 +153,7 @@ onMounted(() => {
     p5.draw = () => {
       // Render silhouettes once on first frame
       if (!silhouettesRendered && camera.value) {
+        p5.stroke(primaryColor.value);
         p5.strokeWeight(2);
         const cameraPos = camera.value.pos;
         for (let i = 0; i < renderingSpheres.length; i++) {
@@ -159,7 +198,6 @@ onMounted(() => {
 
       // Update the branching collection (handles branching)
       if (branchingCollection.vehicles.length > 1) {
-        console.log('flocking');
         branchingCollection.flock(flockingSearchRadius, 1.5, 0.1, 0.2);
       }
       branchingCollection.update();
@@ -229,11 +267,13 @@ onMounted(() => {
       });
 
       // Render visible vehicles
-      dotRenderer.renderVehicles(visibleVehicles);
-      if (Math.random() < 0.005) {
-        dotRenderer.dotSize = 5;
+      if (dotRenderer) {
         dotRenderer.renderVehicles(visibleVehicles);
-        dotRenderer.dotSize = 1;
+        if (Math.random() < 0.005) {
+          dotRenderer.dotSize = 5;
+          dotRenderer.renderVehicles(visibleVehicles);
+          dotRenderer.dotSize = 1;
+        }
       }
 
       // Update UI values
@@ -254,16 +294,13 @@ onMounted(() => {
     'computational-canvas',
   ) as HTMLElement;
 
-  new P5(sketch, canvasElement);
+  p5Instance = new P5(sketch, canvasElement);
 });
 </script>
 
 <template>
   <div
     id="computational-canvas"
-    style="overflow-y: auto; overflow-x: auto"
+    style="overflow-y: auto; overflow-x: auto; line-height: 0"
   ></div>
-  <div>{{ frameRate }} fps</div>
-  <div>{{ numberOfFrames }} frames</div>
-  <div>{{ numberOfVehicles }} number of vehicles</div>
 </template>
