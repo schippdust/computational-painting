@@ -1,7 +1,8 @@
 import P5 from 'p5';
-import type { Vehicle } from '../../MarkMakingEntities/Extensible/Vehicle';
+import { Vehicle } from '../../MarkMakingEntities/Extensible/Vehicle';
 import { OcTree } from '../../Core/VehicleOcTree';
 import type { WindSystem } from '../../Core/WindSystem';
+import { Spring } from '../../Core/Spring';
 
 /**
  * Manages a collection of vehicles with batch operations for physics, steering, and flocking.
@@ -11,6 +12,7 @@ import type { WindSystem } from '../../Core/WindSystem';
 export class VehicleCollection {
   public vehicles: Vehicle[] = [];
   private ocTree: OcTree | null = null;
+  protected springs: Spring[] = [];
 
   /**
    * Creates a new VehicleCollection with optional initial vehicles.
@@ -83,11 +85,86 @@ export class VehicleCollection {
   }
 
   update(): VehicleCollection {
+    // Apply spring forces before vehicle updates so they enter the normal
+    // force-accumulation pipeline and are integrated + reset inside vehicle.update().
+    for (const spring of this.springs) {
+      spring.applyForces();
+    }
+
     this.vehicles.forEach((v) => v.update());
     this.vehicles = this.vehicles.filter((v) => v.age < v.lifeExpectancy);
+
+    // Remove springs whose endpoint vehicles were just culled.
+    if (this.springs.length > 0) {
+      const living = new Set(this.vehicles.map((v) => v.uuid));
+      this.springs = this.springs.filter(
+        (s) => living.has(s.vehicleA.uuid) && living.has(s.vehicleB.uuid),
+      );
+    }
+
     // Invalidate the octree — vehicles have moved and dead ones have been removed.
     // It will be rebuilt lazily on the next spatial query.
     this.ocTree = null;
+    return this;
+  }
+
+  /**
+   * Registers a pre-constructed Spring so it is evaluated every frame.
+   * This method mutates the instance and returns it for method chaining.
+   * @param spring The Spring instance to add
+   * @returns This VehicleCollection instance for method chaining
+   */
+  addSpring(spring: Spring): VehicleCollection {
+    this.springs.push(spring);
+    return this;
+  }
+
+  /**
+   * Constructs and registers a Spring between two vehicles.
+   * restLength defaults to the current distance between the vehicles at the time of registration,
+   * which is the natural choice when building grids or initialising connected structures.
+   * This method mutates the instance and returns it for method chaining.
+   * @param vehicleA The first endpoint vehicle
+   * @param vehicleB The second endpoint vehicle
+   * @param restLength Natural length of the spring; defaults to current distance between vehicles
+   * @param stiffness Spring constant k (default: 1)
+   * @param damping Velocity damping along the spring axis (default: 0)
+   * @returns This VehicleCollection instance for method chaining
+   */
+  addSpringBetween(
+    vehicleA: Vehicle,
+    vehicleB: Vehicle,
+    restLength?: number,
+    stiffness?: number,
+    damping?: number,
+  ): VehicleCollection {
+    const length =
+      restLength ?? P5.Vector.dist(vehicleA.coords, vehicleB.coords);
+    this.springs.push(
+      new Spring(vehicleA, vehicleB, length, stiffness, damping),
+    );
+    return this;
+  }
+
+  /**
+   * Removes a specific Spring from the collection by reference.
+   * Does nothing if the spring is not registered.
+   * This method mutates the instance and returns it for method chaining.
+   * @param spring The Spring instance to remove
+   * @returns This VehicleCollection instance for method chaining
+   */
+  removeSpring(spring: Spring): VehicleCollection {
+    this.springs = this.springs.filter((s) => s !== spring);
+    return this;
+  }
+
+  /**
+   * Removes all registered Springs from the collection.
+   * This method mutates the instance and returns it for method chaining.
+   * @returns This VehicleCollection instance for method chaining
+   */
+  clearSprings(): VehicleCollection {
+    this.springs = [];
     return this;
   }
 

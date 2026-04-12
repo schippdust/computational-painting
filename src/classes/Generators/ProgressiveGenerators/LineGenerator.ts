@@ -1,9 +1,9 @@
 import P5 from 'p5';
-import { Vehicle } from '../MarkMakingEntities/Extensible/Vehicle';
-import { VehicleCollection } from '../EntityManagement/Extensible/VehicleCollection';
-import type { VehiclePhysicalProps } from '../MarkMakingEntities/Extensible/Vehicle';
-import { createGenericPhysicalProps } from '../MarkMakingEntities/Extensible/Vehicle';
-import { Line } from '../Geometry/Line';
+import { Vehicle } from '../../MarkMakingEntities/Extensible/Vehicle';
+import { VehicleCollection } from '../../EntityManagement/Extensible/VehicleCollection';
+import type { VehiclePhysicalProps } from '../../MarkMakingEntities/Extensible/Vehicle';
+import { createGenericPhysicalProps } from '../../MarkMakingEntities/Extensible/Vehicle';
+import { Line } from '../../Geometry/Line';
 
 /**
  * Configuration properties for LineGenerator.

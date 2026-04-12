@@ -18,7 +18,7 @@ import { WindSystem } from '@/classes/Core/WindSystem';
 import {
   CircleGenerator,
   type CircleGeneratorProps,
-} from '@/classes/Generators/CircleGenerator';
+} from '@/classes/Generators/ProgressiveGenerators/CircleGenerator';
 import {
   BrushStrokeSystem,
   type BrushtrokeSystemProps,
