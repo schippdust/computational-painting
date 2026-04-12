@@ -7,11 +7,20 @@ export {};
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    AppFooter: typeof import('./components/AppFooter.vue')['default']
+    CanvasInitOverlay: typeof import('./components/CanvasInitOverlay.vue')['default']
+    CanvasToolbar: typeof import('./components/CanvasToolbar.vue')['default']
     ComputationalCanvas: typeof import('./components/computationalCanvas.vue')['default']
-    HelloWorld: typeof import('./components/HelloWorld.vue')['default']
+    EllipticalTestCanvas: typeof import('./components/ellipticalTestCanvas.vue')['default']
+    FunShapesCanvas: typeof import('./components/funShapesCanvas.vue')['default']
+    GridBlowingInWind: typeof import('./components/gridBlowingInWind.vue')['default']
+    HelpCanvas: typeof import('./components/HelpCanvas.vue')['default']
     InitializationInputs: typeof import('./components/initializationInputs.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SphereEmissionCanvas: typeof import('./components/SphereEmissionCanvas.vue')['default']
+    SpringGridsCanvas: typeof import('./components/SpringGridsCanvas.vue')['default']
+    TestBlankCanvas: typeof import('./components/TestBlankCanvas.vue')['default']
+    TestSphereCanvas: typeof import('./components/TestSphereCanvas.vue')['default']
+    ToolbarNumericInput: typeof import('./components/ToolbarNumericInput.vue')['default']
   }
 }

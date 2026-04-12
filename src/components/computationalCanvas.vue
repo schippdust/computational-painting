@@ -1,138 +1,288 @@
 <script setup lang="ts">
 import P5 from 'p5';
-import { drawAxes, pressSpaceToPause } from '@/classes/DrawingUtils';
-import { CoordinateSystem } from '@/classes/CoordinateSystem';
-import { Circle } from '@/classes/Circle';
-import { Line } from '@/classes/Line';
+import { pressSpaceToPause } from '@/classes/Rendering/DrawingUtils';
+import { CoordinateSystem } from '@/classes/Geometry/CoordinateSystem';
+import { Sphere } from '@/classes/Geometry/Sphere';
 
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
-import { PixelManager } from '@/classes/PixelManager';
-import { Vehicle } from '@/classes/Vehicle';
-import { VehicleCollection } from '@/classes/VehicleCollection';
-import { WindSystem } from '@/classes/WindSystem';
-
-type ColorScheme = 'Black on White' | 'White on Black';
+import {
+  createGenericPhysicalProps,
+  Vehicle,
+} from '@/classes/MarkMakingEntities/Extensible/Vehicle';
+import { WindSystem } from '@/classes/Core/WindSystem';
+import {
+  BranchingCollection,
+  createGenericBranchingCollectionProps,
+} from '@/classes/EntityManagement/VehicleCollections/BranchingCollection';
+import { VehicleDotRenderer } from '@/classes/Rendering/VehicleRenderers/VehicleDotRenderer';
+import { dot } from 'mathjs';
 
 const appStore = useAppStore();
 const {
   canvasHeight,
   canvasWidth,
-  threadSpacing,
-  threadWidth,
   pauseCanvas,
   camera,
-  axisVisibility,
+  primaryColor,
+  secondaryColor,
+  backgroundColor,
 } = storeToRefs(appStore);
 
-const frameRate = ref(100);
+/** Convert a CSS hex color string to a p5-compatible [r, g, b] array. */
+function hexToRgb(hex: string): [number, number, number] {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/i.exec(hex);
+  return m
+    ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)]
+    : [255, 255, 255];
+}
+
+const frameRate = ref(40);
+const numberOfFrames = ref(0);
 const numberOfVehicles = ref(0);
 
-let cameraPos = new P5.Vector(2000, -2000, 4000);
-// let cameraPos = new P5.Vector(0, 10, 7500);
-let cameraFocus = new P5.Vector(0, 0, 0);
-let fovDegrees = 80;
-appStore.setCameraPosition(cameraPos);
-appStore.setCameraTarget(cameraFocus);
-appStore.setCameraFOV(fovDegrees);
+// Expose stats so the parent page can display them in the toolbar slot if desired.
+defineExpose({ frameRate, numberOfFrames, numberOfVehicles });
+
+// Keep the p5 loop in sync with the store's pause state (toggled by toolbar or spacebar).
+let p5Instance: P5 | null = null;
+let dotRenderer: VehicleDotRenderer | null = null;
+
+watch(pauseCanvas, (paused) => {
+  if (!p5Instance) return;
+  if (paused) p5Instance.noLoop();
+  else p5Instance.loop();
+});
+
+// Update dot color immediately when primaryColor changes — future marks use the new color.
+watch(primaryColor, (newColor) => {
+  if (dotRenderer) dotRenderer.color = hexToRgb(newColor);
+});
+
+// Clearing the canvas with the new background color when backgroundColor changes.
+watch(backgroundColor, (newColor) => {
+  p5Instance?.background(newColor);
+});
+
+onUnmounted(() => {
+  // p5.remove() stops the animation loop, removes the canvas element from the DOM,
+  // and frees all p5 event listeners — full cleanup on navigation.
+  p5Instance?.remove();
+  p5Instance = null;
+  dotRenderer = null;
+});
 
 onMounted(() => {
-  function getSketchParams() {
-    return {};
-  }
-  let cycleRadians = 0;
-  let cycleIncrement = 0.01;
-  let pm: PixelManager;
-  let ws: WindSystem;
-  let isMouseDragging: boolean = false;
-  let previousPosition;
-  const vehicleCollection = new VehicleCollection();
+  let branchingCollection: BranchingCollection;
+  let windSystem: WindSystem;
+  let generationSpheres: Sphere[] = [];
+  let renderingSpheres: Sphere[] = [];
+  let silhouettesRendered = false;
+  let initialVelocityMagnitude = 5;
+  const maxVehicles = 1000;
+  const persistentSteerForceMagnitude = 0.5; // Magnitude of radial outward persistent steer force
+  const flockingSearchRadius = 1500;
+  const friction = 0.2;
+  const numberOfSpheres = 5;
+  const individualSphereMinRadius = 1000;
+  const individualSphereMaxRadius = 3000;
+  const sphereBoundsRadius = 15000;
 
   const sketch = (p5: P5) => {
     p5.setup = () => {
-      pm = new PixelManager(p5);
-      ws = new WindSystem(p5);
-      ws.noiseScale = 0.0001;
-      ws.timeScale = 1;
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
-      p5.background(0);
-      p5.frameRate(60);
+      p5.background(backgroundColor.value);
+      p5.frameRate(frameRate.value);
+
+      // Initialize multiple spheres for point generation
+      for (let i = 0; i < numberOfSpheres; i++) {
+        // Generate random centerpoint within sphereBoundsRadius distance from origin
+        const randomDirection = P5.Vector.random3D();
+        const randomDistance = Math.random() * sphereBoundsRadius;
+        const sphereCenter = randomDirection.mult(randomDistance);
+
+        // Generate random radius between min and max
+        const sphereRadius =
+          Math.random() *
+            (individualSphereMaxRadius - individualSphereMinRadius) +
+          individualSphereMinRadius;
+
+        // Create sphere with random center and radius
+        const sphere = new Sphere(
+          CoordinateSystem.fromOriginAndNormal(
+            sphereCenter,
+            new P5.Vector(0, 0, 1),
+          ),
+          sphereRadius,
+        );
+        generationSpheres.push(sphere);
+
+        // Create rendering sphere with 1/4 the radius
+        const renderingSphere = new Sphere(
+          CoordinateSystem.fromOriginAndNormal(
+            sphereCenter,
+            new P5.Vector(0, 0, 1),
+          ),
+          sphereRadius / 2,
+        );
+        renderingSpheres.push(renderingSphere);
+      }
+
+      // Initialize the branching collection with default props
+      branchingCollection = new BranchingCollection(
+        [],
+        createGenericBranchingCollectionProps(),
+      );
+
+      // Initialize wind system
+      windSystem = new WindSystem(p5);
+      windSystem.noiseScale = 1.5;
+      windSystem.setNoiseDetail(4, 0.2);
+
+      // Initialize renderer
+      dotRenderer = new VehicleDotRenderer(
+        p5,
+        5,
+        15000,
+        hexToRgb(primaryColor.value),
+        camera.value,
+      );
+      dotRenderer.dotSize = 1;
     };
 
     p5.draw = () => {
-      console.log('new loop');
-      p5.stroke(255);
-      // p5.background(p5.color(255, 255, 255, 1));
+      // Render silhouettes once on first frame
+      if (!silhouettesRendered && camera.value) {
+        p5.stroke(primaryColor.value);
+        p5.strokeWeight(2);
+        const cameraPos = camera.value.pos;
+        for (let i = 0; i < renderingSpheres.length; i++) {
+          const renderingSphere = renderingSpheres[i];
+          const silhouetteCircle = renderingSphere.silhouetteCircle(cameraPos);
+          silhouetteCircle.renderSegmentCount = 100;
 
-      const centerPoint = new P5.Vector(0, 0, 0);
-      const zUp = new P5.Vector(0, 0, 1);
+          // Get all visible segments by checking against other rendering spheres
+          let visibleSegments = [...silhouetteCircle.renderSegments]; // Copy all segments
 
-      const cursor = new P5.Vector(
-        (Math.cos(cycleRadians) * canvasWidth.value) / 2,
-        (Math.sin(cycleRadians) * canvasWidth.value) / 2,
-        0,
-      );
+          // For each other rendering sphere, check if it obscures any segments
+          for (let j = 0; j < renderingSpheres.length; j++) {
+            if (i === j) continue; // Skip the sphere whose silhouette we're rendering
 
-      const direction = P5.Vector.sub(cursor.copy(), centerPoint.copy());
-      direction.rotate(p5.HALF_PI, zUp);
-      const currentCoords = CoordinateSystem.fromOriginAndNormal(
-        cursor.copy(),
-        direction.copy(),
-      );
-      const circle = new Circle(currentCoords, 150);
-      circle.renderProjected(p5, camera.value);
+            const otherSphere = renderingSpheres[j];
+            const newVisibleSegments = [];
 
-      const edgePoints = circle.randomPointsOnSurface(15);
-      // console.log(edgePoints);
-      const vehicles: Vehicle[] = [];
+            // Check each currently visible segment against the other sphere
+            for (const segment of visibleSegments) {
+              const obscuredSegments = otherSphere.obscureLine(
+                segment,
+                cameraPos,
+              );
+              newVisibleSegments.push(...obscuredSegments);
+            }
 
-      for (const pt of edgePoints) {
-        const v = new Vehicle(p5, pt.copy());
-        v.phys.mass = 15;
-        v.phys.maxVelocity = 50;
-        v.phys.maxSteerForce = 20;
-        v.lifeExpectancy = 350;
-        v.env.friction = 0.2;
+            visibleSegments = newVisibleSegments;
+          }
 
-        // v.align(direction.copy());
-        vehicles.push(v);
+          // Render all visible segments
+          const projectedSegments = camera.value.renderLines(visibleSegments);
+          for (const segment of projectedSegments) {
+            segment.render2D(p5);
+          }
+        }
+        silhouettesRendered = true;
       }
 
-      vehicleCollection
-        .addVehicle(vehicles)
-        .seak(cursor, 0.2)
-        .avoid(cursor, 10)
-        .alignToNeighbors(300)
-        .separate(1200, 100)
-        .applyWind(ws, 350, 500)
-        .update();
-      vehicleCollection.vehicles.forEach((v) => {
-        const location = camera.value.project(v.coords.copy());
-        if (location == null) {
-          return;
+      // Remove dead vehicles before processing
+      // branchingCollection.applyWind(windSystem, 1, 1);
+      // Update all vehicles with forces and behaviors (persistent steer forces applied in vehicle.update())
+
+      // Update the branching collection (handles branching)
+      if (branchingCollection.vehicles.length > 1) {
+        branchingCollection.flock(flockingSearchRadius, 1.5, 0.1, 0.2);
+      }
+      branchingCollection.update();
+
+      function generateNewVehicle() {
+        // Pick a random sphere from the array
+        const selectedSphere =
+          generationSpheres[
+            Math.floor(Math.random() * generationSpheres.length)
+          ];
+        const newPosition = selectedSphere.randomPointInside();
+        const newVehicle = new Vehicle(
+          p5,
+          newPosition,
+          createGenericPhysicalProps(),
+        );
+        newVehicle.lifeExpectancy = 750;
+        newVehicle.env.friction = friction;
+        // Set initial velocity upward
+        newVehicle.velocity = new P5.Vector(0, 0, initialVelocityMagnitude);
+        newVehicle.desiredSeparation = flockingSearchRadius;
+        newVehicle.phys.maxSteerForce = 1;
+
+        // Calculate persistent steer force direction from sphere center to vehicle position
+        const sphereCenter = selectedSphere.coordinateSystem.getPosition();
+        let steerDirection = P5.Vector.sub(newPosition, sphereCenter);
+
+        // If vehicle is at sphere center, use random direction
+        if (steerDirection.mag() < 0.001) {
+          steerDirection = P5.Vector.random3D();
+        } else {
+          steerDirection.normalize();
         }
-        p5.point(location.x, location.y);
+
+        // Create and assign persistent steer force with configured magnitude
+        const persistentSteerForce = steerDirection.mult(
+          persistentSteerForceMagnitude,
+        );
+        newVehicle.addPersistentSteerForce(persistentSteerForce);
+
+        branchingCollection.addVehicle(newVehicle, false);
+      }
+
+      // Generate new vehicles only if we're below the maximum
+      while (branchingCollection.vehicles.length < 100) {
+        generateNewVehicle();
+      }
+      if (branchingCollection.vehicles.length < maxVehicles) {
+        generateNewVehicle();
+        generateNewVehicle();
+      }
+
+      // Filter vehicles to hide those obscured by rendering spheres
+      const cameraPos = camera.value.pos;
+      const visibleVehicles = branchingCollection.vehicles.filter((vehicle) => {
+        for (const renderingSphere of renderingSpheres) {
+          if (
+            renderingSphere.isPointObscured(
+              vehicle.coordSystem.getPosition(),
+              cameraPos,
+            )
+          ) {
+            return false; // Vehicle is obscured
+          }
+        }
+        return true; // Vehicle is visible
       });
 
-      const cursorRenderPos = camera.value.project(cursor.copy());
-      if (cursorRenderPos) {
-        p5.circle(cursorRenderPos.x, cursorRenderPos.y, 2);
+      // Render visible vehicles
+      if (dotRenderer) {
+        dotRenderer.renderVehicles(visibleVehicles);
+        if (Math.random() < 0.005) {
+          dotRenderer.dotSize = 5;
+          dotRenderer.renderVehicles(visibleVehicles);
+          dotRenderer.dotSize = 1;
+        }
       }
 
-      cycleRadians += cycleIncrement;
-
-      // Utility Functions
-      if (axisVisibility.value) {
-        drawAxes(p5, camera.value, 100);
-      }
-
-      frameRate.value = Math.round(p5.frameRate());
-      numberOfVehicles.value = vehicleCollection.vehicles.length;
+      // Update UI values
+      numberOfFrames.value++;
+      numberOfVehicles.value = branchingCollection.vehicles.length;
     };
 
     p5.mousePressed = () => {};
     p5.mouseDragged = () => {};
-
     p5.mouseReleased = () => {};
 
     p5.keyPressed = () => {
@@ -144,15 +294,13 @@ onMounted(() => {
     'computational-canvas',
   ) as HTMLElement;
 
-  new P5(sketch, canvasElement);
+  p5Instance = new P5(sketch, canvasElement);
 });
 </script>
 
 <template>
   <div
     id="computational-canvas"
-    style="overflow-y: auto; overflow-x: auto"
+    style="overflow-y: auto; overflow-x: auto; line-height: 0"
   ></div>
-  <div>{{ frameRate }} fps</div>
-  <div>{{ numberOfVehicles }} number of vehicles</div>
 </template>
