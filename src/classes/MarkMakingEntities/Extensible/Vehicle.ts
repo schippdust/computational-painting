@@ -127,6 +127,15 @@ export class Vehicle {
   }
 
   /**
+   * The vehicle's position history, stored most-recent-first.
+   * The array is capped at maxNumberOfPreviousCoords entries (default: 10).
+   * @returns A readonly view of the vehicle's previous world-space positions
+   */
+  get positionHistory(): readonly P5.Vector[] {
+    return this.previousCoords;
+  }
+
+  /**
    * Sets the vehicle's velocity and updates the forward direction to match.
    * The forward vector is normalized from the velocity vector.
    * @param velocityVector The new velocity vector
