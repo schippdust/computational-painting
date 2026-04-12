@@ -47,6 +47,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       never
     >;
+    '/spring-grids': RouteRecordInfo<
+      '/spring-grids',
+      '/spring-grids',
+      Record<never, never>,
+      Record<never, never>,
+      never
+    >;
   }
 
   /**
@@ -70,6 +77,10 @@ declare module 'vue-router/auto-routes' {
     };
     'src/pages/sphere-emission.vue': {
       routes: '/sphere-emission';
+      views: never;
+    };
+    'src/pages/spring-grids.vue': {
+      routes: '/spring-grids';
       views: never;
     };
   }

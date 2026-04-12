@@ -53,4 +53,12 @@ export const canvasRegistry: CanvasEntry[] = [
     createdAt: '2026-04-12',
     group: 'Fundamentals',
   },
+
+  {
+    id: 'spring-grids',
+    title: 'Spring Grids',
+    description: 'A Simple Grid of Springs with attractors',
+    createdAt: '2026-04-12',
+    group: 'Springs',
+  },
 ];
