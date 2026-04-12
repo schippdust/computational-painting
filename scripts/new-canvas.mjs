@@ -3,13 +3,14 @@
  * Scaffold a new computational canvas iteration.
  *
  * Usage:
- *   node scripts/new-canvas.mjs <kebab-name> [description] [--group "Group Name"]
- *   npm run new-canvas -- <kebab-name> [description] [--group "Group Name"]
+ *   node scripts/new-canvas.mjs <kebab-name> [description] [--group "Group Name"] [--template blank|pre-filled]
+ *   npm run new-canvas -- <kebab-name> [description] [--group "Group Name"] [--template blank|pre-filled]
  *
  * Examples:
  *   npm run new-canvas -- wind-particles "Particles steered by curl noise" --group "Wind Fields"
  *   npm run new-canvas -- branching-lines --group "Branching Spheres"
- *   npm run new-canvas -- my-canvas   # no group → placed in "Uncategorized"
+ *   npm run new-canvas -- my-canvas                         # blank template, Uncategorized
+ *   npm run new-canvas -- my-canvas --template pre-filled   # sphere emission starting point
  *
  * Creates:
  *   src/components/<PascalName>Canvas.vue   — p5 sketch boilerplate
@@ -30,11 +31,14 @@ const rawArgs = process.argv.slice(2);
 
 let rawName;
 let groupArg;
+let templateArg = 'blank';
 const descWords = [];
 
 for (let i = 0; i < rawArgs.length; i++) {
   if (rawArgs[i] === '--group') {
     groupArg = rawArgs[++i];
+  } else if (rawArgs[i] === '--template') {
+    templateArg = rawArgs[++i];
   } else if (!rawName) {
     rawName = rawArgs[i];
   } else {
@@ -45,7 +49,14 @@ for (let i = 0; i < rawArgs.length; i++) {
 if (!rawName) {
   console.error('Error: canvas name is required.\n');
   console.error(
-    'Usage: node scripts/new-canvas.mjs <kebab-name> [description] [--group "Group Name"]',
+    'Usage: node scripts/new-canvas.mjs <kebab-name> [description] [--group "Group Name"] [--template blank|sphere]',
+  );
+  process.exit(1);
+}
+
+if (!['blank', 'pre-filled'].includes(templateArg)) {
+  console.error(
+    `Error: --template must be "blank" or "pre-filled" (got "${templateArg}")`,
   );
   process.exit(1);
 }
@@ -95,11 +106,11 @@ for (const p of [componentPath, pagePath]) {
   }
 }
 
-// ─── Canvas component ─────────────────────────────────────────────────────────
-// Boilerplate: p5 instance mode, camera + store wiring, pause sync watcher,
-// frame counter, and defineExpose for stats.
+// ─── Canvas component: blank template ─────────────────────────────────────────
+// Minimal boilerplate — store wiring, watchers, and DotRenderer ready to use.
+// Fill in the setup and draw TODOs to build your sketch.
 
-const componentContent = `\
+const componentContentBlank = `\
 <script setup lang="ts">
 import P5 from 'p5';
 import { pressSpaceToPause } from '@/classes/Rendering/DrawingUtils';
@@ -194,6 +205,194 @@ onMounted(() => {
 </template>
 `;
 
+// ─── Canvas component: sphere template ────────────────────────────────────────
+// Full sphere-emission starting point: single sphere at the origin, vehicles
+// spawned on the surface each frame with outward velocity, occlusion-based
+// two-color rendering, and a silhouette drawn on the first frame.
+
+const componentContentSphere = `\
+<script setup lang="ts">
+import P5 from 'p5';
+import { pressSpaceToPause } from '@/classes/Rendering/DrawingUtils';
+import { DotRenderer } from '@/classes/Rendering/Renderers/DotRenderer';
+import { Sphere } from '@/classes/Geometry/Sphere';
+import { CoordinateSystem } from '@/classes/Geometry/CoordinateSystem';
+import {
+  Vehicle,
+  createGenericPhysicalProps,
+} from '@/classes/MarkMakingEntities/Extensible/Vehicle';
+import { useAppStore } from '@/stores/app';
+import { storeToRefs } from 'pinia';
+
+const appStore = useAppStore();
+const {
+  canvasHeight,
+  canvasWidth,
+  pauseCanvas,
+  camera,
+  primaryColor,
+  secondaryColor,
+  backgroundColor,
+} = storeToRefs(appStore);
+
+/** Convert a CSS hex color string to a p5-compatible [r, g, b] array. */
+function hexToRgb(hex: string): [number, number, number] {
+  const m = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})/i.exec(hex);
+  return m
+    ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)]
+    : [255, 255, 255];
+}
+
+const frameRate = ref(40);
+const numberOfFrames = ref(0);
+const numberOfVehicles = ref(0);
+
+defineExpose({ frameRate, numberOfFrames, numberOfVehicles });
+
+let p5Instance: P5 | null = null;
+let dotRenderer: DotRenderer | null = null;
+
+watch(pauseCanvas, (paused) => {
+  if (!p5Instance) return;
+  if (paused) p5Instance.noLoop();
+  else p5Instance.loop();
+});
+
+watch(primaryColor, (newColor) => {
+  if (dotRenderer) dotRenderer.color = hexToRgb(newColor);
+});
+
+watch(backgroundColor, (newColor) => {
+  p5Instance?.background(newColor);
+});
+
+onUnmounted(() => {
+  p5Instance?.remove();
+  p5Instance = null;
+  dotRenderer = null;
+});
+
+onMounted(() => {
+  const sphereRadius = 3000;
+  const initialSpeed = 8;
+  const vehicleLifespan = 500;
+  const vehicleFriction = 0.02;
+  const maxVehicles = 800;
+
+  // Single sphere centered at the world origin.
+  const sphere = new Sphere(
+    CoordinateSystem.fromOriginAndNormal(
+      new P5.Vector(0, 0, 0),
+      new P5.Vector(0, 0, 1),
+    ),
+    sphereRadius,
+  );
+
+  let vehicles: Vehicle[] = [];
+  let silhouetteRendered = false;
+
+  const sketch = (p5: P5) => {
+    p5.setup = () => {
+      p5.createCanvas(canvasWidth.value, canvasHeight.value);
+      p5.background(backgroundColor.value);
+      p5.frameRate(frameRate.value);
+
+      dotRenderer = new DotRenderer(
+        p5,
+        4,
+        sphereRadius * 4,
+        hexToRgb(primaryColor.value),
+        camera.value,
+      );
+    };
+
+    p5.draw = () => {
+      // Draw the sphere silhouette once on the first frame.
+      if (!silhouetteRendered && camera.value) {
+        p5.stroke(primaryColor.value);
+        p5.strokeWeight(1);
+        const silhouette = sphere.silhouetteCircle(camera.value.pos);
+        silhouette.renderSegmentCount = 120;
+        const projected = camera.value.renderLines(silhouette.renderSegments);
+        for (const seg of projected) seg.render2D(p5);
+        silhouetteRendered = true;
+      }
+
+      // Remove vehicles that have exceeded their lifespan.
+      vehicles = vehicles.filter((v) => !v.isDead);
+
+      // Spawn one new vehicle per frame up to the population cap.
+      if (vehicles.length < maxVehicles) {
+        const surfacePoint = sphere.randomPointOnSurface();
+
+        // Outward velocity: from sphere center toward the surface point.
+        const outward = P5.Vector.sub(surfacePoint, sphere.centerPoint)
+          .normalize()
+          .mult(initialSpeed);
+
+        const vehicle = new Vehicle(
+          p5,
+          surfacePoint,
+          createGenericPhysicalProps(),
+        );
+        vehicle.lifeExpectancy = vehicleLifespan;
+        vehicle.env.friction = vehicleFriction;
+        vehicle.velocity = outward;
+
+        vehicles.push(vehicle);
+      }
+
+      // Advance all vehicles one physics step.
+      for (const v of vehicles) v.update();
+
+      // Split by occlusion relative to the current camera position.
+      const camPos = camera.value.pos;
+      const visible: Vehicle[] = [];
+      const occluded: Vehicle[] = [];
+      for (const v of vehicles) {
+        if (sphere.isPointObscured(v.coordSystem.getPosition(), camPos)) {
+          occluded.push(v);
+        } else {
+          visible.push(v);
+        }
+      }
+
+      // Render: primary color for visible, secondary for occluded.
+      if (dotRenderer) {
+        dotRenderer.color = hexToRgb(primaryColor.value);
+        dotRenderer.renderVehicles(visible);
+
+        dotRenderer.color = hexToRgb(secondaryColor.value);
+        dotRenderer.renderVehicles(occluded);
+      }
+
+      numberOfFrames.value++;
+      numberOfVehicles.value = vehicles.length;
+    };
+
+    p5.keyPressed = () => {
+      pressSpaceToPause(p5);
+    };
+  };
+
+  const canvasElement = document.getElementById(
+    '${canvasElementId}',
+  ) as HTMLElement;
+  p5Instance = new P5(sketch, canvasElement);
+});
+</script>
+
+<template>
+  <div
+    id="${canvasElementId}"
+    style="overflow-y: auto; overflow-x: auto; line-height: 0"
+  ></div>
+</template>
+`;
+
+const componentContent =
+  templateArg === 'pre-filled' ? componentContentSphere : componentContentBlank;
+
 // ─── Route page ───────────────────────────────────────────────────────────────
 // Full-viewport flex layout: collapsible toolbar on the left, canvas area on the right.
 // The init overlay is shown over the canvas area until the user confirms settings.
@@ -233,6 +432,11 @@ function handleFit() {
   const fitH = canvasAreaRef.value.clientHeight / canvasHeight.value;
   zoom.value = Math.floor(Math.min(fitW, fitH) * 1000) / 1000;
 }
+
+// Fit the canvas to the viewport as soon as the init overlay is confirmed.
+watch(initialized, (isInit) => {
+  if (isInit) nextTick(() => handleFit());
+});
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -404,7 +608,9 @@ const updatedRegistry = trimmed.slice(0, -2) + `\n${newEntry}\n];\n`;
 // ─── Write files ──────────────────────────────────────────────────────────────
 
 writeFileSync(componentPath, componentContent);
-console.log(`✓ Created component  src/components/${pascalName}Canvas.vue`);
+console.log(
+  `✓ Created component  src/components/${pascalName}Canvas.vue  (template: ${templateArg})`,
+);
 
 writeFileSync(pagePath, pageContent);
 console.log(`✓ Created page       src/pages/${kebabName}.vue`);
@@ -414,7 +620,7 @@ console.log(`✓ Updated registry   src/canvasRegistry.ts  (group: "${group}")`)
 
 console.log(`
 Next steps:
-  1. Fill in the TODO sections in src/components/${pascalName}Canvas.vue
+  1. ${templateArg === 'pre-filled' ? 'Modify the sphere parameters at the top of onMounted' : `Fill in the TODO sections in src/components/${pascalName}Canvas.vue`}
   2. Run the dev server: npm run dev
   3. Navigate to http://localhost:3000/${kebabName}
 `);

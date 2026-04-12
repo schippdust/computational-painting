@@ -13,10 +13,12 @@ declare module 'vue' {
     EllipticalTestCanvas: typeof import('./components/ellipticalTestCanvas.vue')['default']
     FunShapesCanvas: typeof import('./components/funShapesCanvas.vue')['default']
     GridBlowingInWind: typeof import('./components/gridBlowingInWind.vue')['default']
+    HelpCanvas: typeof import('./components/HelpCanvas.vue')['default']
     InitializationInputs: typeof import('./components/initializationInputs.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SphereEmissionCanvas: typeof import('./components/SphereEmissionCanvas.vue')['default']
-    WindParticlesCanvas: typeof import('./components/WindParticlesCanvas.vue')['default']
+    TestBlankCanvas: typeof import('./components/TestBlankCanvas.vue')['default']
+    TestSphereCanvas: typeof import('./components/TestSphereCanvas.vue')['default']
   }
 }

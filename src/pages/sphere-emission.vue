@@ -46,6 +46,11 @@ function handleFit() {
   zoom.value = Math.floor(Math.min(fitW, fitH) * 1000) / 1000;
 }
 
+// Fit the canvas to the viewport as soon as the init overlay is confirmed.
+watch(initialized, (isInit) => {
+  if (isInit) nextTick(() => handleFit());
+});
+
 function handleKeydown(e: KeyboardEvent) {
   if (
     e.target instanceof HTMLInputElement ||
