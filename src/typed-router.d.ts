@@ -34,6 +34,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/computational-canvas': RouteRecordInfo<
+      '/computational-canvas',
+      '/computational-canvas',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
   }
 
   /**
@@ -50,6 +57,12 @@ declare module 'vue-router/auto-routes' {
     'src/pages/index.vue': {
       routes:
         | '/'
+      views:
+        | never
+    }
+    'src/pages/computational-canvas.vue': {
+      routes:
+        | '/computational-canvas'
       views:
         | never
     }

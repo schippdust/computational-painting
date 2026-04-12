@@ -128,9 +128,13 @@ export class VehicleCollection {
     multiplier: number = 1,
     awarenessDistance: number | null = null,
   ): VehicleCollection {
-    const targets = Array.isArray(targetPosition) ? targetPosition : [targetPosition];
+    const targets = Array.isArray(targetPosition)
+      ? targetPosition
+      : [targetPosition];
     for (const target of targets) {
-      this.vehiclesInRange(target, awarenessDistance).forEach((v) => v.seek(target, multiplier));
+      this.vehiclesInRange(target, awarenessDistance).forEach((v) =>
+        v.seek(target, multiplier),
+      );
     }
     return this;
   }
@@ -139,9 +143,13 @@ export class VehicleCollection {
     targetPosition: P5.Vector | P5.Vector[],
     awarenessDistance: number | null = null,
   ): VehicleCollection {
-    const targets = Array.isArray(targetPosition) ? targetPosition : [targetPosition];
+    const targets = Array.isArray(targetPosition)
+      ? targetPosition
+      : [targetPosition];
     for (const target of targets) {
-      this.vehiclesInRange(target, awarenessDistance).forEach((v) => v.arrive(target));
+      this.vehiclesInRange(target, awarenessDistance).forEach((v) =>
+        v.arrive(target),
+      );
     }
     return this;
   }
@@ -152,7 +160,9 @@ export class VehicleCollection {
     awarenessDistance: number | null = null,
     multiplier: number = 1,
   ): VehicleCollection {
-    const targets = Array.isArray(targetPosition) ? targetPosition : [targetPosition];
+    const targets = Array.isArray(targetPosition)
+      ? targetPosition
+      : [targetPosition];
     for (const target of targets) {
       this.vehiclesInRange(target, awarenessDistance).forEach((v) =>
         v.avoid(target, desiredClosestDistance, multiplier),
@@ -168,7 +178,10 @@ export class VehicleCollection {
     const ocTree = this.requireOcTree();
     if (ocTree) {
       this.vehicles.forEach((v) => {
-        v.separate(ocTree.queryNeighbors(v, neighborDistance).map((n) => n.coords), separateMultiplier);
+        v.separate(
+          ocTree.queryNeighbors(v, neighborDistance).map((n) => n.coords),
+          separateMultiplier,
+        );
       });
     }
     return this;
@@ -178,7 +191,9 @@ export class VehicleCollection {
     alignmentVectors: P5.Vector | P5.Vector[],
     alignMultiplier: number = 1,
   ): VehicleCollection {
-    const vectorList = Array.isArray(alignmentVectors) ? alignmentVectors : [alignmentVectors];
+    const vectorList = Array.isArray(alignmentVectors)
+      ? alignmentVectors
+      : [alignmentVectors];
     this.vehicles.forEach((v) => v.align(vectorList, alignMultiplier));
     return this;
   }
@@ -190,7 +205,12 @@ export class VehicleCollection {
     const ocTree = this.requireOcTree();
     if (ocTree) {
       this.vehicles.forEach((v) => {
-        v.align(ocTree.queryNeighbors(v, neighborDistance).map((n) => n.phys.velocity), alignMultiplier);
+        v.align(
+          ocTree
+            .queryNeighbors(v, neighborDistance)
+            .map((n) => n.phys.velocity),
+          alignMultiplier,
+        );
       });
     }
     return this;
@@ -203,7 +223,10 @@ export class VehicleCollection {
     const ocTree = this.requireOcTree();
     if (ocTree) {
       this.vehicles.forEach((v) => {
-        v.cohere(ocTree.queryNeighbors(v, neighborDistance).map((n) => n.coords), cohereMultiplier);
+        v.cohere(
+          ocTree.queryNeighbors(v, neighborDistance).map((n) => n.coords),
+          cohereMultiplier,
+        );
       });
     }
     return this;
@@ -219,9 +242,18 @@ export class VehicleCollection {
     if (ocTree) {
       this.vehicles.forEach((v) => {
         const neighbors = ocTree.queryNeighbors(v, neighborDistance);
-        v.separate(neighbors.map((n) => n.coords), separateMultiplier);
-        v.align(neighbors.map((n) => n.phys.velocity), alignMultiplier);
-        v.cohere(neighbors.map((n) => n.coords), cohereMultiplier);
+        v.separate(
+          neighbors.map((n) => n.coords),
+          separateMultiplier,
+        );
+        v.align(
+          neighbors.map((n) => n.phys.velocity),
+          alignMultiplier,
+        );
+        v.cohere(
+          neighbors.map((n) => n.coords),
+          cohereMultiplier,
+        );
       });
     }
     return this;
@@ -239,7 +271,8 @@ export class VehicleCollection {
   private vehiclesInRange(center: P5.Vector, radius: number | null): Vehicle[] {
     if (radius != null && radius > 0) {
       if (this.ocTree == null) this.buildOcTree();
-      if (this.ocTree != null) return this.ocTree.queryNeighbors(center, radius);
+      if (this.ocTree != null)
+        return this.ocTree.queryNeighbors(center, radius);
     }
     return this.vehicles;
   }

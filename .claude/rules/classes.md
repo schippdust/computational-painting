@@ -57,6 +57,7 @@ src/classes/
 ## Extension Patterns
 
 **Extending Vehicle** — subclass for new agent behaviors:
+
 ```ts
 export class MyAgent extends Vehicle {
   // override update() to add custom per-frame behavior
@@ -69,6 +70,7 @@ export class MyAgent extends Vehicle {
 ```
 
 **Extending VehicleCollection** — subclass for new group behaviors:
+
 ```ts
 export class MyCollection extends VehicleCollection {
   update(): MyCollection {

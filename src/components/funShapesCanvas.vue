@@ -6,7 +6,6 @@ import { Circle } from '@/classes/Geometry/Circle';
 import { Line } from '@/classes/Geometry/Line';
 import { Sphere } from '@/classes/Geometry/Sphere';
 
-
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
 import { PixelManager } from '@/classes/Core/PixelManager';
@@ -52,8 +51,6 @@ appStore.setCameraPosition(cameraPos);
 appStore.setCameraTarget(cameraFocus);
 appStore.setCameraFOV(fovDegrees);
 
-
-
 onMounted(() => {
   function getSketchParams() {
     return {};
@@ -87,7 +84,13 @@ onMounted(() => {
         1200,
       );
       testGenerator = new CircleGenerator(p5, circle, generatorProps);
-      dotRenderer = new DotRenderer(p5, 3, 15000, [255, 255, 255], camera.value);
+      dotRenderer = new DotRenderer(
+        p5,
+        3,
+        15000,
+        [255, 255, 255],
+        camera.value,
+      );
     };
 
     p5.draw = () => {

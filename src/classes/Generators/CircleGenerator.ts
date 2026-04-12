@@ -68,7 +68,10 @@ export class CircleGenerator {
    * @param rebuildOcTree Whether to rebuild the octree after all vehicles are added (default: true)
    * @returns This CircleGenerator instance for method chaining
    */
-  generateAll(vehicleFactory: () => Vehicle, rebuildOcTree = true): CircleGenerator {
+  generateAll(
+    vehicleFactory: () => Vehicle,
+    rebuildOcTree = true,
+  ): CircleGenerator {
     while (!this.complete) {
       this.generateVehicle(vehicleFactory(), false);
     }

@@ -29,13 +29,14 @@
 - **Extensible base classes** live in `Extensible/` subfolders and are designed to be subclassed. Concrete implementations live in sibling files or subfolders.
 - **Static factory constructors** are preferred over complex constructor overloads:
   ```ts
-  CoordinateSystem.fromOriginAndNormal(origin, normal)
-  CoordinateSystem.fromOriginNormalX(origin, normal, xAxis)
+  CoordinateSystem.fromOriginAndNormal(origin, normal);
+  CoordinateSystem.fromOriginNormalX(origin, normal, xAxis);
   ```
 
 ## JSDoc
 
 Every public method and constructor should have a JSDoc block. Standard format:
+
 ```ts
 /**
  * One-line summary.

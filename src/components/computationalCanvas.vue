@@ -4,7 +4,6 @@ import { pressSpaceToPause } from '@/classes/Rendering/DrawingUtils';
 import { CoordinateSystem } from '@/classes/Geometry/CoordinateSystem';
 import { Sphere } from '@/classes/Geometry/Sphere';
 
-
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
 import {
@@ -44,7 +43,7 @@ onMounted(() => {
   let initialVelocityMagnitude = 5;
   const maxVehicles = 1000;
   const persistentSteerForceMagnitude = 0.5; // Magnitude of radial outward persistent steer force
-  const flockingSearchRadius = 2400;
+  const flockingSearchRadius = 5000;
   const friction = 0.2;
   const numberOfSpheres = 5;
   const individualSphereMinRadius = 1000;

@@ -4,12 +4,12 @@ A generative art application where physics-driven agents leave permanent marks o
 
 ## Rules Files
 
-| File | Contents |
-|------|----------|
+| File                                          | Contents                                                 |
+| --------------------------------------------- | -------------------------------------------------------- |
 | [Architecture](.claude/rules/architecture.md) | Tech stack, app structure, data flow, drawing philosophy |
-| [Conventions](.claude/rules/conventions.md) | TypeScript/Vue style, naming, method chaining, JSDoc |
-| [Classes](.claude/rules/classes.md) | Class hierarchy, folder anatomy, extension patterns |
-| [p5 Patterns](.claude/rules/p5-patterns.md) | p5.js usage patterns specific to this project |
+| [Conventions](.claude/rules/conventions.md)   | TypeScript/Vue style, naming, method chaining, JSDoc     |
+| [Classes](.claude/rules/classes.md)           | Class hierarchy, folder anatomy, extension patterns      |
+| [p5 Patterns](.claude/rules/p5-patterns.md)   | p5.js usage patterns specific to this project            |
 
 ## Commands
 

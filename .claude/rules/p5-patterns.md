@@ -30,7 +30,10 @@ onMounted(() => {
     p5.setup = () => {
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
       p5.background(0);
-      collection = new BranchingCollection([], createGenericBranchingCollectionProps());
+      collection = new BranchingCollection(
+        [],
+        createGenericBranchingCollectionProps(),
+      );
       renderer = new DotRenderer(p5, 5, 15000, [255, 255, 255], camera.value);
     };
     p5.draw = () => {
@@ -83,12 +86,13 @@ Use the static class, not the constructor shorthand, for type correctness:
 ```ts
 import P5 from 'p5';
 
-const v = new P5.Vector(1, 0, 0);           // construction
-const sum = P5.Vector.add(v1, v2);          // static operations return new vector
-const dist = P5.Vector.dist(v1, v2);        // static distance
+const v = new P5.Vector(1, 0, 0); // construction
+const sum = P5.Vector.add(v1, v2); // static operations return new vector
+const dist = P5.Vector.dist(v1, v2); // static distance
 ```
 
 Mutating operations return `this` (method chaining):
+
 ```ts
 v.normalize().mult(5).add(offset);
 ```

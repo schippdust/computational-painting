@@ -14,5 +14,6 @@ declare module 'vue' {
     InitializationInputs: typeof import('./components/initializationInputs.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    WindParticlesCanvas: typeof import('./components/WindParticlesCanvas.vue')['default']
   }
 }

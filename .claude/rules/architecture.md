@@ -10,18 +10,18 @@ Canvas default size: **4600 × 4600 px**. Agents can occupy a world space of ten
 
 ## Tech Stack
 
-| Layer | Library |
-|-------|---------|
-| UI framework | Vue 3 (Composition API, `<script setup>`) |
-| Language | TypeScript ~5.6 |
-| Build | Vite 5 |
-| State | Pinia |
-| Canvas / simulation | p5.js 1.x (instance mode only) |
-| UI components | Vuetify 3 |
-| Math / matrices | mathjs (CoordinateSystem basis matrices) |
-| Routing | unplugin-vue-router (file-based, `src/pages/`) |
-| Component auto-import | unplugin-vue-components |
-| API auto-import | unplugin-auto-import (Vue Composition API globals) |
+| Layer                 | Library                                            |
+| --------------------- | -------------------------------------------------- |
+| UI framework          | Vue 3 (Composition API, `<script setup>`)          |
+| Language              | TypeScript ~5.6                                    |
+| Build                 | Vite 5                                             |
+| State                 | Pinia                                              |
+| Canvas / simulation   | p5.js 1.x (instance mode only)                     |
+| UI components         | Vuetify 3                                          |
+| Math / matrices       | mathjs (CoordinateSystem basis matrices)           |
+| Routing               | unplugin-vue-router (file-based, `src/pages/`)     |
+| Component auto-import | unplugin-vue-components                            |
+| API auto-import       | unplugin-auto-import (Vue Composition API globals) |
 
 ## Folder Structure
 
