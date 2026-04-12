@@ -52,7 +52,7 @@ const numAttractors = ref(5);
 const springStiffness = ref(0.2);
 const springDamping = ref(0.1);
 const attractorStrength = ref(0.3);
-const attractorRange = ref(2000);
+const attractorRange = ref(2500);
 
 function handleKeydown(e: KeyboardEvent) {
   if (
@@ -78,7 +78,7 @@ function handleKeydown(e: KeyboardEvent) {
 onMounted(() => {
   // Defaults suited for a top-down view of an XY-plane spring grid.
   appStore.setCanvasDims(2000, 2000);
-  appStore.setCameraInitPos(0, 0, 2500);
+  appStore.setCameraInitPos(0, 1, 2000);
   appStore.setCameraInitTarget(0, 0, 0);
   appStore.setCameraInitFOV(60);
 
@@ -186,7 +186,7 @@ onUnmounted(() => {
         </v-tooltip>
       </div>
 
-      <canvas-init-overlay :width="560">
+      <canvas-init-overlay v-if="!initialized" :width="560">
         <!-- Grid settings -->
         <v-divider class="mb-4" />
         <div class="text-subtitle-2 mb-3">Grid</div>
@@ -235,10 +235,43 @@ onUnmounted(() => {
           </v-col>
         </v-row>
 
-        <!-- Attractor count -->
-        <div class="text-subtitle-2 mb-1 mt-2">Attractors</div>
+        <!-- Spring settings -->
+        <v-divider class="mb-4 mt-2" />
+        <div class="text-subtitle-2 mb-3">Springs</div>
         <v-row dense>
           <v-col>
+            <v-text-field
+              :model-value="springStiffness"
+              variant="outlined"
+              label="Stiffness"
+              type="number"
+              density="compact"
+              :min="0"
+              :max="5"
+              :step="0.01"
+              @update:model-value="(v) => (springStiffness = Number(v))"
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              :model-value="springDamping"
+              variant="outlined"
+              label="Damping"
+              type="number"
+              density="compact"
+              :min="0"
+              :max="1"
+              :step="0.01"
+              @update:model-value="(v) => (springDamping = Number(v))"
+            />
+          </v-col>
+        </v-row>
+
+        <!-- Attractor settings -->
+        <v-divider class="mb-4 mt-2" />
+        <div class="text-subtitle-2 mb-3">Attractors</div>
+        <v-row dense>
+          <v-col cols="12">
             <v-slider
               v-model="numAttractors"
               :min="3"
@@ -251,10 +284,71 @@ onUnmounted(() => {
             />
           </v-col>
         </v-row>
+        <v-row dense>
+          <v-col>
+            <v-text-field
+              :model-value="attractorStrength"
+              variant="outlined"
+              label="Strength"
+              type="number"
+              density="compact"
+              :min="0"
+              :max="5"
+              :step="0.01"
+              @update:model-value="(v) => (attractorStrength = Number(v))"
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              :model-value="attractorRange"
+              variant="outlined"
+              label="Range"
+              type="number"
+              density="compact"
+              :min="0"
+              :max="10000"
+              :step="50"
+              @update:model-value="(v) => (attractorRange = Number(v))"
+            />
+          </v-col>
+        </v-row>
 
         <!-- Camera settings -->
-        <div class="text-subtitle-2 mb-3 mt-2">Camera</div>
+        <v-divider class="mb-4 mt-2" />
+        <div class="text-subtitle-2 mb-3">Camera</div>
         <v-row dense>
+          <v-col>
+            <v-text-field
+              variant="outlined"
+              label="Position X"
+              type="number"
+              density="compact"
+              :model-value="cameraInitPos.x"
+              @update:model-value="
+                appStore.setCameraInitPos(
+                  Number($event),
+                  cameraInitPos.y,
+                  cameraInitPos.z,
+                )
+              "
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              variant="outlined"
+              label="Position Y"
+              type="number"
+              density="compact"
+              :model-value="cameraInitPos.y"
+              @update:model-value="
+                appStore.setCameraInitPos(
+                  cameraInitPos.x,
+                  Number($event),
+                  cameraInitPos.z,
+                )
+              "
+            />
+          </v-col>
           <v-col>
             <v-text-field
               variant="outlined"

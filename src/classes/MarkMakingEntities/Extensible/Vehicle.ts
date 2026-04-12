@@ -100,7 +100,15 @@ export class Vehicle {
     this.previousForward = null;
     this.previousUpDirection = null;
     this.maxNumberOfPreviousCoords = 10;
-    this.phys = physicalProperties;
+    // Copy mutable vector fields so vehicles constructed from the same props object
+    // don't share acceleration/velocity state (shallow spread callers like GridGenerator
+    // pass { ...propsObj }, which leaves P5.Vector references shared across all instances).
+    this.phys = {
+      ...physicalProperties,
+      velocity: physicalProperties.velocity.copy(),
+      acceleration: physicalProperties.acceleration.copy(),
+      aggregateSteer: physicalProperties.aggregateSteer.copy(),
+    };
     this.phys.up = upAxis; //should always be normalized
     this.phys.forward = new P5.Vector(0, 0, 0); //should always be normalized or 0
     this.env = { friction: null };

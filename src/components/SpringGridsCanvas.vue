@@ -5,6 +5,8 @@ import { DotRenderer } from '@/classes/Rendering/Renderers/DotRenderer';
 import { VehicleCollection } from '@/classes/EntityManagement/Extensible/VehicleCollection';
 import { GridGenerator } from '@/classes/Generators/InstanceGenerators/GridGenerator';
 import { createGenericPhysicalProps } from '@/classes/MarkMakingEntities/Extensible/Vehicle';
+import { Sphere } from '@/classes/Geometry/Sphere';
+import { CoordinateSystem } from '@/classes/Geometry/CoordinateSystem';
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
 
@@ -70,8 +72,8 @@ onUnmounted(() => {
 
 onMounted(() => {
   let gen: GridGenerator | null = null;
-  const collection = new VehicleCollection();
-  const attractors: P5.Vector[] = [];
+  const springVehicles = new VehicleCollection();
+  const springAttractors: P5.Vector[] = [];
 
   const sketch = (p5: P5) => {
     p5.setup = () => {
@@ -88,10 +90,10 @@ onMounted(() => {
 
       // Light, responsive vehicles: mass=1 so force = acceleration directly.
       const vehicleProps = createGenericPhysicalProps();
-      vehicleProps.mass = 1;
-      vehicleProps.maxSteerForce = 50;
+      vehicleProps.mass = 3;
+      vehicleProps.maxSteerForce = 20;
       vehicleProps.useMaxVelocity = true;
-      vehicleProps.maxVelocity = 20;
+      vehicleProps.maxVelocity = 25;
 
       gen = new GridGenerator(
         p5,
@@ -105,9 +107,11 @@ onMounted(() => {
         },
         vehicleProps,
       );
-      gen.populate(collection);
+      gen.populate(springVehicles);
 
-      // Immortal vehicles with light friction — springs provide the primary damping.
+      // Vehicles must be immortal — the default lifeExpectancy is 150 frames, after which
+      // the collection becomes empty and buildOcTree() throws "Cannot construct OcTree with
+      // no vehicles", crashing the draw loop permanently.
       for (const row of gen.grid) {
         for (const v of row) {
           v.lifeExpectancy = Infinity;
@@ -115,28 +119,61 @@ onMounted(() => {
         }
       }
 
-      // Attractors: random positions within a sphere 2× the widest grid dimension.
-      const attractorRadius = 2 * maxDim;
+      // Attractors: random positions in the XY plane (Z=0) at 0.5–2× the widest grid dimension.
+      // Constraining to Z=0 ensures all attractors are coplanar with the grid and reliably
+      // within attractorRange — random3D() would scatter most attractors above/below the plane.
+      const attractorGenSphereRadius = maxDim;
+      const generatorSphere = new Sphere(
+        CoordinateSystem.fromOriginAndNormal(
+          new P5.Vector(0, 0, 0),
+          new P5.Vector(0, 0, 1),
+        ),
+        attractorGenSphereRadius,
+      );
       for (let i = 0; i < props.numAttractors; i++) {
-        const dir = P5.Vector.random3D();
-        const r = p5.random(attractorRadius * 0.5, attractorRadius);
-        attractors.push(dir.mult(r));
+        // randomPointOnSurface concentrates samples near the equator (phi ≈ π/2),
+        // so r_xy ≈ sphereRadius after z=0 — attractors land outside the grid perimeter.
+        // randomPointInside spreads samples through the full volume, often placing attractors
+        // near the origin (inside the grid), which makes corner vehicles with fewer springs
+        // always escape first toward the same central point every run.
+        const position = generatorSphere.randomPointOnSurface();
+        position.z = 0; // attractors must be coplanar with the grid — 3D positions send forces in ±Z which the XY springs resist, appearing as no lateral movement from the top-down camera
+        springAttractors.push(position);
       }
 
       dotRenderer = new DotRenderer(
         p5,
         6,
-        maxDim * 2,
+        3000,
         hexToRgb(primaryColor.value),
         camera.value,
       );
+
+      // Draw attractor range spheres once onto the background so they persist as
+      // reference markers without compounding every frame on the accumulating canvas.
+      const [pr, pg, pb] = hexToRgb(primaryColor.value);
+      p5.push();
+      p5.stroke(pr, pg, pb);
+      p5.strokeWeight(1);
+      p5.noFill();
+      for (const attractor of springAttractors) {
+        const sphere = new Sphere(
+          CoordinateSystem.fromOriginAndNormal(
+            attractor,
+            new P5.Vector(0, 0, 1),
+          ),
+          props.attractorRange,
+        );
+        const silhouette = sphere.silhouetteCircle(camera.value.pos);
+        silhouette.renderSegmentCount = 64;
+        const projected = camera.value.renderLines(silhouette.renderSegments);
+        for (const seg of projected) seg.render2D(p5);
+      }
+      p5.pop();
     };
 
     p5.draw = () => {
       if (!gen) return;
-
-      // This is a live simulation — clear each frame so the current grid state is visible.
-      p5.background(backgroundColor.value);
 
       // Push current reactive prop values into the spring objects each frame.
       for (const s of gen.springs) {
@@ -144,23 +181,19 @@ onMounted(() => {
         s.damping = props.springDamping;
       }
 
-      // Apply attractor seek forces to vehicles within range, before collection.update()
-      // so they enter the standard force-accumulation pipeline alongside spring forces.
-      for (const v of collection.vehicles) {
-        for (const attractor of attractors) {
-          if (P5.Vector.dist(v.coords, attractor) < props.attractorRange) {
-            v.seek(attractor, props.attractorStrength);
-          }
-        }
-      }
+      springVehicles.seek(
+        springAttractors,
+        props.attractorStrength,
+        props.attractorRange,
+      );
+      springVehicles.applySprings();
+      springVehicles.update();
 
-      // Spring forces + vehicle physics integration.
-      collection.update();
-
-      dotRenderer?.renderVehicles(collection.vehicles);
+      dotRenderer?.renderVehicles(springVehicles.vehicles);
+      // console.log(springVehicles.vehicles.map(v => v.coords));
 
       numberOfFrames.value++;
-      numberOfVehicles.value = collection.count;
+      numberOfVehicles.value = springVehicles.count;
     };
 
     p5.keyPressed = () => {

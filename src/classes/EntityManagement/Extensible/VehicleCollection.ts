@@ -80,17 +80,12 @@ export class VehicleCollection {
   }
 
   buildOcTree(): VehicleCollection {
+    console.log('building oc tree');
     this.ocTree = new OcTree(this.vehicles);
     return this;
   }
 
   update(): VehicleCollection {
-    // Apply spring forces before vehicle updates so they enter the normal
-    // force-accumulation pipeline and are integrated + reset inside vehicle.update().
-    for (const spring of this.springs) {
-      spring.applyForces();
-    }
-
     this.vehicles.forEach((v) => v.update());
     this.vehicles = this.vehicles.filter((v) => v.age < v.lifeExpectancy);
 
@@ -105,6 +100,19 @@ export class VehicleCollection {
     // Invalidate the octree — vehicles have moved and dead ones have been removed.
     // It will be rebuilt lazily on the next spatial query.
     this.ocTree = null;
+    return this;
+  }
+
+  /**
+   * Applies all registered Springs to their endpoint vehicles, accumulating forces for the current frame.
+   * This method should be called once per frame before updating the vehicles to ensure spring forces are included in the physics integration.
+   * This method mutates the vehicles by applying forces but does not update their positions or velocities.
+   * @returns This VehicleCollection instance for method chaining
+   */
+  applySprings(): VehicleCollection {
+    for (const spring of this.springs) {
+      spring.applyForces();
+    }
     return this;
   }
 

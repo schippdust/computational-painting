@@ -59,6 +59,8 @@ Canvas dimensions come from Pinia: `canvasWidth.value` / `canvasHeight.value`. D
 
 The canvas intentionally **does not call `p5.background()`** in the draw loop. Marks accumulate. If you want to clear between experiments, call `p5.background(0)` once manually or at the start of `setup`.
 
+Even if it seems like a script that is being requested should have a background clear, please do not add one without specifically requesting it from the user. In almost every case the background clear will not be desired.
+
 ## Drawing State Isolation
 
 Always wrap per-vehicle drawing calls with `push()` / `pop()` to avoid leaking fill/stroke/strokeWeight state:
