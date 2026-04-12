@@ -17,8 +17,7 @@ import type {
 
 declare module 'vue-router' {
   interface TypesConfig {
-    ParamParsers:
-      | never
+    ParamParsers: never;
   }
 }
 
@@ -32,15 +31,15 @@ declare module 'vue-router/auto-routes' {
       '/',
       Record<never, never>,
       Record<never, never>,
-      | never
-    >,
+      never
+    >;
     '/computational-canvas': RouteRecordInfo<
       '/computational-canvas',
       '/computational-canvas',
       Record<never, never>,
       Record<never, never>,
-      | never
-    >,
+      never
+    >;
   }
 
   /**
@@ -55,17 +54,13 @@ declare module 'vue-router/auto-routes' {
    */
   export interface _RouteFileInfoMap {
     'src/pages/index.vue': {
-      routes:
-        | '/'
-      views:
-        | never
-    }
+      routes: '/';
+      views: never;
+    };
     'src/pages/computational-canvas.vue': {
-      routes:
-        | '/computational-canvas'
-      views:
-        | never
-    }
+      routes: '/computational-canvas';
+      views: never;
+    };
   }
 
   /**
@@ -77,7 +72,7 @@ declare module 'vue-router/auto-routes' {
   export type _RouteNamesForFilePath<FilePath extends string> =
     _RouteFileInfoMap extends Record<FilePath, infer Info>
       ? Info['routes']
-      : keyof RouteNamedMap
+      : keyof RouteNamedMap;
 }
 
-export {}
+export {};
