@@ -2,13 +2,20 @@
 import SpringGridsCanvas from '@/components/SpringGridsCanvas.vue';
 import CanvasToolbar from '@/components/CanvasToolbar.vue';
 import CanvasInitOverlay from '@/components/CanvasInitOverlay.vue';
+import ToolbarNumericInput from '@/components/ToolbarNumericInput.vue';
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
 
 const router = useRouter();
 const appStore = useAppStore();
-const { initialized, canvasWidth, canvasHeight, darkMode } =
-  storeToRefs(appStore);
+const {
+  initialized,
+  canvasWidth,
+  canvasHeight,
+  darkMode,
+  cameraInitPos,
+  cameraInitFOV,
+} = storeToRefs(appStore);
 
 function goHome() {
   appStore.resetInitialization();
@@ -20,10 +27,7 @@ const ZOOM_STEP = 0.05;
 const ZOOM_MIN = 0.05;
 const ZOOM_MAX = 4;
 
-// Points at the inner scroll container — clientWidth/clientHeight exclude any visible scrollbar.
 const canvasAreaRef = ref<HTMLElement | null>(null);
-
-// Track vertical scrollbar width so the home button stays 8px from its left edge.
 const scrollbarWidth = ref(0);
 let resizeObserver: ResizeObserver | null = null;
 
@@ -34,10 +38,21 @@ function handleFit() {
   zoom.value = Math.floor(Math.min(fitW, fitH) * 1000) / 1000;
 }
 
-// Fit the canvas to the viewport as soon as the init overlay is confirmed.
 watch(initialized, (isInit) => {
   if (isInit) nextTick(() => handleFit());
 });
+
+// ─── Init-time params (fixed when Start Drawing is clicked) ───────────────────
+const gridRows = ref(15);
+const gridCols = ref(15);
+const gridSpacing = ref(100);
+const numAttractors = ref(5);
+
+// ─── Runtime params (reactive, toolbar-adjustable while simulation runs) ──────
+const springStiffness = ref(0.2);
+const springDamping = ref(0.1);
+const attractorStrength = ref(0.3);
+const attractorRange = ref(2000);
 
 function handleKeydown(e: KeyboardEvent) {
   if (
@@ -61,6 +76,12 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 onMounted(() => {
+  // Defaults suited for a top-down view of an XY-plane spring grid.
+  appStore.setCanvasDims(2000, 2000);
+  appStore.setCameraInitPos(0, 0, 2500);
+  appStore.setCameraInitTarget(0, 0, 0);
+  appStore.setCameraInitFOV(60);
+
   window.addEventListener('keydown', handleKeydown);
   if (canvasAreaRef.value) {
     const update = () => {
@@ -78,30 +99,74 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown);
   resizeObserver?.disconnect();
   resizeObserver = null;
-  // Uncomment to re-show the init overlay when the user navigates away and back:
-  // appStore.resetInitialization();
 });
 </script>
 
 <template>
   <div class="canvas-page">
     <canvas-toolbar v-model:zoom="zoom" @fit="handleFit">
-      <!-- Add canvas-specific toolbar items here via slot -->
+      <!-- Spring parameters -->
+      <v-divider class="my-1 w-100" />
+      <toolbar-numeric-input
+        v-model="springStiffness"
+        label="Spring Stiffness"
+        icon="mdi-tune-variant"
+        tooltip-text="Spring stiffness (k)"
+        :min="0"
+        :max="5"
+        :step="0.01"
+      />
+      <toolbar-numeric-input
+        v-model="springDamping"
+        label="Spring Damping"
+        icon="mdi-waves"
+        tooltip-text="Spring damping"
+        :min="0"
+        :max="1"
+        :step="0.01"
+      />
+      <!-- Attractor parameters -->
+      <v-divider class="my-1 w-100" />
+      <toolbar-numeric-input
+        v-model="attractorStrength"
+        label="Attractor Strength"
+        icon="mdi-magnet"
+        tooltip-text="Attractor strength"
+        :min="0"
+        :max="5"
+        :step="0.01"
+      />
+      <toolbar-numeric-input
+        v-model="attractorRange"
+        label="Attractor Range"
+        icon="mdi-target-variant"
+        tooltip-text="Attractor range"
+        :min="0"
+        :max="10000"
+        :step="50"
+      />
     </canvas-toolbar>
 
-    <!-- Outer wrapper: position:relative, no overflow — anchors the UI overlay -->
     <div
       class="canvas-area"
       :style="{ background: darkMode ? '#2d2d2d' : '#f0f0f0' }"
     >
-      <!-- Scrollable canvas layer — ref used for fit measurements -->
       <div ref="canvasAreaRef" class="canvas-scroll">
         <div class="canvas-zoom-wrapper" :style="{ zoom: zoom }">
-          <SpringGridsCanvas v-if="initialized" />
+          <SpringGridsCanvas
+            v-if="initialized"
+            :grid-rows="gridRows"
+            :grid-cols="gridCols"
+            :grid-spacing="gridSpacing"
+            :num-attractors="numAttractors"
+            :spring-stiffness="springStiffness"
+            :spring-damping="springDamping"
+            :attractor-strength="attractorStrength"
+            :attractor-range="attractorRange"
+          />
         </div>
       </div>
 
-      <!-- Non-scrolling UI overlay — sits above the canvas, doesn't move with scroll -->
       <div
         class="canvas-ui-layer"
         :style="{ paddingRight: `${8 + scrollbarWidth}px` }"
@@ -121,8 +186,102 @@ onUnmounted(() => {
         </v-tooltip>
       </div>
 
-      <canvas-init-overlay v-if="!initialized">
-        <!-- Add canvas-specific init settings here via slot -->
+      <canvas-init-overlay :width="560">
+        <!-- Grid settings -->
+        <v-divider class="mb-4" />
+        <div class="text-subtitle-2 mb-3">Grid</div>
+        <v-row dense>
+          <v-col>
+            <v-text-field
+              :model-value="gridRows"
+              variant="outlined"
+              label="Rows"
+              type="number"
+              density="compact"
+              :min="2"
+              :max="50"
+              @update:model-value="
+                (v) => (gridRows = Math.max(2, Math.round(Number(v))))
+              "
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              :model-value="gridCols"
+              variant="outlined"
+              label="Columns"
+              type="number"
+              density="compact"
+              :min="2"
+              :max="50"
+              @update:model-value="
+                (v) => (gridCols = Math.max(2, Math.round(Number(v))))
+              "
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              :model-value="gridSpacing"
+              variant="outlined"
+              label="Spacing"
+              type="number"
+              density="compact"
+              :min="20"
+              :max="500"
+              @update:model-value="
+                (v) => (gridSpacing = Math.max(20, Number(v)))
+              "
+            />
+          </v-col>
+        </v-row>
+
+        <!-- Attractor count -->
+        <div class="text-subtitle-2 mb-1 mt-2">Attractors</div>
+        <v-row dense>
+          <v-col>
+            <v-slider
+              v-model="numAttractors"
+              :min="3"
+              :max="10"
+              :step="1"
+              thumb-label="always"
+              label="Count"
+              density="compact"
+              class="mt-4 mb-1"
+            />
+          </v-col>
+        </v-row>
+
+        <!-- Camera settings -->
+        <div class="text-subtitle-2 mb-3 mt-2">Camera</div>
+        <v-row dense>
+          <v-col>
+            <v-text-field
+              variant="outlined"
+              label="Position Z"
+              type="number"
+              density="compact"
+              :model-value="cameraInitPos.z"
+              @update:model-value="
+                appStore.setCameraInitPos(
+                  cameraInitPos.x,
+                  cameraInitPos.y,
+                  Number($event),
+                )
+              "
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              variant="outlined"
+              label="Field of View (°)"
+              type="number"
+              density="compact"
+              :model-value="cameraInitFOV"
+              @update:model-value="appStore.setCameraInitFOV(Number($event))"
+            />
+          </v-col>
+        </v-row>
       </canvas-init-overlay>
     </div>
   </div>
@@ -135,15 +294,12 @@ onUnmounted(() => {
   inset: 0;
 }
 
-/* Non-scrolling wrapper — anchors the absolute children */
 .canvas-area {
   flex: 1;
   position: relative;
   overflow: hidden;
-  /* background is set dynamically via :style binding — dark grey in dark mode, light grey in light mode */
 }
 
-/* The actual scroll container — fills the canvas-area exactly */
 .canvas-scroll {
   position: absolute;
   inset: 0;
@@ -156,7 +312,6 @@ onUnmounted(() => {
   box-shadow: 0 4px 32px rgba(0, 0, 0, 0.35);
 }
 
-/* Overlay layer for UI chrome — never scrolls, always covers full canvas-area */
 .canvas-ui-layer {
   position: absolute;
   inset: 0;
@@ -166,7 +321,6 @@ onUnmounted(() => {
   justify-content: flex-end;
   align-items: flex-start;
   padding-top: 8px;
-  /* padding-right is set dynamically to account for vertical scrollbar width */
 }
 
 .home-btn {
