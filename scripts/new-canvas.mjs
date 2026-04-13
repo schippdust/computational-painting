@@ -3,18 +3,24 @@
  * Scaffold a new computational canvas iteration.
  *
  * Usage:
- *   node scripts/new-canvas.mjs <kebab-name> [description] [--group "Group Name"] [--template blank|pre-filled]
- *   npm run new-canvas -- <kebab-name> [description] [--group "Group Name"] [--template blank|pre-filled]
+ *   node scripts/new-canvas.mjs <kebab-name> [description] [--group "Group Name"] [--template blank|<source-kebab>]
+ *   npm run new-canvas -- <kebab-name> [description] [--group "Group Name"] [--template blank|<source-kebab>]
  *
  * Examples:
  *   npm run new-canvas -- wind-particles "Particles steered by curl noise" --group "Wind Fields"
- *   npm run new-canvas -- branching-lines --group "Branching Spheres"
- *   npm run new-canvas -- my-canvas                         # blank template, Uncategorized
- *   npm run new-canvas -- my-canvas --template pre-filled   # sphere emission starting point
+ *   npm run new-canvas -- my-canvas                              # blank template, Uncategorized
+ *   npm run new-canvas -- spring-v2 --template spring-grids     # clone spring-grids canvas
+ *   npm run new-canvas -- sphere-v2 --template sphere-emission  # clone sphere-emission canvas
+ *
+ * The --template flag accepts:
+ *   blank              (default) Minimal boilerplate with a VehicleDotRenderer stub
+ *   <source-kebab>     Kebab name of any existing canvas — its component and page files are
+ *                      cloned verbatim, with every reference to the source name substituted
+ *                      for the new name. All existing props, logic, and overlays are preserved.
  *
  * Creates:
- *   src/components/<PascalName>Canvas.vue   — p5 sketch boilerplate
- *   src/pages/<kebab-name>.vue              — route page with toolbar + init overlay
+ *   src/components/<PascalName>Canvas.vue   — p5 sketch (blank stub or cloned)
+ *   src/pages/<kebab-name>.vue              — route page (blank stub or cloned)
  *   Appends an entry to src/canvasRegistry.ts
  */
 
@@ -49,14 +55,7 @@ for (let i = 0; i < rawArgs.length; i++) {
 if (!rawName) {
   console.error('Error: canvas name is required.\n');
   console.error(
-    'Usage: node scripts/new-canvas.mjs <kebab-name> [description] [--group "Group Name"] [--template blank|sphere]',
-  );
-  process.exit(1);
-}
-
-if (!['blank', 'pre-filled'].includes(templateArg)) {
-  console.error(
-    `Error: --template must be "blank" or "pre-filled" (got "${templateArg}")`,
+    'Usage: node scripts/new-canvas.mjs <kebab-name> [description] [--group "Group Name"] [--template blank|<source-kebab>]',
   );
   process.exit(1);
 }
@@ -106,15 +105,21 @@ for (const p of [componentPath, pagePath]) {
   }
 }
 
-// ─── Canvas component: blank template ─────────────────────────────────────────
-// Minimal boilerplate — store wiring, watchers, and DotRenderer ready to use.
-// Fill in the setup and draw TODOs to build your sketch.
+// ─── Resolve template content ─────────────────────────────────────────────────
 
-const componentContentBlank = `\
+let componentContent;
+let pageContent;
+
+if (templateArg === 'blank') {
+  // ── Blank component ───────────────────────────────────────────────────────
+  // Minimal boilerplate — store wiring, watchers, and VehicleDotRenderer ready to use.
+  // Fill in the setup and draw TODOs to build your sketch.
+
+  componentContent = `\
 <script setup lang="ts">
 import P5 from 'p5';
 import { pressSpaceToPause } from '@/classes/Rendering/DrawingUtils';
-import { DotRenderer } from '@/classes/Rendering/Renderers/DotRenderer';
+import { VehicleDotRenderer } from '@/classes/Rendering/VehicleRenderers/VehicleDotRenderer';
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
 
@@ -135,12 +140,12 @@ const frameRate = ref(40);
 const numberOfFrames = ref(0);
 const numberOfVehicles = ref(0);
 
-// Expose stats so the parent page can display them in the toolbar slot if desired.
+// Expose stats so the toolbar automation feature can track frame count.
 defineExpose({ frameRate, numberOfFrames, numberOfVehicles });
 
 // Keep the p5 loop in sync with the store's pause state (toggled by toolbar or spacebar).
 let p5Instance: P5 | null = null;
-let dotRenderer: DotRenderer | null = null;
+let dotRenderer: VehicleDotRenderer | null = null;
 
 watch(pauseCanvas, (paused) => {
   if (!p5Instance) return;
@@ -171,7 +176,7 @@ onMounted(() => {
       p5.background(backgroundColor.value);
       p5.frameRate(frameRate.value);
 
-      dotRenderer = new DotRenderer(p5, 5, 15000, hexToRgb(primaryColor.value), camera.value);
+      dotRenderer = new VehicleDotRenderer(p5, 5, 15000, hexToRgb(primaryColor.value), camera.value);
 
       // TODO: initialize geometry, collections
     };
@@ -205,199 +210,12 @@ onMounted(() => {
 </template>
 `;
 
-// ─── Canvas component: sphere template ────────────────────────────────────────
-// Full sphere-emission starting point: single sphere at the origin, vehicles
-// spawned on the surface each frame with outward velocity, occlusion-based
-// two-color rendering, and a silhouette drawn on the first frame.
+  // ── Blank page ────────────────────────────────────────────────────────────
+  // Full-viewport flex layout: collapsible toolbar on the left, canvas area on the right.
+  // The init overlay is shown over the canvas area until the user confirms settings.
+  // canvasKey drives the restart button and automation resets via Vue's :key mechanism.
 
-const componentContentSphere = `\
-<script setup lang="ts">
-import P5 from 'p5';
-import { pressSpaceToPause } from '@/classes/Rendering/DrawingUtils';
-import { DotRenderer } from '@/classes/Rendering/Renderers/DotRenderer';
-import { Sphere } from '@/classes/Geometry/Sphere';
-import { CoordinateSystem } from '@/classes/Geometry/CoordinateSystem';
-import {
-  Vehicle,
-  createGenericPhysicalProps,
-} from '@/classes/MarkMakingEntities/Extensible/Vehicle';
-import { useAppStore } from '@/stores/app';
-import { storeToRefs } from 'pinia';
-
-const appStore = useAppStore();
-const {
-  canvasHeight,
-  canvasWidth,
-  pauseCanvas,
-  camera,
-  primaryColor,
-  secondaryColor,
-  backgroundColor,
-} = storeToRefs(appStore);
-
-/** Convert a CSS hex color string to a p5-compatible [r, g, b] array. */
-function hexToRgb(hex: string): [number, number, number] {
-  const m = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})/i.exec(hex);
-  return m
-    ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)]
-    : [255, 255, 255];
-}
-
-const frameRate = ref(40);
-const numberOfFrames = ref(0);
-const numberOfVehicles = ref(0);
-
-defineExpose({ frameRate, numberOfFrames, numberOfVehicles });
-
-let p5Instance: P5 | null = null;
-let dotRenderer: DotRenderer | null = null;
-
-watch(pauseCanvas, (paused) => {
-  if (!p5Instance) return;
-  if (paused) p5Instance.noLoop();
-  else p5Instance.loop();
-});
-
-watch(primaryColor, (newColor) => {
-  if (dotRenderer) dotRenderer.color = hexToRgb(newColor);
-});
-
-watch(backgroundColor, (newColor) => {
-  p5Instance?.background(newColor);
-});
-
-onUnmounted(() => {
-  p5Instance?.remove();
-  p5Instance = null;
-  dotRenderer = null;
-});
-
-onMounted(() => {
-  const sphereRadius = 3000;
-  const initialSpeed = 8;
-  const vehicleLifespan = 500;
-  const vehicleFriction = 0.02;
-  const maxVehicles = 800;
-
-  // Single sphere centered at the world origin.
-  const sphere = new Sphere(
-    CoordinateSystem.fromOriginAndNormal(
-      new P5.Vector(0, 0, 0),
-      new P5.Vector(0, 0, 1),
-    ),
-    sphereRadius,
-  );
-
-  let vehicles: Vehicle[] = [];
-  let silhouetteRendered = false;
-
-  const sketch = (p5: P5) => {
-    p5.setup = () => {
-      p5.createCanvas(canvasWidth.value, canvasHeight.value);
-      p5.background(backgroundColor.value);
-      p5.frameRate(frameRate.value);
-
-      dotRenderer = new DotRenderer(
-        p5,
-        4,
-        sphereRadius * 4,
-        hexToRgb(primaryColor.value),
-        camera.value,
-      );
-    };
-
-    p5.draw = () => {
-      // Draw the sphere silhouette once on the first frame.
-      if (!silhouetteRendered && camera.value) {
-        p5.stroke(primaryColor.value);
-        p5.strokeWeight(1);
-        const silhouette = sphere.silhouetteCircle(camera.value.pos);
-        silhouette.renderSegmentCount = 120;
-        const projected = camera.value.renderLines(silhouette.renderSegments);
-        for (const seg of projected) seg.render2D(p5);
-        silhouetteRendered = true;
-      }
-
-      // Remove vehicles that have exceeded their lifespan.
-      vehicles = vehicles.filter((v) => !v.isDead);
-
-      // Spawn one new vehicle per frame up to the population cap.
-      if (vehicles.length < maxVehicles) {
-        const surfacePoint = sphere.randomPointOnSurface();
-
-        // Outward velocity: from sphere center toward the surface point.
-        const outward = P5.Vector.sub(surfacePoint, sphere.centerPoint)
-          .normalize()
-          .mult(initialSpeed);
-
-        const vehicle = new Vehicle(
-          p5,
-          surfacePoint,
-          createGenericPhysicalProps(),
-        );
-        vehicle.lifeExpectancy = vehicleLifespan;
-        vehicle.env.friction = vehicleFriction;
-        vehicle.velocity = outward;
-
-        vehicles.push(vehicle);
-      }
-
-      // Advance all vehicles one physics step.
-      for (const v of vehicles) v.update();
-
-      // Split by occlusion relative to the current camera position.
-      const camPos = camera.value.pos;
-      const visible: Vehicle[] = [];
-      const occluded: Vehicle[] = [];
-      for (const v of vehicles) {
-        if (sphere.isPointObscured(v.coordSystem.getPosition(), camPos)) {
-          occluded.push(v);
-        } else {
-          visible.push(v);
-        }
-      }
-
-      // Render: primary color for visible, secondary for occluded.
-      if (dotRenderer) {
-        dotRenderer.color = hexToRgb(primaryColor.value);
-        dotRenderer.renderVehicles(visible);
-
-        dotRenderer.color = hexToRgb(secondaryColor.value);
-        dotRenderer.renderVehicles(occluded);
-      }
-
-      numberOfFrames.value++;
-      numberOfVehicles.value = vehicles.length;
-    };
-
-    p5.keyPressed = () => {
-      pressSpaceToPause(p5);
-    };
-  };
-
-  const canvasElement = document.getElementById(
-    '${canvasElementId}',
-  ) as HTMLElement;
-  p5Instance = new P5(sketch, canvasElement);
-});
-</script>
-
-<template>
-  <div
-    id="${canvasElementId}"
-    style="overflow-y: auto; overflow-x: auto; line-height: 0"
-  ></div>
-</template>
-`;
-
-const componentContent =
-  templateArg === 'pre-filled' ? componentContentSphere : componentContentBlank;
-
-// ─── Route page ───────────────────────────────────────────────────────────────
-// Full-viewport flex layout: collapsible toolbar on the left, canvas area on the right.
-// The init overlay is shown over the canvas area until the user confirms settings.
-
-const pageContent = `\
+  pageContent = `\
 <script setup lang="ts">
 import ${pascalName}Canvas from '@/components/${pascalName}Canvas.vue';
 import CanvasToolbar from '@/components/CanvasToolbar.vue';
@@ -449,6 +267,38 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
+// ─── Canvas reset ─────────────────────────────────────────────────────────────
+// Incrementing canvasKey destroys and re-creates the canvas component, firing
+// onUnmounted (p5 cleanup) then onMounted (full re-init) with current prop values.
+
+const canvasKey = ref(0);
+
+function resetCanvas() {
+  canvasKey.value++;
+}
+
+// ─── Automation ───────────────────────────────────────────────────────────────
+// canvasRef exposes numberOfFrames from the canvas component so CanvasToolbar
+// can track the current frame count and trigger captures at the right moment.
+
+const canvasRef = ref<{ numberOfFrames: number } | null>(null);
+const currentFrame = computed(() => canvasRef.value?.numberOfFrames ?? 0);
+
+function handleAutomateCapture(filename: string) {
+  const canvas = document.querySelector('#${canvasElementId} canvas') as HTMLCanvasElement;
+  if (canvas) {
+    const link = document.createElement('a');
+    link.download = \`\${filename}.png\`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+  setTimeout(() => resetCanvas(), 50);
+}
+
+function handleAutomateComplete() {
+  goHome();
+}
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown);
   if (canvasAreaRef.value) {
@@ -476,7 +326,11 @@ onUnmounted(() => {
   <div class="canvas-page">
     <canvas-toolbar
       v-model:zoom="zoom"
+      :current-frame="currentFrame"
       @fit="handleFit"
+      @reset="resetCanvas"
+      @automate-capture="handleAutomateCapture"
+      @automate-complete="handleAutomateComplete"
     >
       <!-- Add canvas-specific toolbar items here via slot -->
     </canvas-toolbar>
@@ -487,7 +341,11 @@ onUnmounted(() => {
       <!-- Scrollable canvas layer — ref used for fit measurements -->
       <div ref="canvasAreaRef" class="canvas-scroll">
         <div class="canvas-zoom-wrapper" :style="{ zoom: zoom }">
-          <${pascalName}Canvas v-if="initialized" />
+          <${pascalName}Canvas
+            ref="canvasRef"
+            v-if="initialized"
+            :key="canvasKey"
+          />
         </div>
       </div>
 
@@ -566,6 +424,52 @@ onUnmounted(() => {
 }
 </style>
 `;
+} else {
+  // ── Clone an existing canvas ───────────────────────────────────────────────
+  // Read the source component and page, then substitute all references to the
+  // source name with the new name. The clone inherits all props, logic, init
+  // overlay settings, and toolbar slot content unchanged.
+
+  const sourceKebab = toKebab(templateArg);
+  const sourcePascal = toPascal(sourceKebab);
+  const sourceComponentPath = resolve(
+    root,
+    `src/components/${sourcePascal}Canvas.vue`,
+  );
+  const sourcePagePath = resolve(root, `src/pages/${sourceKebab}.vue`);
+
+  if (!existsSync(sourceComponentPath)) {
+    console.error(
+      `Error: template canvas component not found: src/components/${sourcePascal}Canvas.vue\n` +
+        `Make sure the --template value matches an existing canvas kebab name (e.g. --template spring-grids).`,
+    );
+    process.exit(1);
+  }
+  if (!existsSync(sourcePagePath)) {
+    console.error(
+      `Error: template canvas page not found: src/pages/${sourceKebab}.vue\n` +
+        `Make sure the --template value matches an existing canvas kebab name (e.g. --template spring-grids).`,
+    );
+    process.exit(1);
+  }
+
+  const sourceComponent = readFileSync(sourceComponentPath, 'utf8');
+  const sourcePage = readFileSync(sourcePagePath, 'utf8');
+
+  // Two substitutions cover all name references:
+  //   1. Element ID:        "<sourceKebab>-canvas"  →  "<newKebab>-canvas"
+  //      (used in id=, getElementById, querySelector)
+  //   2. Component class:   "<sourcePascal>Canvas"  →  "<newPascal>Canvas"
+  //      (used in import statement and template tag)
+  componentContent = sourceComponent.replaceAll(
+    `${sourceKebab}-canvas`,
+    `${kebabName}-canvas`,
+  );
+
+  pageContent = sourcePage
+    .replaceAll(`${sourcePascal}Canvas`, `${pascalName}Canvas`)
+    .replaceAll(`${sourceKebab}-canvas`, `${kebabName}-canvas`);
+}
 
 // ─── Registry entry ───────────────────────────────────────────────────────────
 
@@ -609,18 +513,29 @@ const updatedRegistry = trimmed.slice(0, -2) + `\n${newEntry}\n];\n`;
 
 writeFileSync(componentPath, componentContent);
 console.log(
-  `✓ Created component  src/components/${pascalName}Canvas.vue  (template: ${templateArg})`,
+  `✓ Created component  src/components/${pascalName}Canvas.vue` +
+    (templateArg === 'blank'
+      ? '  (template: blank)'
+      : `  (cloned from: ${templateArg})`),
 );
 
 writeFileSync(pagePath, pageContent);
-console.log(`✓ Created page       src/pages/${kebabName}.vue`);
+console.log(
+  `✓ Created page       src/pages/${kebabName}.vue` +
+    (templateArg === 'blank' ? '' : `  (cloned from: ${templateArg})`),
+);
 
 writeFileSync(registryPath, updatedRegistry);
 console.log(`✓ Updated registry   src/canvasRegistry.ts  (group: "${group}")`);
 
+const nextStep =
+  templateArg === 'blank'
+    ? `Fill in the TODO sections in src/components/${pascalName}Canvas.vue`
+    : `Modify the cloned logic in src/components/${pascalName}Canvas.vue and src/pages/${kebabName}.vue`;
+
 console.log(`
 Next steps:
-  1. ${templateArg === 'pre-filled' ? 'Modify the sphere parameters at the top of onMounted' : `Fill in the TODO sections in src/components/${pascalName}Canvas.vue`}
+  1. ${nextStep}
   2. Run the dev server: npm run dev
   3. Navigate to http://localhost:3000/${kebabName}
 `);
