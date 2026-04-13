@@ -9,11 +9,18 @@ const { pauseCanvas, darkMode, primaryColor, secondaryColor, backgroundColor } =
 
 const props = defineProps<{
   zoom: number;
+  /** Current frame count from the active canvas component. Used by automation to know when a run is complete. */
+  currentFrame?: number;
 }>();
 
 const emit = defineEmits<{
   'update:zoom': [value: number];
   fit: [];
+  reset: [];
+  /** Fired when a run completes. The page should download the canvas and then call resetCanvas(). */
+  'automate-capture': [filename: string];
+  /** Fired when all runs are done. The page should navigate home. */
+  'automate-complete': [];
 }>();
 
 // Expanded = icon-only toolbar (default). Condensed = thin strip + floating toggle.
@@ -100,6 +107,63 @@ function cancelColor(key: 'primary' | 'secondary' | 'background') {
 function toggleDarkMode() {
   appStore.setDarkMode(!darkMode.value, false);
 }
+
+// ─── Automation ───────────────────────────────────────────────────────────────
+// Watches currentFrame prop. When a run reaches targetFrames, fires automate-capture
+// so the page can download the canvas and reset. After all runs, fires automate-complete.
+
+const automationMenuOpen = ref(false);
+const automating = ref(false);
+const targetFrames = ref(300);
+const totalRuns = ref(5);
+const automationFilename = ref('output');
+const currentRun = ref(1);
+// Guards against double-triggering while the canvas is resetting (frame briefly
+// stays above threshold until the new component mounts and resets it to 0).
+const runTriggered = ref(false);
+
+const automationProgress = computed(() =>
+  Math.min(
+    100,
+    Math.round(((props.currentFrame ?? 0) / targetFrames.value) * 100),
+  ),
+);
+
+function startAutomation() {
+  currentRun.value = 1;
+  runTriggered.value = false;
+  automating.value = true;
+  automationMenuOpen.value = false;
+}
+
+function stopAutomation() {
+  automating.value = false;
+}
+
+watch(
+  () => props.currentFrame,
+  (frame = 0) => {
+    if (!automating.value) return;
+
+    // The canvas resets to frame 0 after each run. Clear the guard once the
+    // new component has started (frame is back near zero).
+    if (frame <= 1) {
+      runTriggered.value = false;
+    }
+
+    // Trigger once per run when the threshold is reached.
+    if (!runTriggered.value && frame >= targetFrames.value) {
+      runTriggered.value = true;
+      const paddedRun = String(currentRun.value).padStart(3, '0');
+      emit('automate-capture', `${paddedRun}-${automationFilename.value}`);
+      currentRun.value++;
+      if (currentRun.value > totalRuns.value) {
+        automating.value = false;
+        emit('automate-complete');
+      }
+    }
+  },
+);
 </script>
 
 <template>
@@ -332,8 +396,130 @@ function toggleDarkMode() {
       <!-- Canvas-specific tools -->
       <slot />
 
-      <!-- Push dark mode toggle to the bottom -->
+      <!-- Push bottom actions to the bottom -->
       <div class="toolbar-spacer" />
+
+      <v-divider class="my-1 w-100" />
+
+      <!-- Restart canvas -->
+      <v-tooltip text="Restart canvas" location="right">
+        <template #activator="{ props: tip }">
+          <v-btn
+            variant="text"
+            icon="mdi-refresh"
+            density="compact"
+            v-bind="tip"
+            @click="emit('reset')"
+          />
+        </template>
+      </v-tooltip>
+
+      <v-divider class="my-1 w-100" />
+
+      <!-- Automate iteration -->
+      <v-menu
+        v-model="automationMenuOpen"
+        :close-on-content-click="false"
+        location="end"
+      >
+        <template #activator="{ props: menuProps }">
+          <v-tooltip
+            :text="automating ? 'Automation running' : 'Automate iteration'"
+            location="right"
+          >
+            <template #activator="{ props: tip }">
+              <v-btn
+                variant="text"
+                :icon="
+                  automating ? 'mdi-stop-circle-outline' : 'mdi-robot-outline'
+                "
+                density="compact"
+                :color="automating ? 'error' : undefined"
+                v-bind="mergeProps(menuProps, tip)"
+              />
+            </template>
+          </v-tooltip>
+        </template>
+
+        <v-card min-width="260" class="automation-card">
+          <v-card-title class="text-subtitle-2 pt-3 pb-1 px-4"
+            >Automate Iteration</v-card-title
+          >
+          <v-card-text class="pt-1 px-4">
+            <!-- Running state: show progress -->
+            <template v-if="automating">
+              <div class="text-body-2 mb-1">
+                Run {{ currentRun - 1 }} /
+                {{ totalRuns }}
+              </div>
+              <div class="text-caption text-medium-emphasis mb-2">
+                Frame {{ currentFrame ?? 0 }} / {{ targetFrames }}
+              </div>
+              <v-progress-linear
+                :model-value="automationProgress"
+                color="primary"
+                rounded
+                height="6"
+                class="mb-1"
+              />
+            </template>
+
+            <!-- Config state -->
+            <template v-else>
+              <v-text-field
+                v-model.number="targetFrames"
+                label="Frames per run"
+                type="number"
+                :min="1"
+                density="compact"
+                variant="outlined"
+                hide-details
+                class="mb-3"
+              />
+              <v-text-field
+                v-model.number="totalRuns"
+                label="Number of runs"
+                type="number"
+                :min="1"
+                density="compact"
+                variant="outlined"
+                hide-details
+                class="mb-3"
+              />
+              <v-text-field
+                v-model="automationFilename"
+                label="File name"
+                density="compact"
+                variant="outlined"
+                hide-details
+              />
+            </template>
+          </v-card-text>
+          <v-card-actions class="px-4 pb-3">
+            <v-spacer />
+            <template v-if="automating">
+              <v-btn
+                variant="flat"
+                color="error"
+                size="small"
+                @click="stopAutomation"
+                >Stop</v-btn
+              >
+            </template>
+            <template v-else>
+              <v-btn
+                variant="text"
+                size="small"
+                @click="automationMenuOpen = false"
+                >Cancel</v-btn
+              >
+              <v-btn variant="flat" size="small" @click="startAutomation"
+                >Start</v-btn
+              >
+            </template>
+          </v-card-actions>
+        </v-card>
+      </v-menu>
 
       <v-divider class="my-1 w-100" />
 
@@ -425,7 +611,7 @@ function toggleDarkMode() {
   flex-shrink: 0;
 }
 
-/* Pushes dark mode toggle to the bottom of the toolbar */
+/* Pushes bottom actions to the bottom of the toolbar */
 .toolbar-spacer {
   flex: 1;
 }
@@ -438,5 +624,9 @@ function toggleDarkMode() {
   z-index: 100;
   border-radius: 6px !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45) !important;
+}
+
+.automation-card {
+  font-size: 0.875rem;
 }
 </style>

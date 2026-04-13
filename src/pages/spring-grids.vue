@@ -22,7 +22,32 @@ function goHome() {
   router.push('/');
 }
 
+const canvasKey = ref(0);
 const zoom = ref(1);
+
+function resetCanvas() {
+  canvasKey.value++;
+}
+
+const canvasRef = ref<{ numberOfFrames: number } | null>(null);
+const currentFrame = computed(() => canvasRef.value?.numberOfFrames ?? 0);
+
+function handleAutomateCapture(filename: string) {
+  const canvas = document.querySelector(
+    '#spring-grids-canvas canvas',
+  ) as HTMLCanvasElement;
+  if (canvas) {
+    const link = document.createElement('a');
+    link.download = `${filename}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+  setTimeout(() => resetCanvas(), 50);
+}
+
+function handleAutomateComplete() {
+  goHome();
+}
 const ZOOM_STEP = 0.05;
 const ZOOM_MIN = 0.05;
 const ZOOM_MAX = 4;
@@ -45,14 +70,15 @@ watch(initialized, (isInit) => {
 // ─── Init-time params (fixed when Start Drawing is clicked) ───────────────────
 const gridRows = ref(15);
 const gridCols = ref(15);
+const gridLayers = ref(4);
 const gridSpacing = ref(100);
-const numAttractors = ref(5);
+const numAttractors = ref(8);
 
 // ─── Runtime params (reactive, toolbar-adjustable while simulation runs) ──────
-const springStiffness = ref(0.2);
-const springDamping = ref(0.1);
-const attractorStrength = ref(0.3);
-const attractorRange = ref(2500);
+const springStiffness = ref(100);
+const springDamping = ref(0.2);
+const attractorStrength = ref(0.05);
+const attractorRange = ref(750);
 
 function handleKeydown(e: KeyboardEvent) {
   if (
@@ -77,8 +103,8 @@ function handleKeydown(e: KeyboardEvent) {
 
 onMounted(() => {
   // Defaults suited for a top-down view of an XY-plane spring grid.
-  appStore.setCanvasDims(2000, 2000);
-  appStore.setCameraInitPos(0, 1, 2000);
+  appStore.setCanvasDims(6000, 6000);
+  appStore.setCameraInitPos(2000, 2400, 1700);
   appStore.setCameraInitTarget(0, 0, 0);
   appStore.setCameraInitFOV(60);
 
@@ -104,7 +130,14 @@ onUnmounted(() => {
 
 <template>
   <div class="canvas-page">
-    <canvas-toolbar v-model:zoom="zoom" @fit="handleFit">
+    <canvas-toolbar
+      v-model:zoom="zoom"
+      :current-frame="currentFrame"
+      @fit="handleFit"
+      @reset="resetCanvas"
+      @automate-capture="handleAutomateCapture"
+      @automate-complete="handleAutomateComplete"
+    >
       <!-- Spring parameters -->
       <v-divider class="my-1 w-100" />
       <toolbar-numeric-input
@@ -154,9 +187,12 @@ onUnmounted(() => {
       <div ref="canvasAreaRef" class="canvas-scroll">
         <div class="canvas-zoom-wrapper" :style="{ zoom: zoom }">
           <SpringGridsCanvas
+            ref="canvasRef"
             v-if="initialized"
+            :key="canvasKey"
             :grid-rows="gridRows"
             :grid-cols="gridCols"
+            :grid-layers="gridLayers"
             :grid-spacing="gridSpacing"
             :num-attractors="numAttractors"
             :spring-stiffness="springStiffness"
@@ -216,6 +252,20 @@ onUnmounted(() => {
               :max="50"
               @update:model-value="
                 (v) => (gridCols = Math.max(2, Math.round(Number(v))))
+              "
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              :model-value="gridLayers"
+              variant="outlined"
+              label="Layers"
+              type="number"
+              density="compact"
+              :min="1"
+              :max="20"
+              @update:model-value="
+                (v) => (gridLayers = Math.max(1, Math.round(Number(v))))
               "
             />
           </v-col>
