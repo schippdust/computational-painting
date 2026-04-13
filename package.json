@@ -11,7 +11,8 @@
     "type-check": "vue-tsc --build --force",
     "lint": "eslint . --fix",
     "format": "prettier --write .",
-    "new-canvas": "node scripts/new-canvas.mjs"
+    "new-canvas": "node scripts/new-canvas.mjs",
+    "rename-canvas": "node scripts/rename-canvas.mjs"
   },
   "dependencies": {
     "@mdi/font": "7.4.47",

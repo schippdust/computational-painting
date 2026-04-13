@@ -27,7 +27,31 @@ function goHome() {
   router.push('/');
 }
 
+const canvasKey = ref(0);
 const zoom = ref(1);
+
+function resetCanvas() {
+  canvasKey.value++;
+}
+const canvasRef = ref<{ numberOfFrames: number } | null>(null);
+const currentFrame = computed(() => canvasRef.value?.numberOfFrames ?? 0);
+
+function handleAutomateCapture(filename: string) {
+  const canvas = document.querySelector(
+    '#sphere-emission-canvas canvas',
+  ) as HTMLCanvasElement;
+  if (canvas) {
+    const link = document.createElement('a');
+    link.download = `${filename}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+  setTimeout(() => resetCanvas(), 50);
+}
+
+function handleAutomateComplete() {
+  goHome();
+}
 const ZOOM_STEP = 0.05;
 const ZOOM_MIN = 0.05;
 const ZOOM_MAX = 4;
@@ -97,7 +121,14 @@ onUnmounted(() => {
 
 <template>
   <div class="canvas-page">
-    <canvas-toolbar v-model:zoom="zoom" @fit="handleFit">
+    <canvas-toolbar
+      v-model:zoom="zoom"
+      :current-frame="currentFrame"
+      @fit="handleFit"
+      @reset="resetCanvas"
+      @automate-capture="handleAutomateCapture"
+      @automate-complete="handleAutomateComplete"
+    >
       <!-- Add canvas-specific toolbar items here via slot -->
     </canvas-toolbar>
 
@@ -109,7 +140,11 @@ onUnmounted(() => {
       <!-- Scrollable canvas layer — ref used for fit measurements -->
       <div ref="canvasAreaRef" class="canvas-scroll">
         <div class="canvas-zoom-wrapper" :style="{ zoom: zoom }">
-          <SphereEmissionCanvas v-if="initialized" />
+          <SphereEmissionCanvas
+            ref="canvasRef"
+            v-if="initialized"
+            :key="canvasKey"
+          />
         </div>
       </div>
 

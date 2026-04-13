@@ -43,6 +43,25 @@ This creates three things:
 
 The route is live immediately at `http://localhost:3000/<kebab-name>` once the dev server is running. The script will abort without writing anything if any of the target files already exist.
 
+## Renaming a Canvas
+
+Use the `rename-canvas` script to rename an existing iteration in one step:
+
+```bash
+npm run rename-canvas -- <current-kebab> <new-kebab> [--group "New Group"]
+# e.g.
+npm run rename-canvas -- spring-grids spring-lattice
+npm run rename-canvas -- spring-grids spring-lattice --group "Lattice Experiments"
+```
+
+What gets updated:
+
+1. **`src/components/<OldPascal>Canvas.vue`** — renamed to `src/components/<NewPascal>Canvas.vue`; internal element IDs updated.
+2. **`src/pages/<old-kebab>.vue`** — renamed to `src/pages/<new-kebab>.vue`; import and component tag updated.
+3. **Registry entry in `src/canvasRegistry.ts`** — `id`, `title`, and optionally `group` are replaced in place.
+
+The script will abort without writing anything if the source files don't exist, the targets already exist, or the registry doesn't contain the old id.
+
 ## Quick Orientation
 
 - Canvas components live in `src/components/` — each is a self-contained p5 sketch mounted on `onMounted`

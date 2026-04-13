@@ -22,8 +22,11 @@ src/classes/
 │   └── VectorOverloads.ts   Augments P5.Vector with additional operators (import as side effect)
 │
 ├── Generators/              Distribute vehicles along geometry at setup time
-│   ├── LineGenerator.ts     Spawns vehicles at parametric intervals along a Line
-│   └── CircleGenerator.ts   Spawns vehicles along a Circle
+│   ├── InstanceGenerators/
+│   │   └── GridGenerator.ts    Rectangular 3D lattice of vehicles pre-wired with springs
+│   └── ProgressiveGenerators/
+│       ├── LineGenerator.ts    Spawns vehicles at parametric intervals along a Line
+│       └── CircleGenerator.ts  Spawns vehicles along a Circle
 │
 ├── MarkMakingEntities/      Simulated agents that move through space and leave marks
 │   ├── Extensible/
@@ -47,11 +50,17 @@ src/classes/
 └── Rendering/               Draw vehicles and geometry to the p5 canvas
     ├── DrawingUtils.ts       Canvas helpers: pressSpaceToPause, etc.
     ├── CanvasThreads.ts      Threading/batching utilities for canvas operations
-    └── Renderers/
-        ├── DotRenderer.ts             Vehicles as distance-scaled filled circles
-        ├── SphereRenderer.ts          Renders Sphere geometry (silhouettes, fills)
-        ├── TaperingCircleRenderer.ts  Vehicles as tapering circles (brushstroke-like)
-        └── taperingSphereRenderer.ts  Sphere-projected tapering marks
+    ├── GeometryRenderers/    Render raw geometry — no Vehicle dependency
+    │   ├── DotRenderer.ts        Distance-scaled filled circles at world-space positions
+    │   ├── LineRenderer.ts       Projected line segments with distance-scaled stroke weight
+    │   └── SphereRenderer.ts     Sphere silhouettes (wireframe) and screen-space fills
+    ├── VehicleRenderers/     Thin adapters over GeometryRenderers; accept Vehicle arrays
+    │   ├── VehicleDotRenderer.ts              extends DotRenderer
+    │   ├── VehicleSphereRenderer.ts           extends SphereRenderer
+    │   ├── VehicleTaperingCircleRenderer.ts   tapering history trails
+    │   └── VehicletaperingSphereRenderer.ts   sphere-projected tapering trails
+    └── PhysicsRenderers/     Render simulation constructs (springs, fields, forces)
+        └── SpringRenderer.ts     Distance-scaled lines connecting Spring endpoint vehicles
 ```
 
 ## Extension Patterns

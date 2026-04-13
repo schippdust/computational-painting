@@ -15,17 +15,21 @@ export interface GridGeneratorProps {
   rows: number;
   /** Number of columns in the grid. */
   cols: number;
-  /** World-space distance between adjacent vehicles. */
+  /**
+   * Number of layers along the Z axis (depth). 1 produces a flat 2D grid (default: 1).
+   */
+  layers?: number;
+  /** World-space distance between adjacent vehicles on every axis. */
   spacing: number;
-  /** World-space position of the top-left corner of the grid. */
+  /** World-space position of the origin corner (row 0, col 0, layer 0) of the grid. */
   origin: P5.Vector;
   /** Spring constant k for all springs in the grid (default: 1). */
   stiffness?: number;
   /** Velocity damping along each spring axis (default: 0). */
   damping?: number;
   /**
-   * Also wire the four diagonal neighbours with rest length spacing × √2.
-   * Produces a shear-resistant lattice (default: false).
+   * Also wire the four diagonal neighbours within each XY layer with rest length spacing × √2.
+   * Produces a shear-resistant lattice within each layer (default: false).
    */
   connectDiagonals?: boolean;
   /**
@@ -38,23 +42,33 @@ export interface GridGeneratorProps {
    * Will be normalised internally.
    */
   yAxis?: P5.Vector;
+  /**
+   * Direction of layers in world space (default: world +Z).
+   * Will be normalised internally.
+   */
+  zAxis?: P5.Vector;
 }
 
 /**
- * Creates a rectangular lattice of vehicles pre-wired with Hooke's-law springs in one call.
+ * Creates a rectangular 3D lattice of vehicles pre-wired with Hooke's-law springs in one call.
  * Unlike ProgressiveGenerators (which emit vehicles one at a time), GridGenerator instantiates
- * the entire grid immediately, making it suitable for initialising spring-cloth simulations.
+ * the entire grid immediately, making it suitable for initialising spring-cloth and spring-volume
+ * simulations.
+ *
+ * The lattice is indexed as grid[layer][row][col]. Springs are wired along all three axes
+ * (X between columns, Y between rows, Z between layers). Diagonal springs within each XY
+ * layer are optionally added via connectDiagonals.
  *
  * Usage:
  * ```ts
  * const gen = new GridGenerator(p5, props);
  * gen.populate(collection); // adds all vehicles and springs to the collection
- * const topLeft = gen.grid[0][0]; // reference individual vehicles
+ * const topLeftFront = gen.grid[0][0][0]; // reference individual vehicles
  * ```
  */
 export class GridGenerator {
-  /** The rows × cols 2D array of created Vehicle instances. */
-  public grid: Vehicle[][] = [];
+  /** The layers × rows × cols 3D array of created Vehicle instances. */
+  public grid: Vehicle[][][] = [];
   /** All Spring instances created between grid neighbours. */
   public springs: Spring[] = [];
 
@@ -73,9 +87,9 @@ export class GridGenerator {
 
   /**
    * Builds the vehicle lattice and registers all vehicles and springs with the provided collection.
-   * Vehicles are positioned in the plane defined by xAxis and yAxis from props.
-   * Adjacent vehicles (horizontal and vertical) are connected with springs of rest length equal
-   * to spacing; diagonal neighbours are optionally connected with rest length spacing × √2.
+   * Vehicles are positioned in the volume defined by xAxis, yAxis, and zAxis from props.
+   * Adjacent vehicles along each axis are connected with springs of rest length equal to spacing.
+   * Diagonal neighbours within each XY layer are optionally connected with rest length spacing × √2.
    * Calling populate() a second time appends another copy — create a new GridGenerator for a
    * fresh lattice.
    * This method mutates the collection and returns this GridGenerator instance for method chaining.
@@ -86,6 +100,7 @@ export class GridGenerator {
     const {
       rows,
       cols,
+      layers = 1,
       spacing,
       origin,
       stiffness = 1,
@@ -99,82 +114,115 @@ export class GridGenerator {
     const yDir = (this.props.yAxis ?? new P5.Vector(0, 1, 0))
       .copy()
       .normalize();
+    const zDir = (this.props.zAxis ?? new P5.Vector(0, 0, 1))
+      .copy()
+      .normalize();
     const diagonalLength = spacing * Math.SQRT2;
 
-    // Create vehicles at each lattice point.
-    const grid: Vehicle[][] = [];
-    for (let r = 0; r < rows; r++) {
-      const row: Vehicle[] = [];
-      for (let c = 0; c < cols; c++) {
-        const pos = origin
-          .copy()
-          .add(xDir.copy().mult(c * spacing))
-          .add(yDir.copy().mult(r * spacing));
-        row.push(new Vehicle(this.sketch, pos, { ...this.vehicleProps }));
+    // Create vehicles at each lattice point, indexed [layer][row][col].
+    const grid: Vehicle[][][] = [];
+    for (let l = 0; l < layers; l++) {
+      const layerGrid: Vehicle[][] = [];
+      for (let r = 0; r < rows; r++) {
+        const row: Vehicle[] = [];
+        for (let c = 0; c < cols; c++) {
+          const pos = origin
+            .copy()
+            .add(xDir.copy().mult(c * spacing))
+            .add(yDir.copy().mult(r * spacing))
+            .add(zDir.copy().mult(l * spacing));
+          row.push(new Vehicle(this.sketch, pos, { ...this.vehicleProps }));
+        }
+        layerGrid.push(row);
       }
-      grid.push(row);
+      grid.push(layerGrid);
     }
     this.grid = grid;
 
     // Register vehicles in batch (defer octree rebuild until all are added).
-    for (const row of grid) {
-      collection.addVehicle(row, false);
+    for (const layer of grid) {
+      for (const row of layer) {
+        collection.addVehicle(row, false);
+      }
     }
     collection.buildOcTree();
 
-    // Wire horizontal springs: (r, c) — (r, c+1).
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols - 1; c++) {
-        const s = new Spring(
-          grid[r][c],
-          grid[r][c + 1],
-          spacing,
-          stiffness,
-          damping,
-        );
-        this.springs.push(s);
-        collection.addSpring(s);
-      }
-    }
-
-    // Wire vertical springs: (r, c) — (r+1, c).
-    for (let r = 0; r < rows - 1; r++) {
-      for (let c = 0; c < cols; c++) {
-        const s = new Spring(
-          grid[r][c],
-          grid[r + 1][c],
-          spacing,
-          stiffness,
-          damping,
-        );
-        this.springs.push(s);
-        collection.addSpring(s);
-      }
-    }
-
-    // Wire diagonal springs if requested.
-    if (connectDiagonals) {
-      for (let r = 0; r < rows - 1; r++) {
+    // Wire X springs: [l][r][c] — [l][r][c+1].
+    for (let l = 0; l < layers; l++) {
+      for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols - 1; c++) {
-          // Top-left → bottom-right.
-          const s1 = new Spring(
-            grid[r][c],
-            grid[r + 1][c + 1],
-            diagonalLength,
+          const s = new Spring(
+            grid[l][r][c],
+            grid[l][r][c + 1],
+            spacing,
             stiffness,
             damping,
           );
-          // Top-right → bottom-left.
-          const s2 = new Spring(
-            grid[r][c + 1],
-            grid[r + 1][c],
-            diagonalLength,
+          this.springs.push(s);
+          collection.addSpring(s);
+        }
+      }
+    }
+
+    // Wire Y springs: [l][r][c] — [l][r+1][c].
+    for (let l = 0; l < layers; l++) {
+      for (let r = 0; r < rows - 1; r++) {
+        for (let c = 0; c < cols; c++) {
+          const s = new Spring(
+            grid[l][r][c],
+            grid[l][r + 1][c],
+            spacing,
             stiffness,
             damping,
           );
-          this.springs.push(s1, s2);
-          collection.addSpring(s1);
-          collection.addSpring(s2);
+          this.springs.push(s);
+          collection.addSpring(s);
+        }
+      }
+    }
+
+    // Wire Z springs: [l][r][c] — [l+1][r][c].
+    for (let l = 0; l < layers - 1; l++) {
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const s = new Spring(
+            grid[l][r][c],
+            grid[l + 1][r][c],
+            spacing,
+            stiffness,
+            damping,
+          );
+          this.springs.push(s);
+          collection.addSpring(s);
+        }
+      }
+    }
+
+    // Wire XY diagonal springs within each layer (optional shear resistance).
+    if (connectDiagonals) {
+      for (let l = 0; l < layers; l++) {
+        for (let r = 0; r < rows - 1; r++) {
+          for (let c = 0; c < cols - 1; c++) {
+            // Top-left → bottom-right.
+            const s1 = new Spring(
+              grid[l][r][c],
+              grid[l][r + 1][c + 1],
+              diagonalLength,
+              stiffness,
+              damping,
+            );
+            // Top-right → bottom-left.
+            const s2 = new Spring(
+              grid[l][r][c + 1],
+              grid[l][r + 1][c],
+              diagonalLength,
+              stiffness,
+              damping,
+            );
+            this.springs.push(s1, s2);
+            collection.addSpring(s1);
+            collection.addSpring(s2);
+          }
         }
       }
     }
