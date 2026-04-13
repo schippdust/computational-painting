@@ -33,9 +33,9 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       never
     >;
-    '/computational-canvas': RouteRecordInfo<
-      '/computational-canvas',
-      '/computational-canvas',
+    '/branching-spheres': RouteRecordInfo<
+      '/branching-spheres',
+      '/branching-spheres',
       Record<never, never>,
       Record<never, never>,
       never
@@ -71,8 +71,8 @@ declare module 'vue-router/auto-routes' {
       routes: '/';
       views: never;
     };
-    'src/pages/computational-canvas.vue': {
-      routes: '/computational-canvas';
+    'src/pages/branching-spheres.vue': {
+      routes: '/branching-spheres';
       views: never;
     };
     'src/pages/sphere-emission.vue': {

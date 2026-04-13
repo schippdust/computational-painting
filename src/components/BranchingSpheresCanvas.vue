@@ -291,7 +291,7 @@ onMounted(() => {
   };
 
   const canvasElement = document.getElementById(
-    'computational-canvas',
+    'branching-spheres-canvas',
   ) as HTMLElement;
 
   p5Instance = new P5(sketch, canvasElement);
@@ -300,7 +300,7 @@ onMounted(() => {
 
 <template>
   <div
-    id="computational-canvas"
+    id="branching-spheres-canvas"
     style="overflow-y: auto; overflow-x: auto; line-height: 0"
   ></div>
 </template>

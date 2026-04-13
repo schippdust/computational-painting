@@ -37,8 +37,8 @@ export function groupedCanvases(): CanvasGroup[] {
 
 export const canvasRegistry: CanvasEntry[] = [
   {
-    id: 'computational-canvas',
-    title: 'Computational Canvas',
+    id: 'branching-spheres',
+    title: 'Branching Spheres',
     description:
       'Branching sphere formations with flocking behavior rendered as distance-scaled dots.',
     createdAt: '2025-01-01',

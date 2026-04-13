@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ComputationalCanvas from '@/components/computationalCanvas.vue';
+import BranchingSpheresCanvas from '@/components/BranchingSpheresCanvas.vue';
 import CanvasToolbar from '@/components/CanvasToolbar.vue';
 import CanvasInitOverlay from '@/components/CanvasInitOverlay.vue';
 import { useAppStore } from '@/stores/app';
@@ -38,7 +38,7 @@ const currentFrame = computed(() => canvasRef.value?.numberOfFrames ?? 0);
 
 function handleAutomateCapture(filename: string) {
   const canvas = document.querySelector(
-    '#computational-canvas canvas',
+    '#branching-spheres-canvas canvas',
   ) as HTMLCanvasElement;
   if (canvas) {
     const link = document.createElement('a');
@@ -143,7 +143,7 @@ onUnmounted(() => {
       <!-- Scrollable canvas layer — ref used for fit measurements -->
       <div ref="canvasAreaRef" class="canvas-scroll">
         <div class="canvas-zoom-wrapper" :style="{ zoom: zoom }">
-          <computational-canvas
+          <branching-spheres-canvas
             ref="canvasRef"
             v-if="initialized"
             :key="canvasKey"

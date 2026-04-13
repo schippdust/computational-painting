@@ -7,6 +7,7 @@ export {};
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    BranchingSpheresCanvas: typeof import('./components/BranchingSpheresCanvas.vue')['default']
     CanvasInitOverlay: typeof import('./components/CanvasInitOverlay.vue')['default']
     CanvasToolbar: typeof import('./components/CanvasToolbar.vue')['default']
     ComputationalCanvas: typeof import('./components/computationalCanvas.vue')['default']
