@@ -20,6 +20,7 @@ declare module 'vue' {
     SphereEmissionCanvas: typeof import('./components/SphereEmissionCanvas.vue')['default']
     SpringGridsCanvas: typeof import('./components/SpringGridsCanvas.vue')['default']
     SpringGridsV2Canvas: typeof import('./components/SpringGridsV2Canvas.vue')['default']
+    TestRenameCanvas: typeof import('./components/TestRenameCanvas.vue')['default']
     TestScaffoldCanvas: typeof import('./components/TestScaffoldCanvas.vue')['default']
     ToolbarNumericInput: typeof import('./components/ToolbarNumericInput.vue')['default']
   }

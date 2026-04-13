@@ -42,7 +42,7 @@ export const canvasRegistry: CanvasEntry[] = [
     description:
       'Branching sphere formations with flocking behavior rendered as distance-scaled dots.',
     createdAt: '2025-01-01',
-    group: 'Branching Spheres',
+    group: 'Branching',
   },
 
   {
