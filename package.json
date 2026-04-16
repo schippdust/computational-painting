@@ -12,7 +12,14 @@
     "lint": "eslint . --fix",
     "format": "prettier --write .",
     "new-canvas": "node scripts/new-canvas.mjs",
-    "rename-canvas": "node scripts/rename-canvas.mjs"
+    "rename-canvas": "node scripts/rename-canvas.mjs",
+    "create-slider": "node scripts/create-slider.mjs",
+    "create-input": "node scripts/create-input.mjs",
+    "create-color-picker": "node scripts/create-color-picker.mjs",
+    "edit-slider": "node scripts/edit-slider.mjs",
+    "edit-input": "node scripts/edit-input.mjs",
+    "edit-color-picker": "node scripts/edit-color-picker.mjs",
+    "delete-param": "node scripts/delete-param.mjs"
   },
   "dependencies": {
     "@mdi/font": "7.4.47",
