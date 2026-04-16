@@ -40,6 +40,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       never
     >;
+    '/branching-upward': RouteRecordInfo<
+      '/branching-upward',
+      '/branching-upward',
+      Record<never, never>,
+      Record<never, never>,
+      never
+    >;
     '/sphere-emission': RouteRecordInfo<
       '/sphere-emission',
       '/sphere-emission',
@@ -73,6 +80,10 @@ declare module 'vue-router/auto-routes' {
     };
     'src/pages/branching-spheres.vue': {
       routes: '/branching-spheres';
+      views: never;
+    };
+    'src/pages/branching-upward.vue': {
+      routes: '/branching-upward';
       views: never;
     };
     'src/pages/sphere-emission.vue': {

@@ -99,6 +99,48 @@ Mutating operations return `this` (method chaining):
 v.normalize().mult(5).add(offset);
 ```
 
+## Canvas Parameters ("Add a parameter")
+
+When the user asks to "add a parameter" to a canvas, the full pattern touches two files:
+
+**1. Page (`src/pages/<name>.vue`)** — add a `ref` with the default value, a slider in the `canvas-init-overlay`, and the prop binding on the canvas component:
+
+```ts
+// script
+const myParam = ref(2000);
+```
+
+```html
+<!-- init overlay -->
+<v-slider
+  v-model="myParam"
+  label="My Param"
+  :min="100"
+  :max="5000"
+  :step="100"
+  thumb-label
+  hide-details
+  class="mb-2"
+/>
+
+<!-- canvas tag -->
+<my-canvas :my-param="myParam" ... />
+```
+
+**2. Canvas component (`src/components/<Name>Canvas.vue`)** — add `defineProps`, then immediately wrap each prop with `toRef` so it is readable as a reactive ref (`.value`) anywhere in the sketch, including inside the draw loop:
+
+```ts
+const props = defineProps<{
+  myParam: number;
+}>();
+
+const myParam = toRef(props, 'myParam');
+```
+
+Inside the sketch, use `myParam.value`. Because `toRef` keeps the ref in sync with the prop, reading `.value` in `p5.draw()` always returns the current value — no `watch` required.
+
+Slider ranges should match the parameter's meaningful domain. For very small values (e.g. 0.001), set `:step` one order of magnitude smaller (e.g. `0.0001`).
+
 ## Noise and Randomness
 
 - `p5.noise(x, y, z)` — Perlin noise, returns [0, 1]
