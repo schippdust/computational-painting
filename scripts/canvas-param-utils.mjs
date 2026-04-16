@@ -521,7 +521,8 @@ export function renameParam(
 
   // Template: update visual label (runs after v-model rename so finders use newCamel)
   if (paramType === 'slider') {
-    p = editSliderAttributes(p, newCamel, { label: newLabel });
+    p = editSliderAttributes(p, newCamel, { label: newLabel }); // init overlay (label= attr)
+    p = editToolbarSliderLabel(p, newCamel, newLabel); // toolbar (<p> above slider)
   } else if (paramType === 'input') {
     p = editInputLabel(p, newCamel, newLabel);
   } else if (paramType === 'color') {
@@ -577,9 +578,48 @@ export function deleteCanvasTagProp(pageSrc, camelName) {
 
 // ─── Page: delete slider blocks ──────────────────────────────────────────────
 
-/** Remove all `<v-slider ... v-model="camelName" ... />` blocks (init overlay + toolbar). */
+/**
+ * Remove all `<v-slider ... v-model="camelName" ... />` blocks (init overlay + toolbar).
+ * For toolbar-style sliders (label-above format), also removes the preceding
+ * `<p class="text-caption...">` label line.
+ */
 export function deleteSliderBlocks(pageSrc, camelName) {
-  return removeSelfClosingBlocks(pageSrc, 'v-slider', `v-model="${camelName}"`);
+  const vModelStr = `v-model="${camelName}"`;
+  let result = pageSrc;
+
+  while (result.includes(vModelStr)) {
+    const lines = result.split('\n');
+    const vModelIdx = lines.findIndex((l) => l.includes(vModelStr));
+    if (vModelIdx === -1) break;
+
+    // Walk back to opening <v-slider
+    let openIdx = vModelIdx;
+    while (openIdx >= 0 && !lines[openIdx].trimStart().startsWith('<v-slider'))
+      openIdx--;
+    if (openIdx < 0 || !lines[openIdx].trimStart().startsWith('<v-slider'))
+      break;
+
+    // If the line before <v-slider is a <p class="text-caption..."> (toolbar label-above style),
+    // include it in the deletion range
+    let startIdx = openIdx;
+    if (
+      openIdx > 0 &&
+      lines[openIdx - 1].trimStart().startsWith('<p class="text-caption')
+    ) {
+      startIdx = openIdx - 1;
+    }
+
+    // Walk forward to closing />
+    let closeIdx = vModelIdx;
+    while (closeIdx < lines.length && lines[closeIdx].trim() !== '/>')
+      closeIdx++;
+    if (closeIdx >= lines.length) break;
+
+    lines.splice(startIdx, closeIdx - startIdx + 1);
+    result = lines.join('\n');
+  }
+
+  return result;
 }
 
 // ─── Page: delete input blocks ───────────────────────────────────────────────
@@ -696,6 +736,45 @@ export function deleteComponentParam(componentSrc, camelName) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // Internal helpers (not exported)
 // ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Update the `<p class="text-caption...">Label</p>` that sits immediately above
+ * a toolbar-style `<v-slider v-model="camelName">` (label-above format).
+ * Init-overlay sliders still use the `label=` attr and are handled by editSliderAttributes.
+ */
+function editToolbarSliderLabel(pageSrc, camelName, newLabel) {
+  const lines = pageSrc.split('\n');
+  const vModelStr = `v-model="${camelName}"`;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (!lines[i].includes(vModelStr)) continue;
+
+    // Walk back to the opening <v-slider line
+    let openIdx = i;
+    while (openIdx >= 0 && !lines[openIdx].trimStart().startsWith('<v-slider'))
+      openIdx--;
+    if (openIdx < 0 || !lines[openIdx].trimStart().startsWith('<v-slider'))
+      continue;
+
+    // Check the line before <v-slider for a <p class="text-caption..."> label
+    const prevIdx = openIdx - 1;
+    if (
+      prevIdx < 0 ||
+      !lines[prevIdx].trimStart().startsWith('<p class="text-caption')
+    )
+      continue;
+
+    const pLine = lines[prevIdx];
+    const contentStart = pLine.indexOf('>') + 1;
+    const contentEnd = pLine.lastIndexOf('</p>');
+    if (contentStart > 0 && contentEnd > contentStart) {
+      lines[prevIdx] =
+        pLine.slice(0, contentStart) + newLabel + pLine.slice(contentEnd);
+    }
+  }
+
+  return lines.join('\n');
+}
 
 /** Insert newText as line(s) immediately before the first line containing anchor. */
 function insertLineBefore(src, anchor, newText) {

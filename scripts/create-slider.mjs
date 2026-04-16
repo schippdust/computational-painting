@@ -3,12 +3,13 @@
  * Add a slider parameter to an existing canvas.
  *
  * Usage:
- *   npm run create-slider -- <path> <name> <min> <value> <max>
+ *   npm run create-slider -- <path> <name> <min> <value> <max> [--step <number>]
  *
  * Examples:
  *   npm run create-slider -- branching-upward friction 0 0.2 1
  *   npm run create-slider -- spring-grids stiffness 0 50 500
  *   npm run create-slider -- my-canvas noise-scale 0.0001 0.001 0.01
+ *   npm run create-slider -- my-canvas speed 0 10 100 --step 0.5
  *
  * What gets added:
  *   Page script   — `const <name> = ref(<value>);`
@@ -17,7 +18,7 @@
  *   Toolbar menu  — v-slider in the parameters menu (created if absent)
  *   Component     — `<name>: number` in defineProps, `const <name> = toRef(props, '<name>')`
  *
- * The step is inferred from the precision of min/value/max:
+ * The step is inferred from the precision of min/value/max unless --step is provided:
  *   - All integers → proportional integer step
  *   - Any decimal  → one decimal place finer than the finest value given
  */
@@ -38,7 +39,8 @@ import {
 
 // ─── Args ─────────────────────────────────────────────────────────────────────
 
-const [rawPath, rawName, rawMin, rawValue, rawMax] = process.argv.slice(2);
+const [rawPath, rawName, rawMin, rawValue, rawMax, ...rest] =
+  process.argv.slice(2);
 
 if (
   !rawPath ||
@@ -48,9 +50,26 @@ if (
   rawMax === undefined
 ) {
   console.error(
-    'Usage: npm run create-slider -- <path> <name> <min> <value> <max>\n' +
+    'Usage: npm run create-slider -- <path> <name> <min> <value> <max> [--step N]\n' +
       'Example: npm run create-slider -- branching-upward friction 0 0.2 1',
   );
+  process.exit(1);
+}
+
+const opts = {};
+for (let i = 0; i < rest.length; i++) {
+  if (
+    rest[i].startsWith('--') &&
+    rest[i + 1] !== undefined &&
+    !rest[i + 1].startsWith('--')
+  ) {
+    opts[rest[i].slice(2)] = rest[i + 1];
+    i++;
+  }
+}
+
+if (opts.step !== undefined && isNaN(parseFloat(opts.step))) {
+  console.error(`Error: --step must be a number (got '${opts.step}').`);
   process.exit(1);
 }
 
@@ -111,7 +130,8 @@ function inferStep(min, value, max) {
   return Math.pow(10, -(maxDP + 1));
 }
 
-const step = inferStep(min, value, max);
+const step =
+  opts.step !== undefined ? parseFloat(opts.step) : inferStep(min, value, max);
 
 // ─── Build control blocks ─────────────────────────────────────────────────────
 
@@ -129,11 +149,11 @@ const initBlock = [
   `        />`,
 ].join('\n');
 
-// Toolbar menu — 12-space indent, no thumb-label (compact card)
+// Toolbar menu — 12-space indent, label above slider, no thumb-label (compact card)
 const toolbarBlock = [
+  `            <p class="text-caption text-medium-emphasis mb-n2">${label}</p>`,
   `            <v-slider`,
   `              v-model="${camelName}"`,
-  `              label="${label}"`,
   `              :min="${min}"`,
   `              :max="${max}"`,
   `              :step="${step}"`,

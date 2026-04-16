@@ -20,6 +20,7 @@ import { dot } from 'mathjs';
 import { Circle } from '@/classes/Geometry/Circle';
 import { Line } from '@/classes/Geometry/Line';
 import { LineRenderer } from '@/classes/Rendering/GeometryRenderers/LineRenderer';
+import { VehicleCollection } from '@/classes/EntityManagement/Extensible/VehicleCollection';
 
 const props = defineProps<{
   generationCircleRadius: number;
@@ -158,8 +159,22 @@ onMounted(() => {
 
       const generationPoints = generationCircle.getRandomPointsInside(3);
       dotRenderer?.renderPoints(generationPoints);
+      for (let pt of generationPoints) {
+        const startVel = p5.random(
+          -1 * maxStartingVelocity.value,
+          1 * maxStartingVelocity.value,
+        );
+        const direction = generationCircle.coordinateSystem
+          .getZAxis()
+          .mult(startVel);
+        const newBranch = new Vehicle(p5, pt, createGenericPhysicalProps());
+        newBranch.addPersistentSteerForce(direction);
+        branchingCollection.addVehicle(newBranch);
+      }
 
-      p5.random(-1 * maxStartingVelocity.value, 1 * maxStartingVelocity.value);
+      branchingCollection.update();
+
+      dotRenderer?.renderVehicles(branchingCollection.vehicles);
 
       // Render silhouettes once on first frame
 

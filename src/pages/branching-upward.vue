@@ -159,27 +159,31 @@ onUnmounted(() => {
         </template>
         <v-card min-width="260">
           <v-card-text class="pt-3">
+            <p class="text-caption text-medium-emphasis mb-n2">
+              Generation Circle Radius
+            </p>
             <v-slider
               v-model="generationCircleRadius"
-              label="Generation Circle Radius"
               :min="100"
               :max="10000"
-              :step="100"
+              :step="0.001"
               hide-details
               class="mb-4"
             />
+            <p class="text-caption text-medium-emphasis mb-n2">Falloff</p>
             <v-slider
               v-model="falloff"
-              label="Falloff"
               :min="0.0001"
               :max="0.01"
               :step="0.0001"
               hide-details
               class="mb-4"
             />
+            <p class="text-caption text-medium-emphasis mb-n2">
+              Max Starting Velocity
+            </p>
             <v-slider
               v-model="maxStartingVelocity"
-              label="Max Starting Velocity"
               :min="1"
               :max="100"
               :step="1"
@@ -238,7 +242,7 @@ onUnmounted(() => {
           label="Generation Circle Radius"
           :min="100"
           :max="10000"
-          :step="100"
+          :step="0.001"
           thumb-label
           hide-details
           class="mb-2"
