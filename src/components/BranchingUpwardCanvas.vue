@@ -24,10 +24,12 @@ import { LineRenderer } from '@/classes/Rendering/GeometryRenderers/LineRenderer
 const props = defineProps<{
   generationCircleRadius: number;
   falloff: number;
+  maxStartingVelocity: number;
 }>();
 
 const generationCircleRadius = toRef(props, 'generationCircleRadius');
 const falloff = toRef(props, 'falloff');
+const maxStartingVelocity = toRef(props, 'maxStartingVelocity');
 
 const appStore = useAppStore();
 const {
@@ -142,17 +144,22 @@ onMounted(() => {
     };
 
     p5.draw = () => {
-      const testCircle = new Circle(
+      const generationCircle = new Circle(
         CoordinateSystem.fromOriginAndNormal(
           new P5.Vector(0, 0, 0),
           new P5.Vector(0, 1, 0),
         ),
         generationCircleRadius.value,
       );
-      testCircle.renderSegments;
+      generationCircle.renderSegmentCount = 100;
       if (lineRenderer) {
-        lineRenderer.renderLines(testCircle.renderSegments);
+        lineRenderer.renderLines(generationCircle.renderSegments);
       }
+
+      const generationPoints = generationCircle.getRandomPointsInside(3);
+      dotRenderer?.renderPoints(generationPoints);
+
+      p5.random(-1 * maxStartingVelocity.value, 1 * maxStartingVelocity.value);
 
       // Render silhouettes once on first frame
 

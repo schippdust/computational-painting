@@ -29,9 +29,12 @@ function goHome() {
 
 const generationCircleRadius = ref(2000);
 const falloff = ref(0.001);
+const maxStartingVelocity = ref(25);
+
+const paramMenuOpen = ref(false);
+const zoom = ref(1);
 
 const canvasKey = ref(0);
-const zoom = ref(1);
 
 function resetCanvas() {
   canvasKey.value++;
@@ -135,7 +138,56 @@ onUnmounted(() => {
       @automate-capture="handleAutomateCapture"
       @automate-complete="handleAutomateComplete"
     >
-      <!-- Add canvas-specific toolbar items here via slot -->
+      <!-- Parameters menu -->
+      <v-menu
+        v-model="paramMenuOpen"
+        :close-on-content-click="false"
+        location="end"
+      >
+        <template #activator="{ props: menuProps }">
+          <v-tooltip text="Canvas parameters" location="right">
+            <template #activator="{ props: tip }">
+              <v-btn
+                variant="text"
+                icon="mdi-tune"
+                density="compact"
+                v-bind="{ ...menuProps, ...tip }"
+                @click="menuProps.onClick"
+              />
+            </template>
+          </v-tooltip>
+        </template>
+        <v-card min-width="260">
+          <v-card-text class="pt-3">
+            <v-slider
+              v-model="generationCircleRadius"
+              label="Generation Circle Radius"
+              :min="100"
+              :max="10000"
+              :step="100"
+              hide-details
+              class="mb-4"
+            />
+            <v-slider
+              v-model="falloff"
+              label="Falloff"
+              :min="0.0001"
+              :max="0.01"
+              :step="0.0001"
+              hide-details
+              class="mb-4"
+            />
+            <v-slider
+              v-model="maxStartingVelocity"
+              label="Max Starting Velocity"
+              :min="1"
+              :max="100"
+              :step="1"
+              hide-details
+            />
+          </v-card-text>
+        </v-card>
+      </v-menu>
     </canvas-toolbar>
 
     <!-- Outer wrapper: position:relative, no overflow — anchors the UI overlay -->
@@ -152,6 +204,7 @@ onUnmounted(() => {
             :key="canvasKey"
             :generation-circle-radius="generationCircleRadius"
             :falloff="falloff"
+            :max-starting-velocity="maxStartingVelocity"
           />
         </div>
       </div>
@@ -196,6 +249,16 @@ onUnmounted(() => {
           :min="0.0001"
           :max="0.01"
           :step="0.0001"
+          thumb-label
+          hide-details
+          class="mb-2"
+        />
+        <v-slider
+          v-model="maxStartingVelocity"
+          label="Max Starting Velocity"
+          :min="1"
+          :max="100"
+          :step="1"
           thumb-label
           hide-details
           class="mb-3"
