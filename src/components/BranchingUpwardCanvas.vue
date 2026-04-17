@@ -20,6 +20,7 @@ import { dot } from 'mathjs';
 import { Circle } from '@/classes/Geometry/Circle';
 import { Line } from '@/classes/Geometry/Line';
 import { LineRenderer } from '@/classes/Rendering/GeometryRenderers/LineRenderer';
+import { VehicleLineRenderer } from '@/classes/Rendering/VehicleRenderers/VehicleLineRenderer';
 import { VehicleCollection } from '@/classes/EntityManagement/Extensible/VehicleCollection';
 
 const props = defineProps<{
@@ -62,6 +63,7 @@ defineExpose({ frameRate, numberOfFrames, numberOfVehicles });
 let p5Instance: P5 | null = null;
 let dotRenderer: VehicleDotRenderer | null = null;
 let lineRenderer: LineRenderer | null = null;
+let vehicleLineRenderer: VehicleLineRenderer | null = null;
 
 watch(pauseCanvas, (paused) => {
   if (!p5Instance) return;
@@ -72,6 +74,7 @@ watch(pauseCanvas, (paused) => {
 // Update dot color immediately when primaryColor changes — future marks use the new color.
 watch(primaryColor, (newColor) => {
   if (dotRenderer) dotRenderer.color = hexToRgb(newColor);
+  if (vehicleLineRenderer) vehicleLineRenderer.color = hexToRgb(newColor);
 });
 
 watch(secondaryColor, (newColor) => {
@@ -142,6 +145,13 @@ onMounted(() => {
         5,
         camera.value,
       );
+
+      vehicleLineRenderer = new VehicleLineRenderer(
+        p5,
+        hexToRgb(primaryColor.value),
+        2,
+        camera.value,
+      );
     };
 
     p5.draw = () => {
@@ -174,94 +184,8 @@ onMounted(() => {
 
       branchingCollection.update();
 
-      dotRenderer?.renderVehicles(branchingCollection.vehicles);
+      vehicleLineRenderer?.renderVehicles(branchingCollection.vehicles);
 
-      // Render silhouettes once on first frame
-
-      // Remove dead vehicles before processing
-      // branchingCollection.applyWind(windSystem, 1, 1);
-      // Update all vehicles with forces and behaviors (persistent steer forces applied in vehicle.update())
-      /*
-      // Update the branching collection (handles branching)
-      if (branchingCollection.vehicles.length > 1) {
-        branchingCollection.flock(flockingSearchRadius, 1.5, 0.1, 0.2);
-      }
-      branchingCollection.update();
-
-      function generateNewVehicle() {
-        // Pick a random sphere from the array
-        const selectedSphere =
-          generationSpheres[
-            Math.floor(Math.random() * generationSpheres.length)
-          ];
-        const newPosition = selectedSphere.randomPointInside();
-        const newVehicle = new Vehicle(
-          p5,
-          newPosition,
-          createGenericPhysicalProps(),
-        );
-        newVehicle.lifeExpectancy = 750;
-        newVehicle.env.friction = friction;
-        // Set initial velocity upward
-        newVehicle.velocity = new P5.Vector(0, 0, initialVelocityMagnitude);
-        newVehicle.desiredSeparation = flockingSearchRadius;
-        newVehicle.phys.maxSteerForce = 1;
-
-        // Calculate persistent steer force direction from sphere center to vehicle position
-        const sphereCenter = selectedSphere.coordinateSystem.getPosition();
-        let steerDirection = P5.Vector.sub(newPosition, sphereCenter);
-
-        // If vehicle is at sphere center, use random direction
-        if (steerDirection.mag() < 0.001) {
-          steerDirection = P5.Vector.random3D();
-        } else {
-          steerDirection.normalize();
-        }
-
-        // Create and assign persistent steer force with configured magnitude
-        const persistentSteerForce = steerDirection.mult(
-          persistentSteerForceMagnitude,
-        );
-        newVehicle.addPersistentSteerForce(persistentSteerForce);
-
-        branchingCollection.addVehicle(newVehicle, false);
-      }
-
-      // Generate new vehicles only if we're below the maximum
-      while (branchingCollection.vehicles.length < 100) {
-        generateNewVehicle();
-      }
-      if (branchingCollection.vehicles.length < maxVehicles) {
-        generateNewVehicle();
-        generateNewVehicle();
-      }
-
-      // Filter vehicles to hide those obscured by rendering spheres
-      const cameraPos = camera.value.pos;
-      const visibleVehicles = branchingCollection.vehicles.filter((vehicle) => {
-        for (const renderingSphere of renderingSpheres) {
-          if (
-            renderingSphere.isPointObscured(
-              vehicle.coordSystem.getPosition(),
-              cameraPos,
-            )
-          ) {
-            return false; // Vehicle is obscured
-          }
-        }
-        return true; // Vehicle is visible
-      });
-
-      // Render visible vehicles
-      if (dotRenderer) {
-        dotRenderer.renderVehicles(visibleVehicles);
-        if (Math.random() < 0.005) {
-          dotRenderer.dotSize = 5;
-          dotRenderer.renderVehicles(visibleVehicles);
-          dotRenderer.dotSize = 1;
-        }
-      }
-*/
       // Update UI values
       numberOfFrames.value++;
       numberOfVehicles.value = branchingCollection.vehicles.length;
