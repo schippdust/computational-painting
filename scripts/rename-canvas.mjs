@@ -1,20 +1,24 @@
 #!/usr/bin/env node
 /**
- * Rename an existing computational canvas iteration.
+ * Rename an existing computational canvas iteration, or just update its group.
  *
  * Usage:
- *   node scripts/rename-canvas.mjs <current-kebab> <new-kebab> [--group "New Group"]
- *   npm run rename-canvas -- <current-kebab> <new-kebab> [--group "New Group"]
+ *   node scripts/rename-canvas.mjs <current-kebab> [new-kebab] [--group "New Group"]
+ *   npm run rename-canvas -- <current-kebab> [new-kebab] [--group "New Group"]
  *
  * Examples:
  *   npm run rename-canvas -- spring-grids spring-lattice
  *   npm run rename-canvas -- spring-grids spring-lattice --group "Lattice Experiments"
+ *   npm run rename-canvas -- spring-grids --group "Lattice Experiments"
  *
  * What gets updated:
  *   src/components/<OldPascal>Canvas.vue  →  renamed to  src/components/<NewPascal>Canvas.vue
  *   src/pages/<old-kebab>.vue             →  renamed to  src/pages/<new-kebab>.vue
  *   Internal references in both files (element id, getElementById, querySelector, import, tag)
  *   Registry entry: id, title, and optionally group
+ *
+ * When <new-kebab> is omitted (or identical to <current-kebab>), only the registry
+ * group is updated — no files are renamed.
  */
 
 import {
@@ -48,12 +52,17 @@ for (let i = 0; i < rawArgs.length; i++) {
   }
 }
 
-if (!oldRawName || !newRawName) {
-  console.error('Error: both current and new canvas names are required.\n');
+if (!oldRawName) {
+  console.error('Error: current canvas name is required.\n');
   console.error(
-    'Usage: node scripts/rename-canvas.mjs <current-kebab> <new-kebab> [--group "New Group"]',
+    'Usage: node scripts/rename-canvas.mjs <current-kebab> [new-kebab] [--group "New Group"]',
   );
   process.exit(1);
+}
+
+// new name is optional — omitting it means "group-only update"
+if (!newRawName) {
+  newRawName = oldRawName;
 }
 
 // ─── Name transforms ──────────────────────────────────────────────────────────
@@ -86,9 +95,11 @@ const newKebab = toKebab(newRawName);
 const newPascal = toPascal(newKebab);
 const newTitle = toTitle(newKebab);
 
-if (oldKebab === newKebab) {
+const namesAreIdentical = oldKebab === newKebab;
+
+if (namesAreIdentical && !newGroup) {
   console.error(
-    'Error: current and new names are identical after normalisation.',
+    'Error: current and new names are identical and no --group was provided — nothing to do.',
   );
   process.exit(1);
 }
@@ -113,13 +124,13 @@ if (!existsSync(oldPagePath)) {
   console.error(`Error: page not found: src/pages/${oldKebab}.vue`);
   process.exit(1);
 }
-if (existsSync(newComponentPath)) {
+if (!namesAreIdentical && existsSync(newComponentPath)) {
   console.error(
     `Error: target already exists: src/components/${newPascal}Canvas.vue`,
   );
   process.exit(1);
 }
-if (existsSync(newPagePath)) {
+if (!namesAreIdentical && existsSync(newPagePath)) {
   console.error(`Error: target already exists: src/pages/${newKebab}.vue`);
   process.exit(1);
 }
@@ -129,7 +140,7 @@ if (!registrySource.includes(`id: '${oldKebab}'`)) {
   console.error(`Error: no registry entry found with id '${oldKebab}'.`);
   process.exit(1);
 }
-if (registrySource.includes(`id: '${newKebab}'`)) {
+if (!namesAreIdentical && registrySource.includes(`id: '${newKebab}'`)) {
   console.error(
     `Error: registry already contains an entry with id '${newKebab}'.`,
   );
@@ -143,14 +154,17 @@ if (registrySource.includes(`id: '${newKebab}'`)) {
 //   2. Component class:  "<oldPascal>Canvas"  →  "<newPascal>Canvas"
 //      (used in import statement and template tag in the page)
 
-const newComponentContent = readFileSync(oldComponentPath, 'utf8').replaceAll(
-  `${oldKebab}-canvas`,
-  `${newKebab}-canvas`,
-);
+let newComponentContent, newPageContent;
+if (!namesAreIdentical) {
+  newComponentContent = readFileSync(oldComponentPath, 'utf8').replaceAll(
+    `${oldKebab}-canvas`,
+    `${newKebab}-canvas`,
+  );
 
-const newPageContent = readFileSync(oldPagePath, 'utf8')
-  .replaceAll(`${oldPascal}Canvas`, `${newPascal}Canvas`)
-  .replaceAll(`${oldKebab}-canvas`, `${newKebab}-canvas`);
+  newPageContent = readFileSync(oldPagePath, 'utf8')
+    .replaceAll(`${oldPascal}Canvas`, `${newPascal}Canvas`)
+    .replaceAll(`${oldKebab}-canvas`, `${newKebab}-canvas`);
+}
 
 // ─── Update registry ──────────────────────────────────────────────────────────
 // Replace id and title in the existing entry. Optionally update group.
@@ -169,25 +183,33 @@ if (newGroup) {
 }
 
 // ─── Apply all changes ────────────────────────────────────────────────────────
-// Write updated content to the new paths, then delete the old files.
 
-writeFileSync(newComponentPath, newComponentContent);
-writeFileSync(newPagePath, newPageContent);
 writeFileSync(registryPath, newRegistry);
 
-// Remove old files only after writes succeed.
-unlinkSync(oldComponentPath);
-unlinkSync(oldPagePath);
+if (!namesAreIdentical) {
+  // Write updated content to the new paths, then delete the old files.
+  writeFileSync(newComponentPath, newComponentContent);
+  writeFileSync(newPagePath, newPageContent);
+
+  // Remove old files only after writes succeed.
+  unlinkSync(oldComponentPath);
+  unlinkSync(oldPagePath);
+}
 
 // ─── Report ───────────────────────────────────────────────────────────────────
 
-console.log(
-  `✓ Renamed component  src/components/${oldPascal}Canvas.vue  →  ${newPascal}Canvas.vue`,
-);
-console.log(
-  `✓ Renamed page       src/pages/${oldKebab}.vue  →  ${newKebab}.vue`,
-);
-console.log(
-  `✓ Updated registry   id: '${oldKebab}'  →  '${newKebab}'${newGroup ? `  group: '${newGroup}'` : ''}`,
-);
-console.log(`\nRoute is now live at: http://localhost:3000/${newKebab}`);
+if (!namesAreIdentical) {
+  console.log(
+    `✓ Renamed component  src/components/${oldPascal}Canvas.vue  →  ${newPascal}Canvas.vue`,
+  );
+  console.log(
+    `✓ Renamed page       src/pages/${oldKebab}.vue  →  ${newKebab}.vue`,
+  );
+  console.log(
+    `✓ Updated registry   id: '${oldKebab}'  →  '${newKebab}'${newGroup ? `  group: '${newGroup}'` : ''}`,
+  );
+  console.log(`\nRoute is now live at: http://localhost:3000/${newKebab}`);
+} else {
+  console.log(`✓ Updated registry   id: '${oldKebab}'  group: '${newGroup}'`);
+  console.log(`\nRoute unchanged at: http://localhost:3000/${oldKebab}`);
+}

@@ -61,4 +61,12 @@ export const canvasRegistry: CanvasEntry[] = [
     createdAt: '2026-04-12',
     group: 'Springs',
   },
+
+  {
+    id: 'branching-upward',
+    title: 'Branching Upward',
+    description: 'Branching Upward — a new computational canvas iteration.',
+    createdAt: '2026-04-16',
+    group: 'Branching',
+  },
 ];

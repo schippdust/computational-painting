@@ -48,10 +48,11 @@ The route is live immediately at `http://localhost:3000/<kebab-name>` once the d
 Use the `rename-canvas` script to rename an existing iteration in one step:
 
 ```bash
-npm run rename-canvas -- <current-kebab> <new-kebab> [--group "New Group"]
+npm run rename-canvas -- <current-kebab> [new-kebab] [--group "New Group"]
 # e.g.
 npm run rename-canvas -- spring-grids spring-lattice
 npm run rename-canvas -- spring-grids spring-lattice --group "Lattice Experiments"
+npm run rename-canvas -- spring-grids --group "Lattice Experiments"  # group-only update
 ```
 
 What gets updated:
@@ -59,6 +60,8 @@ What gets updated:
 1. **`src/components/<OldPascal>Canvas.vue`** — renamed to `src/components/<NewPascal>Canvas.vue`; internal element IDs updated.
 2. **`src/pages/<old-kebab>.vue`** — renamed to `src/pages/<new-kebab>.vue`; import and component tag updated.
 3. **Registry entry in `src/canvasRegistry.ts`** — `id`, `title`, and optionally `group` are replaced in place.
+
+When `[new-kebab]` is omitted (or identical to the current name), only the registry group is updated — no files are renamed.
 
 The script will abort without writing anything if the source files don't exist, the targets already exist, or the registry doesn't contain the old id.
 

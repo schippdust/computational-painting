@@ -138,7 +138,7 @@ export class Circle {
    * @param useSphere If true, generates points on a sphere surface; if false, on a circle (default: false)
    * @returns An array of random points on the surface
    */
-  static getRandomPointsOnSurface(
+  static getRandomPointsCircumference(
     center: P5.Vector | CoordinateSystem,
     radius: number,
     numberOfPoints: number,
@@ -146,7 +146,9 @@ export class Circle {
   ) {
     const points: P5.Vector[] = [];
     for (let i = 0; i < numberOfPoints; i++) {
-      points.push(Circle.getRandomPointOnSurface(center, radius, useSphere));
+      points.push(
+        Circle.getRandomPointOnCircumference(center, radius, useSphere),
+      );
     }
     return points;
   }
@@ -159,7 +161,7 @@ export class Circle {
    * @param useSphere If true, generates point on a sphere surface; if false, on a circle (default: false)
    * @returns A random point on the surface
    */
-  static getRandomPointOnSurface(
+  static getRandomPointOnCircumference(
     center: P5.Vector | CoordinateSystem,
     radius: number,
     useSphere: boolean = false,
@@ -257,6 +259,71 @@ export class Circle {
   }
 
   /**
+   * Generates multiple random points on the surface of this circle or sphere.
+   * This method mutates nothing and returns an array for method chaining patterns.
+   * @param numberOfPoints How many random points to generate
+   * @param useSphere If true, generates points on a sphere surface; if false, on a circle (default: false)
+   * @returns An array of random points on the surface
+   */
+  getRandomPointsCircumference(
+    numberOfPoints: number,
+    useSphere: boolean = false,
+  ): P5.Vector[] {
+    return Circle.getRandomPointsCircumference(
+      this.coordinateSystem,
+      this._radius,
+      numberOfPoints,
+      useSphere,
+    );
+  }
+
+  /**
+   * Generates a single random point on the surface of this circle or sphere.
+   * Uses uniform distribution for both circle and sphere surfaces.
+   * @param useSphere If true, generates point on a sphere surface; if false, on a circle (default: false)
+   * @returns A random point on the surface
+   */
+  getRandomPointOnCircumference(useSphere: boolean = false): P5.Vector {
+    return Circle.getRandomPointOnCircumference(
+      this.coordinateSystem,
+      this._radius,
+      useSphere,
+    );
+  }
+
+  /**
+   * Generates multiple random points inside this circle or sphere.
+   * @param numberOfPoints How many random points to generate
+   * @param useSphere If true, generates points inside a sphere; if false, inside a circle (default: false)
+   * @returns An array of random points inside the volume
+   */
+  getRandomPointsInside(
+    numberOfPoints: number,
+    useSphere: boolean = false,
+  ): P5.Vector[] {
+    return Circle.getRandomPointsInside(
+      this.coordinateSystem,
+      this._radius,
+      numberOfPoints,
+      useSphere,
+    );
+  }
+
+  /**
+   * Generates a single random point inside this circle or sphere.
+   * Uses uniform distribution corrections (cbrt for sphere, sqrt for circle) to ensure even coverage.
+   * @param useSphere If true, generates point inside a sphere; if false, inside a circle (default: false)
+   * @returns A random point inside the volume
+   */
+  getRandomPointInside(useSphere: boolean = false): P5.Vector {
+    return Circle.getRandomPointInside(
+      this.coordinateSystem,
+      this._radius,
+      useSphere,
+    );
+  }
+
+  /**
    * Gets a point on the circle at a specific angle.
    * @param radians The angle in radians (0 to 2π)
    * @returns A point on the circle at the specified angle
@@ -351,7 +418,7 @@ export class Circle {
     const points: P5.Vector[] = [];
     for (let i = 0; i < numberOfPoints; i++) {
       points.push(
-        Circle.getRandomPointOnSurface(
+        Circle.getRandomPointOnCircumference(
           this.coordinateSystem,
           this._radius,
           useSphere,
@@ -368,7 +435,7 @@ export class Circle {
    * @returns A random point on the surface
    */
   randomPointOnSurface(useSphere: boolean = false): P5.Vector {
-    return Circle.getRandomPointOnSurface(
+    return Circle.getRandomPointOnCircumference(
       this.coordinateSystem,
       this._radius,
       useSphere,
