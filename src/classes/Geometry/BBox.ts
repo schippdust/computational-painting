@@ -1,5 +1,7 @@
 import P5 from 'p5';
-import type { Line } from './Line';
+import { Line } from './Line';
+import { Sphere } from './Sphere';
+import { CoordinateSystem } from './CoordinateSystem';
 import { Intersections3d } from '../Core/Intersections3d';
 
 /**
@@ -9,8 +11,11 @@ import { Intersections3d } from '../Core/Intersections3d';
  * numbers so non-cubic boxes are the natural form. Use BBox.cube() when you need
  * uniform extents on all axes.
  *
- * The halfExtents P5.Vector property is derived from the constructor args and can
- * be read directly when the combined vector is more convenient.
+ * All static factory methods accept an optional CoordinateSystem parameter. When
+ * provided, input geometry is transformed to that coordinate system's local space
+ * before the box is computed, producing a CS-axis-aligned (OBB-style) bounding
+ * volume expressed in local coordinates. Intersection tests on a CS-aligned BBox
+ * should be performed with geometry also transformed to the same local space.
  */
 export class BBox {
   /** Per-axis half-extents as a vector. Derived from the constructor args. */
@@ -31,6 +36,8 @@ export class BBox {
   ) {
     this.halfExtents = new P5.Vector(halfX, halfY, halfZ);
   }
+
+  // ── Intersection tests ────────────────────────────────────────────────────
 
   /**
    * Tests whether a point lies inside this bounding box.
@@ -61,6 +68,8 @@ export class BBox {
     return Intersections3d.lineIntersectsBox(line, this);
   }
 
+  // ── Subdivision ───────────────────────────────────────────────────────────
+
   /**
    * Returns the child BBox for the given octant offset.
    * Each axis is halved independently, so non-cubic parents produce non-cubic children.
@@ -85,22 +94,36 @@ export class BBox {
     );
   }
 
+  // ── Static factories ──────────────────────────────────────────────────────
+
   /**
    * Computes a tight-fitting BBox around all provided points, with a 10% buffer
    * per axis. Each axis is sized independently so the result matches the actual
    * data extents rather than forcing a cube.
-   * @param pts The points to fit inside the box
+   *
+   * When coordinateSystem is provided the points are first transformed into that
+   * CS's local space; the returned BBox is expressed in local coordinates.
+   *
+   * @param pts              The points to fit inside the box
+   * @param coordinateSystem Optional CS to align the box to; omit for world axes
    * @returns A BBox containing all points
    * @throws Error if pts is empty
    */
-  static fromPoints(pts: P5.Vector[]): BBox {
+  static fromPoints(
+    pts: P5.Vector[],
+    coordinateSystem?: CoordinateSystem,
+  ): BBox {
     if (pts.length === 0)
       throw new Error('BBox.fromPoints requires at least one point.');
 
-    const min = pts[0].copy();
-    const max = pts[0].copy();
+    const resolved = coordinateSystem
+      ? BBox._toLocalSpace(pts, coordinateSystem)
+      : pts;
 
-    for (const p of pts) {
+    const min = resolved[0].copy();
+    const max = resolved[0].copy();
+
+    for (const p of resolved) {
       min.x = Math.min(min.x, p.x);
       min.y = Math.min(min.y, p.y);
       min.z = Math.min(min.z, p.z);
@@ -120,12 +143,87 @@ export class BBox {
 
   /**
    * Creates a cubic BBox with equal half-extents on all axes.
-   * Convenience factory for when a uniform cube is desired.
-   * @param center   The center of the cube
-   * @param halfSize Half the side length (applied to all three axes)
+   *
+   * When coordinateSystem is provided the center is transformed into that CS's
+   * local space; the returned BBox is expressed in local coordinates.
+   *
+   * @param center           The center of the cube in world space (or local space if no CS)
+   * @param halfSize         Half the side length (applied to all three axes)
+   * @param coordinateSystem Optional CS to align the box to; omit for world axes
    * @returns A cubic BBox
    */
-  static cube(center: P5.Vector, halfSize: number): BBox {
-    return new BBox(center, halfSize, halfSize, halfSize);
+  static cube(
+    center: P5.Vector,
+    halfSize: number,
+    coordinateSystem?: CoordinateSystem,
+  ): BBox {
+    const resolved = coordinateSystem
+      ? BBox._toLocalSpace([center], coordinateSystem)[0]
+      : center;
+    return new BBox(resolved, halfSize, halfSize, halfSize);
+  }
+
+  /**
+   * Computes a BBox that exactly contains the given geometry (no buffer).
+   *
+   * - Line: the box spans the two endpoints on each axis.
+   * - Sphere: the box extends by the sphere's radius in every direction from center,
+   *   producing a cube whose side length equals the sphere's diameter.
+   *
+   * When coordinateSystem is provided the geometry is transformed into that CS's
+   * local space before the box is computed. The returned BBox is expressed in
+   * local coordinates; run intersection tests with geometry also in local space.
+   *
+   * @param geometry         A Line or Sphere to bound
+   * @param coordinateSystem Optional CS to align the box to; omit for world axes
+   * @returns A BBox tightly containing the geometry
+   */
+  static fromGeometry(
+    geometry: Line | Sphere,
+    coordinateSystem?: CoordinateSystem,
+  ): BBox {
+    if (geometry instanceof Line) {
+      let s = geometry.startPoint;
+      let e = geometry.endPoint;
+
+      if (coordinateSystem) {
+        [s, e] = BBox._toLocalSpace([s, e], coordinateSystem);
+      }
+
+      return new BBox(
+        new P5.Vector((s.x + e.x) / 2, (s.y + e.y) / 2, (s.z + e.z) / 2),
+        Math.abs(e.x - s.x) / 2,
+        Math.abs(e.y - s.y) / 2,
+        Math.abs(e.z - s.z) / 2,
+      );
+    }
+
+    // Sphere — radius is rotationally invariant; only the center moves
+    const r = geometry.radius;
+    const center = coordinateSystem
+      ? BBox._toLocalSpace([geometry.centerPoint], coordinateSystem)[0]
+      : geometry.centerPoint.copy();
+
+    return new BBox(center, r, r, r);
+  }
+
+  // ── Private helpers ───────────────────────────────────────────────────────
+
+  /**
+   * Transforms an array of world-space points into the given coordinate system's
+   * local space using the world CS as the input frame.
+   * @param worldPts         Points in world space
+   * @param coordinateSystem Target local coordinate system
+   * @returns Points expressed in the CS's local coordinates
+   */
+  private static _toLocalSpace(
+    worldPts: P5.Vector[],
+    coordinateSystem: CoordinateSystem,
+  ): P5.Vector[] {
+    return CoordinateSystem.transformLocalPointsToTargetCs(
+      CoordinateSystem.getWorldAxes(),
+      coordinateSystem,
+      worldPts,
+    );
   }
 }
