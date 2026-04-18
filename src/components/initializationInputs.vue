@@ -6,7 +6,7 @@ const { canvasHeight, canvasWidth, threadSpacing, threadWidth } =
   storeToRefs(appStore);
 
 function updateCanvasWidth(event: string) {
-  let numericalEvent = Number(event);
+  const numericalEvent = Number(event);
   if (isNaN(numericalEvent) || numericalEvent <= 0) {
     return;
   } else {
@@ -15,7 +15,7 @@ function updateCanvasWidth(event: string) {
 }
 
 function updateCanvasHeight(event: string) {
-  let numericalEvent = Number(event);
+  const numericalEvent = Number(event);
   if (isNaN(numericalEvent) || numericalEvent <= 0) {
     return;
   } else {
@@ -24,7 +24,7 @@ function updateCanvasHeight(event: string) {
 }
 
 function setThreadWidth(event: string) {
-  let numericalEvent = Number(event);
+  const numericalEvent = Number(event);
   if (isNaN(numericalEvent) || numericalEvent <= 0) {
     return;
   } else {
@@ -33,7 +33,7 @@ function setThreadWidth(event: string) {
 }
 
 function setThreadSpacing(event: string) {
-  let numericalEvent = Number(event);
+  const numericalEvent = Number(event);
   if (isNaN(numericalEvent) || numericalEvent <= 0) {
     return;
   } else {
@@ -45,7 +45,9 @@ function setThreadSpacing(event: string) {
   <v-container>
     <v-row>
       <v-col>
-        <div class="text-h5">Setup Canvas</div>
+        <div class="text-h5">
+          Setup Canvas
+        </div>
       </v-col>
     </v-row>
     <v-row>
@@ -90,7 +92,10 @@ function setThreadSpacing(event: string) {
     </v-row>
     <v-row>
       <v-col cols="3">
-        <v-btn variant="outlined" @click="appStore.initializeCanvas()">
+        <v-btn
+          variant="outlined"
+          @click="appStore.initializeCanvas()"
+        >
           Initialize Canvas
         </v-btn>
       </v-col>

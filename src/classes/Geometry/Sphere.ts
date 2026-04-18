@@ -416,7 +416,7 @@ export class Sphere {
       forward = new P5.Vector(0, 0, 1); // default forward if not moving
     }
 
-    let up = upDirection.copy().normalize();
+    const up = upDirection.copy().normalize();
 
     // Create an orthonormal basis with forward as the z-axis
     // Find a vector perpendicular to forward

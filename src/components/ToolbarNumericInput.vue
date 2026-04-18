@@ -50,23 +50,34 @@ function onText(raw: string) {
 </script>
 
 <template>
-  <v-menu v-model="menuOpen" :close-on-content-click="false" location="end">
+  <v-menu
+    v-model="menuOpen"
+    :close-on-content-click="false"
+    location="end"
+  >
     <template #activator="{ props: menuProps }">
-      <v-tooltip :text="tooltipText" location="right">
+      <v-tooltip
+        :text="tooltipText"
+        location="right"
+      >
         <template #activator="{ props: tip }">
           <v-btn
             variant="text"
             density="compact"
             v-bind="mergeProps(menuProps, tip)"
           >
-            <v-icon size="18">{{ icon }}</v-icon>
+            <v-icon size="18">
+              {{ icon }}
+            </v-icon>
           </v-btn>
         </template>
       </v-tooltip>
     </template>
     <v-card min-width="240">
       <v-card-text class="px-4 pt-4 pb-3">
-        <div class="text-caption text-medium-emphasis mb-2">{{ label }}</div>
+        <div class="text-caption text-medium-emphasis mb-2">
+          {{ label }}
+        </div>
         <v-slider
           :model-value="internal"
           :min="min"

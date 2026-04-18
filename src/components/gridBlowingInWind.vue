@@ -33,9 +33,9 @@ const numberOfVehicles = ref(0);
 
 // let cameraPos = new P5.Vector(5000, 0, 0); // vertical
 // let cameraPos = new P5.Vector(0, 10, 7500); // horizonta
-let cameraPos = new P5.Vector(2000, -2000, 4000); // angled
-let cameraFocus = new P5.Vector(0, 0, 0);
-let fovDegrees = 80;
+const cameraPos = new P5.Vector(2000, -2000, 4000); // angled
+const cameraFocus = new P5.Vector(0, 0, 0);
+const fovDegrees = 80;
 appStore.setCameraPosition(cameraPos);
 appStore.setCameraTarget(cameraFocus);
 appStore.setCameraFOV(fovDegrees);
@@ -91,7 +91,7 @@ onMounted(() => {
     p5.draw = () => {
       p5.stroke(255);
       gridVehicles.vehicles.forEach((v) => {
-        let renderPos = camera.value.project(v.coords);
+        const renderPos = camera.value.project(v.coords);
         if (renderPos) {
           p5.circle(renderPos.x, renderPos.y, 5);
         }
@@ -127,7 +127,7 @@ onMounted(() => {
   <div
     id="computational-canvas"
     style="overflow-y: auto; overflow-x: auto"
-  ></div>
+  />
   <div>{{ frameRate }} fps</div>
   <div>{{ numberOfFrames }} frames</div>
   <div>{{ numberOfVehicles }} number of vehicles</div>

@@ -214,7 +214,7 @@ export class CoordinateSystem {
   transformLocalPointsToWorldCs(local: P5.Vector | P5.Vector[]): P5.Vector[] {
     const pointList = Array.isArray(local) ? local : [local];
     const projectedPoints: P5.Vector[] = [];
-    for (let pt of pointList) {
+    for (const pt of pointList) {
       const localPt = pt.copy();
       const localArr = [localPt.x, localPt.y, localPt.z];
 
