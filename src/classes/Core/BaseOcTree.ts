@@ -141,7 +141,7 @@ export abstract class BaseOcTree<
       );
       const newCenter = oldRoot.bbox.center.copy().add(offset);
 
-      const newBBox = new BBox(newCenter, newHalfExtents);
+      const newBBox = new BBox(newCenter, newHalfExtents.x, newHalfExtents.y, newHalfExtents.z);
       this.root = this.createNode(newBBox);
       this.root.subdivide();
       this.reattachOldRoot(oldRoot, this.root);
