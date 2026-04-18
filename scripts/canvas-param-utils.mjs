@@ -153,7 +153,12 @@ const INIT_SLOT = '<!-- Add canvas-specific init settings here via slot -->';
  * Priority: before paramMenuOpen (keeps params grouped) → before zoom (fresh canvas,
  * also seeds paramMenuOpen so the toolbar menu has something to bind to).
  */
-export function addPageRef(pageSrc, camelName, refValue) {
+export function addPageRef(
+  pageSrc,
+  camelName,
+  refValue,
+  { addMenuOpen = true } = {},
+) {
   const declaration = `const ${camelName} = ref(${refValue});`;
 
   if (pageSrc.includes('const paramMenuOpen = ref(false)')) {
@@ -164,11 +169,14 @@ export function addPageRef(pageSrc, camelName, refValue) {
     );
   }
   if (pageSrc.includes('const zoom = ref(')) {
-    return insertLineBefore(
-      pageSrc,
-      'const zoom = ref(',
-      `${declaration}\nconst paramMenuOpen = ref(false);\n`,
-    );
+    if (addMenuOpen) {
+      return insertLineBefore(
+        pageSrc,
+        'const zoom = ref(',
+        `${declaration}\nconst paramMenuOpen = ref(false);\n`,
+      );
+    }
+    return insertLineBefore(pageSrc, 'const zoom = ref(', declaration);
   }
 
   console.error(
@@ -734,6 +742,102 @@ export function deleteComponentParam(componentSrc, camelName) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// REACTIVITY operations
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── Ensure paramMenuOpen ref ─────────────────────────────────────────────────
+
+/** Ensure `const paramMenuOpen = ref(false);` exists in the page script. No-op if already present. */
+export function ensureParamMenuOpen(pageSrc) {
+  if (pageSrc.includes('const paramMenuOpen = ref(false)')) return pageSrc;
+  return insertLineBefore(
+    pageSrc,
+    'const zoom = ref(',
+    'const paramMenuOpen = ref(false);\n',
+  );
+}
+
+// ─── Detect toolbar presence ──────────────────────────────────────────────────
+
+/** Returns true if the parameter's control block is present in the toolbar card-text. */
+export function isParamInToolbar(pageSrc, camelName, paramType) {
+  const bounds = findToolbarCardTextBounds(pageSrc);
+  if (bounds.start === -1) return false;
+  const toolbarContent = pageSrc.slice(bounds.start, bounds.end);
+  if (paramType === 'color')
+    return toolbarContent.includes(`:color="${camelName}"`);
+  if (paramType === 'input')
+    return toolbarContent.includes(`v-model.number="${camelName}"`);
+  return toolbarContent.includes(`v-model="${camelName}"`);
+}
+
+/** Returns true if the toolbar card-text section exists but contains no visible content. */
+export function isToolbarEmpty(pageSrc) {
+  const bounds = findToolbarCardTextBounds(pageSrc);
+  if (bounds.start === -1) return false;
+  const content = pageSrc.slice(
+    bounds.start + '<v-card-text class="pt-3">'.length,
+    bounds.end,
+  );
+  return content.trim() === '';
+}
+
+// ─── Remove from toolbar only ────────────────────────────────────────────────
+
+/**
+ * Remove a parameter's control block from the toolbar menu only.
+ * Leaves the init overlay occurrence untouched.
+ */
+export function removeParamFromToolbar(pageSrc, camelName, paramType) {
+  const bounds = findToolbarCardTextBounds(pageSrc);
+  if (bounds.start === -1) return pageSrc;
+  const before = pageSrc.slice(0, bounds.start);
+  const section = pageSrc.slice(bounds.start, bounds.end);
+  const after = pageSrc.slice(bounds.end);
+
+  let newSection;
+  if (paramType === 'slider')
+    newSection = deleteSliderBlocks(section, camelName);
+  else if (paramType === 'input')
+    newSection = deleteInputBlocks(section, camelName);
+  else if (paramType === 'color')
+    newSection = deleteColorPickerBlocks(section, camelName);
+  else newSection = section;
+
+  return before + newSection + after;
+}
+
+// ─── Extract slider attrs ─────────────────────────────────────────────────────
+
+/**
+ * Extract :min, :max, :step values from the first v-slider bound to camelName.
+ * Returns { min, max, step } as numbers.
+ */
+export function extractSliderAttrs(pageSrc, camelName) {
+  const vModelStr = `v-model="${camelName}"`;
+  const lines = pageSrc.split('\n');
+  const vModelIdx = lines.findIndex((l) => l.includes(vModelStr));
+  if (vModelIdx === -1) return { min: 0, max: 1, step: 0.1 };
+
+  let openIdx = vModelIdx;
+  while (openIdx >= 0 && !lines[openIdx].trimStart().startsWith('<v-slider'))
+    openIdx--;
+  let closeIdx = vModelIdx;
+  while (closeIdx < lines.length && lines[closeIdx].trim() !== '/>') closeIdx++;
+
+  const block = lines.slice(openIdx, closeIdx + 1).join('\n');
+  const minMatch = block.match(/:min="([^"]+)"/);
+  const maxMatch = block.match(/:max="([^"]+)"/);
+  const stepMatch = block.match(/:step="([^"]+)"/);
+
+  return {
+    min: minMatch ? parseFloat(minMatch[1]) : 0,
+    max: maxMatch ? parseFloat(maxMatch[1]) : 1,
+    step: stepMatch ? parseFloat(stepMatch[1]) : 0.1,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Internal helpers (not exported)
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -824,6 +928,21 @@ function removeSelfClosingBlocks(src, tagName, identifyingStr) {
   }
 
   return result;
+}
+
+/**
+ * Find the start/end character indices of `<v-card-text class="pt-3">...</v-card-text>`
+ * in the toolbar menu. `end` points to the start of the closing tag.
+ * Returns { start: -1, end: -1 } if not found.
+ */
+function findToolbarCardTextBounds(pageSrc) {
+  const openStr = '<v-card-text class="pt-3">';
+  const closeStr = '</v-card-text>';
+  const start = pageSrc.indexOf(openStr);
+  if (start === -1) return { start: -1, end: -1 };
+  const end = pageSrc.indexOf(closeStr, start);
+  if (end === -1) return { start: -1, end: -1 };
+  return { start, end };
 }
 
 /**

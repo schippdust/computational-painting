@@ -101,7 +101,9 @@ v.normalize().mult(5).add(offset);
 
 ## Canvas Parameters ("Add a parameter")
 
-When the user asks to "add a parameter" to a canvas, **add the parameter in three places**: the canvas component props, the init overlay sliders, AND the left-hand toolbar menu. This is the default behavior unless explicitly stated otherwise.
+When the user asks to "add a parameter" to a canvas, **add the parameter in three places by default**: the canvas component props, the init overlay sliders, AND the left-hand toolbar menu. This is the behavior when `--reactive` is `true` (the default).
+
+If a parameter is "init-only" or "not reactive" (i.e. `--reactive false`), it appears **only in the init overlay** and is not live-adjustable once the canvas starts. Use `--reactive false` for parameters that only make sense at canvas setup (e.g. seed values, grid size, number of agents to spawn).
 
 **1. Page (`src/pages/<name>.vue`)** — add a `ref` with the default value, a slider in the `canvas-init-overlay`, the toolbar menu ref, and the prop binding on the canvas component:
 

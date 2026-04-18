@@ -3,20 +3,26 @@
  * Add a slider parameter to an existing canvas.
  *
  * Usage:
- *   npm run create-slider -- <path> <name> <min> <value> <max> [--step <number>]
+ *   npm run create-slider -- <path> <name> <min> <value> <max> [--step <number>] [--reactive false]
  *
  * Examples:
  *   npm run create-slider -- branching-upward friction 0 0.2 1
  *   npm run create-slider -- spring-grids stiffness 0 50 500
  *   npm run create-slider -- my-canvas noise-scale 0.0001 0.001 0.01
  *   npm run create-slider -- my-canvas speed 0 10 100 --step 0.5
+ *   npm run create-slider -- my-canvas max-agents 0 1000 5000 --reactive false
  *
  * What gets added:
  *   Page script   — `const <name> = ref(<value>);`
  *   Canvas tag    — `:<kebab-name>="<name>"`
- *   Init overlay  — v-slider in the Parameters section
- *   Toolbar menu  — v-slider in the parameters menu (created if absent)
+ *   Init overlay  — v-slider in the Parameters section (always)
+ *   Toolbar menu  — v-slider in the parameters menu (only if --reactive is not false)
  *   Component     — `<name>: number` in defineProps, `const <name> = toRef(props, '<name>')`
+ *
+ * Options:
+ *   --step N         Override inferred slider step
+ *   --reactive bool  'true' (default) adds to toolbar for live adjustment while drawing;
+ *                    'false' shows in init overlay only — not adjustable after canvas starts
  *
  * The step is inferred from the precision of min/value/max unless --step is provided:
  *   - All integers → proportional integer step
@@ -72,6 +78,19 @@ if (opts.step !== undefined && isNaN(parseFloat(opts.step))) {
   console.error(`Error: --step must be a number (got '${opts.step}').`);
   process.exit(1);
 }
+
+if (
+  opts.reactive !== undefined &&
+  opts.reactive !== 'true' &&
+  opts.reactive !== 'false'
+) {
+  console.error(
+    `Error: --reactive must be 'true' or 'false' (got '${opts.reactive}').`,
+  );
+  process.exit(1);
+}
+
+const reactive = opts.reactive !== 'false';
 
 const min = parseFloat(rawMin);
 const value = parseFloat(rawValue);
@@ -165,10 +184,12 @@ const toolbarBlock = [
 // ─── Apply changes ────────────────────────────────────────────────────────────
 
 let newPageSrc = pageSrc;
-newPageSrc = addPageRef(newPageSrc, camelName, value);
+newPageSrc = addPageRef(newPageSrc, camelName, value, {
+  addMenuOpen: reactive,
+});
 newPageSrc = addCanvasTagProp(newPageSrc, camelName);
 newPageSrc = addToInitOverlay(newPageSrc, initBlock);
-newPageSrc = addToToolbarMenu(newPageSrc, toolbarBlock);
+if (reactive) newPageSrc = addToToolbarMenu(newPageSrc, toolbarBlock);
 
 const newComponentSrc = addComponentParam(componentSrc, camelName, 'number');
 

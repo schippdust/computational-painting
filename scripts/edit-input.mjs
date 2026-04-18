@@ -6,23 +6,31 @@
  *   npm run edit-input -- <path> <name> [options]
  *
  * Options (all optional, at least one required):
- *   --name  "new-name"    Rename the parameter (updates code name + visual label together)
- *   --value <number>      Update the default ref value
+ *   --name     "new-name"    Rename the parameter (updates code name + visual label together)
+ *   --value    <number>      Update the default ref value
+ *   --reactive true|false    Move parameter between toolbar (true) and init-only (false)
  *
  * Examples:
  *   npm run edit-input -- branching-upward max-vehicles --value 2000
  *   npm run edit-input -- branching-upward max-vehicles --name max-agents
+ *   npm run edit-input -- branching-upward seed --reactive false
  */
 
 import { writeFileSync } from 'node:fs';
 import {
   toKebab,
   toCamel,
+  toTitle,
   resolveCanvas,
   assertNoDuplicate,
   assertParamIsType,
   editPageRef,
   renameParam,
+  ensureParamMenuOpen,
+  isParamInToolbar,
+  isToolbarEmpty,
+  removeParamFromToolbar,
+  addToToolbarMenu,
 } from './canvas-param-utils.mjs';
 
 // ─── Args ─────────────────────────────────────────────────────────────────────
@@ -51,12 +59,23 @@ for (let i = 0; i < rest.length; i++) {
 
 if (Object.keys(opts).length === 0) {
   console.error('No options provided — nothing to change.');
-  console.error('Available: --name --value');
+  console.error('Available: --name --value --reactive');
   process.exit(1);
 }
 
 if (opts.value !== undefined && isNaN(parseFloat(opts.value))) {
   console.error(`Error: --value must be a number (got '${opts.value}').`);
+  process.exit(1);
+}
+
+if (
+  opts.reactive !== undefined &&
+  opts.reactive !== 'true' &&
+  opts.reactive !== 'false'
+) {
+  console.error(
+    `Error: --reactive must be 'true' or 'false' (got '${opts.reactive}').`,
+  );
   process.exit(1);
 }
 
@@ -95,6 +114,36 @@ if (newCamel !== oldCamel) {
 if (opts.value !== undefined) {
   newPageSrc = editPageRef(newPageSrc, newCamel, parseFloat(opts.value));
   changes.push(`default value → ${opts.value}`);
+}
+
+if (opts.reactive !== undefined) {
+  const reactiveValue = opts.reactive === 'true';
+  const currentlyReactive = isParamInToolbar(newPageSrc, newCamel, 'input');
+
+  if (reactiveValue && !currentlyReactive) {
+    const label = toTitle(toKebab(newCamel));
+    const toolbarBlock = [
+      `            <v-text-field`,
+      `              v-model.number="${newCamel}"`,
+      `              label="${label}"`,
+      `              type="number"`,
+      `              density="compact"`,
+      `              hide-details`,
+      `              class="mb-4"`,
+      `            />`,
+    ].join('\n');
+    newPageSrc = ensureParamMenuOpen(newPageSrc);
+    newPageSrc = addToToolbarMenu(newPageSrc, toolbarBlock);
+    changes.push('reactive → true');
+  } else if (!reactiveValue && currentlyReactive) {
+    newPageSrc = removeParamFromToolbar(newPageSrc, newCamel, 'input');
+    if (isToolbarEmpty(newPageSrc)) {
+      console.log(
+        '  ⚠ No reactive params remain — toolbar menu is now empty.',
+      );
+    }
+    changes.push('reactive → false');
+  }
 }
 
 writeFileSync(pagePath, newPageSrc);

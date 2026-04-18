@@ -3,18 +3,23 @@
  * Add a color-picker parameter to an existing canvas.
  *
  * Usage:
- *   npm run create-color-picker -- <path> <name> [default-hex]
+ *   npm run create-color-picker -- <path> <name> [default-hex] [--reactive false]
  *
  * Examples:
  *   npm run create-color-picker -- branching-upward accent-color
  *   npm run create-color-picker -- branching-upward accent-color #ff6600
+ *   npm run create-color-picker -- branching-upward bg-color #000000 --reactive false
  *
  * What gets added:
  *   Page script   — `const <name> = ref('<hex>');`
  *   Canvas tag    — `:<kebab-name>="<name>"`
- *   Init overlay  — color swatch button + v-color-picker in the Parameters section
- *   Toolbar menu  — color swatch button + v-color-picker in the parameters menu (created if absent)
+ *   Init overlay  — color swatch button + v-color-picker in the Parameters section (always)
+ *   Toolbar menu  — color swatch button + v-color-picker in the parameters menu (only if --reactive is not false)
  *   Component     — `<name>: string` in defineProps, `const <name> = toRef(props, '<name>')`
+ *
+ * Options:
+ *   --reactive bool  'true' (default) adds to toolbar for live adjustment while drawing;
+ *                    'false' shows in init overlay only — not adjustable after canvas starts
  *
  * The color value is a reactive hex string (e.g. '#ff6600').
  * Convert to an [r,g,b] array in your sketch with hexToRgb(<name>.value).
@@ -36,14 +41,29 @@ import {
 
 // ─── Args ─────────────────────────────────────────────────────────────────────
 
-const [rawPath, rawName, rawDefault] = process.argv.slice(2);
+const [rawPath, rawName, ...rest] = process.argv.slice(2);
 
 if (!rawPath || !rawName) {
   console.error(
-    'Usage: npm run create-color-picker -- <path> <name> [default-hex]\n' +
+    'Usage: npm run create-color-picker -- <path> <name> [default-hex] [--reactive false]\n' +
       'Example: npm run create-color-picker -- branching-upward accent-color #ff6600',
   );
   process.exit(1);
+}
+
+const opts = {};
+let rawDefault;
+for (let i = 0; i < rest.length; i++) {
+  if (
+    rest[i].startsWith('--') &&
+    rest[i + 1] !== undefined &&
+    !rest[i + 1].startsWith('--')
+  ) {
+    opts[rest[i].slice(2)] = rest[i + 1];
+    i++;
+  } else if (!rest[i].startsWith('--') && rawDefault === undefined) {
+    rawDefault = rest[i];
+  }
 }
 
 const defaultHex = rawDefault ?? '#ffffff';
@@ -54,6 +74,19 @@ if (!/^#[0-9a-fA-F]{6}$/.test(defaultHex)) {
   );
   process.exit(1);
 }
+
+if (
+  opts.reactive !== undefined &&
+  opts.reactive !== 'true' &&
+  opts.reactive !== 'false'
+) {
+  console.error(
+    `Error: --reactive must be 'true' or 'false' (got '${opts.reactive}').`,
+  );
+  process.exit(1);
+}
+
+const reactive = opts.reactive !== 'false';
 
 const camelName = toCamel(toKebab(rawName));
 const label = toTitle(toKebab(rawName));
@@ -110,10 +143,12 @@ const toolbarBlock = [
 // ─── Apply changes ────────────────────────────────────────────────────────────
 
 let newPageSrc = pageSrc;
-newPageSrc = addPageRef(newPageSrc, camelName, `'${defaultHex}'`);
+newPageSrc = addPageRef(newPageSrc, camelName, `'${defaultHex}'`, {
+  addMenuOpen: reactive,
+});
 newPageSrc = addCanvasTagProp(newPageSrc, camelName);
 newPageSrc = addToInitOverlay(newPageSrc, initBlock);
-newPageSrc = addToToolbarMenu(newPageSrc, toolbarBlock);
+if (reactive) newPageSrc = addToToolbarMenu(newPageSrc, toolbarBlock);
 
 const newComponentSrc = addComponentParam(componentSrc, camelName, 'string');
 

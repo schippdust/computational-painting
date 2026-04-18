@@ -54,6 +54,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       never
     >;
+    '/smart-paint-testing-1': RouteRecordInfo<
+      '/smart-paint-testing-1',
+      '/smart-paint-testing-1',
+      Record<never, never>,
+      Record<never, never>,
+      never
+    >;
     '/sphere-emission': RouteRecordInfo<
       '/sphere-emission',
       '/sphere-emission',
@@ -95,6 +102,10 @@ declare module 'vue-router/auto-routes' {
     };
     'src/pages/branching-upward-2.vue': {
       routes: '/branching-upward-2';
+      views: never;
+    };
+    'src/pages/smart-paint-testing-1.vue': {
+      routes: '/smart-paint-testing-1';
       views: never;
     };
     'src/pages/sphere-emission.vue': {

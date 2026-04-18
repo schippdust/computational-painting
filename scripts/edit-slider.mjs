@@ -6,28 +6,37 @@
  *   npm run edit-slider -- <path> <name> [options]
  *
  * Options (all optional, at least one required):
- *   --name  "new-name"    Rename the parameter (updates code name + visual label together)
- *   --min   <number>      Update the minimum value
- *   --max   <number>      Update the maximum value
- *   --value <number>      Update the default ref value
- *   --step  <number>      Update the slider step
+ *   --name     "new-name"    Rename the parameter (updates code name + visual label together)
+ *   --min      <number>      Update the minimum value
+ *   --max      <number>      Update the maximum value
+ *   --value    <number>      Update the default ref value
+ *   --step     <number>      Update the slider step
+ *   --reactive true|false    Move parameter between toolbar (true) and init-only (false)
  *
  * Examples:
  *   npm run edit-slider -- branching-upward friction --name viscosity
  *   npm run edit-slider -- branching-upward friction --min 0 --max 2 --value 0.5
  *   npm run edit-slider -- branching-upward noise-scale --step 0.0001
+ *   npm run edit-slider -- branching-upward max-agents --reactive false
  */
 
 import { writeFileSync } from 'node:fs';
 import {
   toKebab,
   toCamel,
+  toTitle,
   resolveCanvas,
   assertNoDuplicate,
   assertParamIsType,
   editPageRef,
   editSliderAttributes,
   renameParam,
+  ensureParamMenuOpen,
+  isParamInToolbar,
+  isToolbarEmpty,
+  removeParamFromToolbar,
+  addToToolbarMenu,
+  extractSliderAttrs,
 } from './canvas-param-utils.mjs';
 
 // ─── Args ─────────────────────────────────────────────────────────────────────
@@ -56,7 +65,7 @@ for (let i = 0; i < rest.length; i++) {
 
 if (Object.keys(opts).length === 0) {
   console.error('No options provided — nothing to change.');
-  console.error('Available: --name --min --max --value --step');
+  console.error('Available: --name --min --max --value --step --reactive');
   process.exit(1);
 }
 
@@ -66,6 +75,17 @@ for (const key of numericOpts) {
     console.error(`Error: --${key} must be a number (got '${opts[key]}').`);
     process.exit(1);
   }
+}
+
+if (
+  opts.reactive !== undefined &&
+  opts.reactive !== 'true' &&
+  opts.reactive !== 'false'
+) {
+  console.error(
+    `Error: --reactive must be 'true' or 'false' (got '${opts.reactive}').`,
+  );
+  process.exit(1);
 }
 
 const oldCamel = toCamel(toKebab(rawName));
@@ -121,6 +141,38 @@ if (opts.step !== undefined) {
 
 if (Object.keys(attrEdits).length > 0) {
   newPageSrc = editSliderAttributes(newPageSrc, newCamel, attrEdits);
+}
+
+if (opts.reactive !== undefined) {
+  const reactiveValue = opts.reactive === 'true';
+  const currentlyReactive = isParamInToolbar(newPageSrc, newCamel, 'slider');
+
+  if (reactiveValue && !currentlyReactive) {
+    const { min, max, step } = extractSliderAttrs(newPageSrc, newCamel);
+    const label = toTitle(toKebab(newCamel));
+    const toolbarBlock = [
+      `            <p class="text-caption text-medium-emphasis mb-n2">${label}</p>`,
+      `            <v-slider`,
+      `              v-model="${newCamel}"`,
+      `              :min="${min}"`,
+      `              :max="${max}"`,
+      `              :step="${step}"`,
+      `              hide-details`,
+      `              class="mb-4"`,
+      `            />`,
+    ].join('\n');
+    newPageSrc = ensureParamMenuOpen(newPageSrc);
+    newPageSrc = addToToolbarMenu(newPageSrc, toolbarBlock);
+    changes.push('reactive → true');
+  } else if (!reactiveValue && currentlyReactive) {
+    newPageSrc = removeParamFromToolbar(newPageSrc, newCamel, 'slider');
+    if (isToolbarEmpty(newPageSrc)) {
+      console.log(
+        '  ⚠ No reactive params remain — toolbar menu is now empty.',
+      );
+    }
+    changes.push('reactive → false');
+  }
 }
 
 writeFileSync(pagePath, newPageSrc);
