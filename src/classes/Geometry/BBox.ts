@@ -3,6 +3,7 @@ import { Line } from './Line';
 import { Sphere } from './Sphere';
 import { CoordinateSystem } from './CoordinateSystem';
 import { Intersections3d } from '../Core/Intersections3d';
+import type { GeometryItem } from './GeometryTypes';
 
 /**
  * An axis-aligned bounding box (AABB) in 3D space.
@@ -166,6 +167,7 @@ export class BBox {
   /**
    * Computes a BBox that exactly contains the given geometry (no buffer).
    *
+   * - P5.Vector: a zero-extent point box at that position.
    * - Line: the box spans the two endpoints on each axis.
    * - Sphere: the box extends by the sphere's radius in every direction from center,
    *   producing a cube whose side length equals the sphere's diameter.
@@ -174,12 +176,12 @@ export class BBox {
    * local space before the box is computed. The returned BBox is expressed in
    * local coordinates; run intersection tests with geometry also in local space.
    *
-   * @param geometry         A Line or Sphere to bound
+   * @param geometry         A GeometryItem (P5.Vector, Line, or Sphere) to bound
    * @param coordinateSystem Optional CS to align the box to; omit for world axes
    * @returns A BBox tightly containing the geometry
    */
   static fromGeometry(
-    geometry: Line | Sphere,
+    geometry: GeometryItem,
     coordinateSystem?: CoordinateSystem,
   ): BBox {
     if (geometry instanceof Line) {
@@ -198,13 +200,19 @@ export class BBox {
       );
     }
 
-    // Sphere — radius is rotationally invariant; only the center moves
-    const r = geometry.radius;
-    const center = coordinateSystem
-      ? BBox._toLocalSpace([geometry.centerPoint], coordinateSystem)[0]
-      : geometry.centerPoint.copy();
+    if (geometry instanceof Sphere) {
+      const r = geometry.radius;
+      const center = coordinateSystem
+        ? BBox._toLocalSpace([geometry.centerPoint], coordinateSystem)[0]
+        : geometry.centerPoint.copy();
+      return new BBox(center, r, r, r);
+    }
 
-    return new BBox(center, r, r, r);
+    // P5.Vector — a point has no extent
+    const pt = coordinateSystem
+      ? BBox._toLocalSpace([geometry], coordinateSystem)[0]
+      : geometry.copy();
+    return new BBox(pt, 0, 0, 0);
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────

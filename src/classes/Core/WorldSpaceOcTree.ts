@@ -3,13 +3,9 @@ import { Line } from '../Geometry/Line';
 import { Sphere } from '../Geometry/Sphere';
 import { BBox } from '../Geometry/BBox';
 import { BaseOcTreeNode, BaseOcTree } from './BaseOcTree';
+import type { GeometryItem } from '../Geometry/GeometryTypes';
 
-/**
- * A single geometry item that can be logged as part of a world event.
- * Extend this union as new geometry types are introduced and intersection
- * tests are added for them.
- */
-export type GeometryItem = P5.Vector | Line | Sphere;
+export type { GeometryItem };
 
 /**
  * A record of one tracked event type within a single spatial node.
