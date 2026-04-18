@@ -224,5 +224,5 @@ onMounted(() => {
   <div
     id="spring-grids-canvas"
     style="overflow-y: auto; overflow-x: auto; line-height: 0"
-  ></div>
+  />
 </template>

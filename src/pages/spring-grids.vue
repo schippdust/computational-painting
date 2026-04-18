@@ -184,11 +184,17 @@ onUnmounted(() => {
       class="canvas-area"
       :style="{ background: darkMode ? '#2d2d2d' : '#f0f0f0' }"
     >
-      <div ref="canvasAreaRef" class="canvas-scroll">
-        <div class="canvas-zoom-wrapper" :style="{ zoom: zoom }">
+      <div
+        ref="canvasAreaRef"
+        class="canvas-scroll"
+      >
+        <div
+          class="canvas-zoom-wrapper"
+          :style="{ zoom: zoom }"
+        >
           <SpringGridsCanvas
-            ref="canvasRef"
             v-if="initialized"
+            ref="canvasRef"
             :key="canvasKey"
             :grid-rows="gridRows"
             :grid-cols="gridCols"
@@ -207,7 +213,10 @@ onUnmounted(() => {
         class="canvas-ui-layer"
         :style="{ paddingRight: `${8 + scrollbarWidth}px` }"
       >
-        <v-tooltip text="Return to gallery" location="left">
+        <v-tooltip
+          text="Return to gallery"
+          location="left"
+        >
           <template #activator="{ props: tip }">
             <v-btn
               class="home-btn"
@@ -222,10 +231,15 @@ onUnmounted(() => {
         </v-tooltip>
       </div>
 
-      <canvas-init-overlay v-if="!initialized" :width="560">
+      <canvas-init-overlay
+        v-if="!initialized"
+        :width="560"
+      >
         <!-- Grid settings -->
         <v-divider class="mb-4" />
-        <div class="text-subtitle-2 mb-3">Grid</div>
+        <div class="text-subtitle-2 mb-3">
+          Grid
+        </div>
         <v-row dense>
           <v-col>
             <v-text-field
@@ -287,7 +301,9 @@ onUnmounted(() => {
 
         <!-- Spring settings -->
         <v-divider class="mb-4 mt-2" />
-        <div class="text-subtitle-2 mb-3">Springs</div>
+        <div class="text-subtitle-2 mb-3">
+          Springs
+        </div>
         <v-row dense>
           <v-col>
             <v-text-field
@@ -319,7 +335,9 @@ onUnmounted(() => {
 
         <!-- Attractor settings -->
         <v-divider class="mb-4 mt-2" />
-        <div class="text-subtitle-2 mb-3">Attractors</div>
+        <div class="text-subtitle-2 mb-3">
+          Attractors
+        </div>
         <v-row dense>
           <v-col cols="12">
             <v-slider
@@ -365,7 +383,9 @@ onUnmounted(() => {
 
         <!-- Camera settings -->
         <v-divider class="mb-4 mt-2" />
-        <div class="text-subtitle-2 mb-3">Camera</div>
+        <div class="text-subtitle-2 mb-3">
+          Camera
+        </div>
         <v-row dense>
           <v-col>
             <v-text-field

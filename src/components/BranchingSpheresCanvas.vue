@@ -75,10 +75,10 @@ onUnmounted(() => {
 onMounted(() => {
   let branchingCollection: BranchingCollection;
   let windSystem: WindSystem;
-  let generationSpheres: Sphere[] = [];
-  let renderingSpheres: Sphere[] = [];
+  const generationSpheres: Sphere[] = [];
+  const renderingSpheres: Sphere[] = [];
   let silhouettesRendered = false;
-  let initialVelocityMagnitude = 5;
+  const initialVelocityMagnitude = 5;
   const maxVehicles = 1000;
   const persistentSteerForceMagnitude = 0.5; // Magnitude of radial outward persistent steer force
   const flockingSearchRadius = 1500;
@@ -302,5 +302,5 @@ onMounted(() => {
   <div
     id="branching-spheres-canvas"
     style="overflow-y: auto; overflow-x: auto; line-height: 0"
-  ></div>
+  />
 </template>
