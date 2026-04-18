@@ -21,3 +21,9 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+output/*
+
+# vue-tsc --build output artifacts (compiled .d.ts and .js alongside source .ts/.vue)
+src/**/*.d.ts
+src/**/*.js

@@ -174,7 +174,10 @@ watch(
   >
     <template v-if="expanded">
       <!-- Collapse -->
-      <v-tooltip text="Collapse toolbar" location="right">
+      <v-tooltip
+        text="Collapse toolbar"
+        location="right"
+      >
         <template #activator="{ props: tip }">
           <v-btn
             variant="text"
@@ -207,7 +210,10 @@ watch(
       <v-divider class="my-1 w-100" />
 
       <!-- Zoom In -->
-      <v-tooltip text="Zoom in  ( + )" location="right">
+      <v-tooltip
+        text="Zoom in  ( + )"
+        location="right"
+      >
         <template #activator="{ props: tip }">
           <v-btn
             variant="text"
@@ -220,16 +226,26 @@ watch(
       </v-tooltip>
 
       <!-- Zoom % label — click to reset -->
-      <v-tooltip text="Reset zoom  ( 0 )" location="right">
+      <v-tooltip
+        text="Reset zoom  ( 0 )"
+        location="right"
+      >
         <template #activator="{ props: tip }">
-          <span class="zoom-pct" v-bind="tip" @click="zoomReset">{{
+          <span
+            class="zoom-pct"
+            v-bind="tip"
+            @click="zoomReset"
+          >{{
             zoomLabel
           }}</span>
         </template>
       </v-tooltip>
 
       <!-- Zoom Out -->
-      <v-tooltip text="Zoom out  ( − )" location="right">
+      <v-tooltip
+        text="Zoom out  ( − )"
+        location="right"
+      >
         <template #activator="{ props: tip }">
           <v-btn
             variant="text"
@@ -244,7 +260,10 @@ watch(
       <v-divider class="my-1 w-100" />
 
       <!-- Fit to view -->
-      <v-tooltip text="Fit to view" location="right">
+      <v-tooltip
+        text="Fit to view"
+        location="right"
+      >
         <template #activator="{ props: tip }">
           <v-btn
             variant="text"
@@ -265,7 +284,10 @@ watch(
         location="end"
       >
         <template #activator="{ props: menuProps }">
-          <v-tooltip text="Primary color" location="right">
+          <v-tooltip
+            text="Primary color"
+            location="right"
+          >
             <template #activator="{ props: tip }">
               <v-btn
                 class="color-picker-btn"
@@ -274,7 +296,9 @@ watch(
                 v-bind="mergeProps(menuProps, tip)"
               >
                 <div class="color-picker-btn__content">
-                  <v-icon size="18">mdi-format-color-fill</v-icon>
+                  <v-icon size="18">
+                    mdi-format-color-fill
+                  </v-icon>
                   <div
                     class="color-picker-btn__swatch"
                     :style="{ background: primaryColor }"
@@ -285,15 +309,26 @@ watch(
           </v-tooltip>
         </template>
         <v-card min-width="280">
-          <v-color-picker v-model="tempColor" :modes="['hex', 'rgb']" />
+          <v-color-picker
+            v-model="tempColor"
+            :modes="['hex', 'rgb']"
+          />
           <v-card-actions>
             <v-spacer />
-            <v-btn variant="text" size="small" @click="cancelColor('primary')"
-              >Cancel</v-btn
+            <v-btn
+              variant="text"
+              size="small"
+              @click="cancelColor('primary')"
             >
-            <v-btn variant="flat" size="small" @click="confirmColor('primary')"
-              >Apply</v-btn
+              Cancel
+            </v-btn>
+            <v-btn
+              variant="flat"
+              size="small"
+              @click="confirmColor('primary')"
             >
+              Apply
+            </v-btn>
           </v-card-actions>
         </v-card>
       </v-menu>
@@ -307,7 +342,10 @@ watch(
         location="end"
       >
         <template #activator="{ props: menuProps }">
-          <v-tooltip text="Secondary color" location="right">
+          <v-tooltip
+            text="Secondary color"
+            location="right"
+          >
             <template #activator="{ props: tip }">
               <v-btn
                 class="color-picker-btn"
@@ -316,7 +354,9 @@ watch(
                 v-bind="mergeProps(menuProps, tip)"
               >
                 <div class="color-picker-btn__content">
-                  <v-icon size="18">mdi-format-color-fill</v-icon>
+                  <v-icon size="18">
+                    mdi-format-color-fill
+                  </v-icon>
                   <div
                     class="color-picker-btn__swatch"
                     :style="{ background: secondaryColor }"
@@ -327,18 +367,26 @@ watch(
           </v-tooltip>
         </template>
         <v-card min-width="280">
-          <v-color-picker v-model="tempColor" :modes="['hex', 'rgb']" />
+          <v-color-picker
+            v-model="tempColor"
+            :modes="['hex', 'rgb']"
+          />
           <v-card-actions>
             <v-spacer />
-            <v-btn variant="text" size="small" @click="cancelColor('secondary')"
-              >Cancel</v-btn
+            <v-btn
+              variant="text"
+              size="small"
+              @click="cancelColor('secondary')"
             >
+              Cancel
+            </v-btn>
             <v-btn
               variant="flat"
               size="small"
               @click="confirmColor('secondary')"
-              >Apply</v-btn
             >
+              Apply
+            </v-btn>
           </v-card-actions>
         </v-card>
       </v-menu>
@@ -352,7 +400,10 @@ watch(
         location="end"
       >
         <template #activator="{ props: menuProps }">
-          <v-tooltip text="Background color" location="right">
+          <v-tooltip
+            text="Background color"
+            location="right"
+          >
             <template #activator="{ props: tip }">
               <v-btn
                 class="color-picker-btn"
@@ -361,7 +412,9 @@ watch(
                 v-bind="mergeProps(menuProps, tip)"
               >
                 <div class="color-picker-btn__content">
-                  <v-icon size="18">mdi-format-color-fill</v-icon>
+                  <v-icon size="18">
+                    mdi-format-color-fill
+                  </v-icon>
                   <div
                     class="color-picker-btn__swatch"
                     :style="{ background: backgroundColor }"
@@ -372,21 +425,26 @@ watch(
           </v-tooltip>
         </template>
         <v-card min-width="280">
-          <v-color-picker v-model="tempColor" :modes="['hex', 'rgb']" />
+          <v-color-picker
+            v-model="tempColor"
+            :modes="['hex', 'rgb']"
+          />
           <v-card-actions>
             <v-spacer />
             <v-btn
               variant="text"
               size="small"
               @click="cancelColor('background')"
-              >Cancel</v-btn
             >
+              Cancel
+            </v-btn>
             <v-btn
               variant="flat"
               size="small"
               @click="confirmColor('background')"
-              >Apply</v-btn
             >
+              Apply
+            </v-btn>
           </v-card-actions>
         </v-card>
       </v-menu>
@@ -402,7 +460,10 @@ watch(
       <v-divider class="my-1 w-100" />
 
       <!-- Restart canvas -->
-      <v-tooltip text="Restart canvas" location="right">
+      <v-tooltip
+        text="Restart canvas"
+        location="right"
+      >
         <template #activator="{ props: tip }">
           <v-btn
             variant="text"
@@ -441,10 +502,13 @@ watch(
           </v-tooltip>
         </template>
 
-        <v-card min-width="260" class="automation-card">
-          <v-card-title class="text-subtitle-2 pt-3 pb-1 px-4"
-            >Automate Iteration</v-card-title
-          >
+        <v-card
+          min-width="260"
+          class="automation-card"
+        >
+          <v-card-title class="text-subtitle-2 pt-3 pb-1 px-4">
+            Automate Iteration
+          </v-card-title>
           <v-card-text class="pt-1 px-4">
             <!-- Running state: show progress -->
             <template v-if="automating">
@@ -503,19 +567,25 @@ watch(
                 color="error"
                 size="small"
                 @click="stopAutomation"
-                >Stop</v-btn
               >
+                Stop
+              </v-btn>
             </template>
             <template v-else>
               <v-btn
                 variant="text"
                 size="small"
                 @click="automationMenuOpen = false"
-                >Cancel</v-btn
               >
-              <v-btn variant="flat" size="small" @click="startAutomation"
-                >Start</v-btn
+                Cancel
+              </v-btn>
+              <v-btn
+                variant="flat"
+                size="small"
+                @click="startAutomation"
               >
+                Start
+              </v-btn>
             </template>
           </v-card-actions>
         </v-card>
