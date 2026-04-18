@@ -1,4 +1,5 @@
 import P5 from 'p5';
+import type { BBox } from '../Geometry/BBox';
 import type { Line } from '../Geometry/Line';
 
 /**
@@ -11,22 +12,18 @@ export class Intersections3d {
    * Tests whether a point is inside an axis-aligned bounding box.
    * Uses half-open intervals: inclusive on the min face, exclusive on the max face.
    * @param point The point to test
-   * @param center The center of the box
-   * @param halfSize Half the side length of the cube (same on all axes)
+   * @param bbox  The bounding box to test against
    * @returns True if the point is inside the box
    */
-  static pointInBox(
-    point: P5.Vector,
-    center: P5.Vector,
-    halfSize: number,
-  ): boolean {
+  static pointInBox(point: P5.Vector, bbox: BBox): boolean {
+    const { center, halfExtents } = bbox;
     return (
-      point.x >= center.x - halfSize &&
-      point.x < center.x + halfSize &&
-      point.y >= center.y - halfSize &&
-      point.y < center.y + halfSize &&
-      point.z >= center.z - halfSize &&
-      point.z < center.z + halfSize
+      point.x >= center.x - halfExtents.x &&
+      point.x < center.x + halfExtents.x &&
+      point.y >= center.y - halfExtents.y &&
+      point.y < center.y + halfExtents.y &&
+      point.z >= center.z - halfExtents.z &&
+      point.z < center.z + halfExtents.z
     );
   }
 
@@ -34,25 +31,24 @@ export class Intersections3d {
    * Tests whether a sphere overlaps an axis-aligned bounding box.
    * Uses the squared minimum-distance-from-center-to-box test.
    * @param sphereCenter The sphere's center
-   * @param radius The sphere's radius
-   * @param boxCenter The center of the AABB
-   * @param halfSize Half the side length of the AABB cube
+   * @param radius       The sphere's radius
+   * @param bbox         The bounding box to test against
    * @returns True if the sphere intersects or is fully inside the box
    */
   static sphereIntersectsBox(
     sphereCenter: P5.Vector,
     radius: number,
-    boxCenter: P5.Vector,
-    halfSize: number,
+    bbox: BBox,
   ): boolean {
+    const { center, halfExtents } = bbox;
     let d = 0;
-    for (const [val, b] of [
-      [sphereCenter.x, boxCenter.x],
-      [sphereCenter.y, boxCenter.y],
-      [sphereCenter.z, boxCenter.z],
-    ] as [number, number][]) {
-      const min = b - halfSize;
-      const max = b + halfSize;
+    for (const [val, c, he] of [
+      [sphereCenter.x, center.x, halfExtents.x],
+      [sphereCenter.y, center.y, halfExtents.y],
+      [sphereCenter.z, center.z, halfExtents.z],
+    ] as [number, number, number][]) {
+      const min = c - he;
+      const max = c + he;
       if (val < min) d += (val - min) ** 2;
       else if (val > max) d += (val - max) ** 2;
     }
@@ -64,32 +60,25 @@ export class Intersections3d {
    * Uses the slab method: intersects all three axis-aligned slab pairs and checks
    * that the resulting t-intervals overlap and fall within [0, 1].
    * @param line The line segment to test
-   * @param boxCenter The center of the AABB
-   * @param halfSize Half the side length of the AABB cube
+   * @param bbox The bounding box to test against
    * @returns True if any part of the segment passes through or touches the box
    */
-  static lineIntersectsBox(
-    line: Line,
-    boxCenter: P5.Vector,
-    halfSize: number,
-  ): boolean {
+  static lineIntersectsBox(line: Line, bbox: BBox): boolean {
     const { startPoint, endPoint } = line;
-    const dx = endPoint.x - startPoint.x;
-    const dy = endPoint.y - startPoint.y;
-    const dz = endPoint.z - startPoint.z;
+    const { center, halfExtents } = bbox;
 
-    const axes: [number, number, number][] = [
-      [dx, startPoint.x, boxCenter.x],
-      [dy, startPoint.y, boxCenter.y],
-      [dz, startPoint.z, boxCenter.z],
+    const axes: [number, number, number, number][] = [
+      [endPoint.x - startPoint.x, startPoint.x, center.x, halfExtents.x],
+      [endPoint.y - startPoint.y, startPoint.y, center.y, halfExtents.y],
+      [endPoint.z - startPoint.z, startPoint.z, center.z, halfExtents.z],
     ];
 
     let tMin = 0;
     let tMax = 1;
 
-    for (const [d, o, c] of axes) {
-      const min = c - halfSize;
-      const max = c + halfSize;
+    for (const [d, o, c, he] of axes) {
+      const min = c - he;
+      const max = c + he;
 
       if (Math.abs(d) < 1e-9) {
         // Ray is parallel to this slab — check if origin is inside
@@ -110,9 +99,9 @@ export class Intersections3d {
 
   /**
    * Tests whether a point is inside a sphere.
-   * @param point The point to test
+   * @param point       The point to test
    * @param sphereCenter The sphere's center
-   * @param radius The sphere's radius
+   * @param radius       The sphere's radius
    * @returns True if the point is inside or on the surface of the sphere
    */
   static pointInSphere(

@@ -254,20 +254,12 @@ export class WorldSpaceOcTree extends BaseOcTree<
 
   /**
    * Creates a new WorldSpaceOcTree with an empty root and no tracked events.
-   * @param center   The center of the initial bounding volume
-   * @param halfSize Half the side length of the initial cubic volume
-   * @param capacity Node capacity — passed to all nodes (not used for subdivision
-   *                 trigger here, but controls the minimum node size in base class)
+   * @param initialBBox The initial bounding volume. Use BBox.cube() for a uniform
+   *                    cube or supply per-axis half-extents for a rectangular volume.
+   * @param capacity    Node capacity (default: 4)
    */
-  constructor(
-    center: P5.Vector,
-    halfSize: number,
-    capacity: number = 4,
-  ) {
-    const root = new WorldSpaceOcTreeNode(
-      new BBox(center, halfSize),
-      capacity,
-    );
+  constructor(initialBBox: BBox, capacity: number = 4) {
+    const root = new WorldSpaceOcTreeNode(initialBBox, capacity);
     super(root, capacity);
   }
 

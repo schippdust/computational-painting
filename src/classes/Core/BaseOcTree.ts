@@ -121,21 +121,27 @@ export abstract class BaseOcTree<
 
   /**
    * Expands the root until it contains the given point.
-   * Each iteration doubles the half-size and shifts the center toward the point,
-   * then delegates re-attachment of the old root to reattachOldRoot.
+   * Each iteration doubles the half-extents on all axes and shifts the center
+   * toward the point by the old half-extents (per axis), then delegates
+   * re-attachment of the old root to reattachOldRoot.
    * Subclasses only need to implement reattachOldRoot — the loop is shared.
    * @param point The point that must fall inside the root after expansion
    */
   protected expandToFit(point: P5.Vector): void {
     while (!this.root.containsPoint(point)) {
       const oldRoot = this.root;
-      const newHalfSize = oldRoot.bbox.halfSize * 2;
+      const oldHE = oldRoot.bbox.halfExtents;
+      const newHalfExtents = oldHE.copy().mult(2);
 
       const dir = point.copy().sub(oldRoot.bbox.center).normalize();
-      const offset = dir.copy().mult(oldRoot.bbox.halfSize);
+      const offset = new P5.Vector(
+        dir.x * oldHE.x,
+        dir.y * oldHE.y,
+        dir.z * oldHE.z,
+      );
       const newCenter = oldRoot.bbox.center.copy().add(offset);
 
-      const newBBox = new BBox(newCenter, newHalfSize);
+      const newBBox = new BBox(newCenter, newHalfExtents);
       this.root = this.createNode(newBBox);
       this.root.subdivide();
       this.reattachOldRoot(oldRoot, this.root);
