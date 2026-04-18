@@ -1,6 +1,7 @@
 import P5 from 'p5';
 import { Line } from '../Geometry/Line';
 import { Sphere } from '../Geometry/Sphere';
+import { Polyline } from '../Geometry/Polyline';
 import { BBox } from '../Geometry/BBox';
 import { BaseOcTreeNode, BaseOcTree } from './BaseOcTree';
 import type { GeometryItem } from '../Geometry/GeometryTypes';
@@ -148,6 +149,27 @@ class WorldSpaceOcTreeNode extends BaseOcTreeNode<
   }
 
   /**
+   * Logs a polyline event on this node and its children.
+   * On a leaf: adds the polyline if any of its segments intersect this bbox, then subdivides if over limit.
+   * On an internal node: recurses into children whose bbox intersects the polyline.
+   * @param polyline The polyline to log
+   * @param event The event name to log it under
+   */
+  logPolyline(polyline: Polyline, event: string): void {
+    if (!this.divided) {
+      this._logGeometry(polyline, event, () =>
+        this.bbox.intersectsPolyline(polyline),
+      );
+    } else {
+      for (const child of this.children) {
+        if (child.bbox.intersectsPolyline(polyline)) {
+          child.logPolyline(polyline, event);
+        }
+      }
+    }
+  }
+
+  /**
    * Propagates a newly registered event down to all existing children.
    * Called by WorldSpaceOcTree.trackWorldEvents after initial registration.
    * @param event The event name
@@ -208,10 +230,14 @@ class WorldSpaceOcTreeNode extends BaseOcTreeNode<
           for (const child of this.children) {
             child.logLine(geom, event);
           }
+        } else if (geom instanceof Polyline) {
+          for (const child of this.children) {
+            child.logPolyline(geom, event);
+          }
         } else {
           // Sphere
           for (const child of this.children) {
-            child.logSphere(geom, event);
+            child.logSphere(geom as Sphere, event);
           }
         }
       }
@@ -329,6 +355,24 @@ export class WorldSpaceOcTree extends BaseOcTree<
     return this;
   }
 
+  /**
+   * Logs a polyline event for the given polyline.
+   * Expands the tree if the polyline's midpoint is outside the current bounds, then
+   * records the polyline in all leaf nodes whose bbox any of its segments intersect.
+   * This method mutates the instance and returns it for method chaining.
+   * @param polyline The polyline to log
+   * @param event    The event name (must be registered via trackWorldEvents first)
+   * @returns This WorldSpaceOcTree instance for method chaining
+   */
+  logPolylineEvent(polyline: Polyline, event: string): WorldSpaceOcTree {
+    const midpoint = polyline.getPointAtParam(0.5);
+    if (!this.root.containsPoint(midpoint)) {
+      this.expandToFit(midpoint);
+    }
+    this.root.logPolyline(polyline, event);
+    return this;
+  }
+
   // ── BaseOcTree implementation ──────────────────────────────────────────────
 
   /** Creates a new root node for the given bbox, pre-registering all tracked events. */
@@ -362,6 +406,7 @@ export class WorldSpaceOcTree extends BaseOcTree<
       for (const geom of record.geometry) {
         if (geom instanceof P5.Vector) newRoot.children[0].logPoint(geom, event);
         else if (geom instanceof Line) newRoot.children[0].logLine(geom, event);
+        else if (geom instanceof Polyline) newRoot.children[0].logPolyline(geom, event);
         else newRoot.children[0].logSphere(geom as Sphere, event);
       }
     }

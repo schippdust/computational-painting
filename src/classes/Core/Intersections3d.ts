@@ -1,6 +1,7 @@
 import P5 from 'p5';
 import type { BBox } from '../Geometry/BBox';
 import type { Line } from '../Geometry/Line';
+import type { Polyline } from '../Geometry/Polyline';
 
 /**
  * Static utility class for 3D intersection and containment tests.
@@ -127,5 +128,18 @@ export class Intersections3d {
     r2: number,
   ): boolean {
     return P5.Vector.dist(c1, c2) <= r1 + r2;
+  }
+
+  /**
+   * Tests whether any segment of a polyline intersects an axis-aligned bounding box.
+   * @param polyline The polyline to test
+   * @param bbox     The bounding box to test against
+   * @returns True if at least one segment of the polyline passes through or touches the box
+   */
+  static polylineIntersectsBox(polyline: Polyline, bbox: BBox): boolean {
+    for (const segment of polyline.segments) {
+      if (Intersections3d.lineIntersectsBox(segment, bbox)) return true;
+    }
+    return false;
   }
 }

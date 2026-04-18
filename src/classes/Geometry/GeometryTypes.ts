@@ -1,6 +1,7 @@
 import type P5 from 'p5';
 import type { Line } from './Line';
 import type { Sphere } from './Sphere';
+import type { Polyline } from './Polyline';
 
 /**
  * Union of all concrete geometry types that can occupy 3D world space.
@@ -12,4 +13,4 @@ import type { Sphere } from './Sphere';
  * will surface a TypeScript error if the new type is not handled, making coverage
  * easy to audit.
  */
-export type GeometryItem = P5.Vector | Line | Sphere;
+export type GeometryItem = P5.Vector | Line | Sphere | Polyline;

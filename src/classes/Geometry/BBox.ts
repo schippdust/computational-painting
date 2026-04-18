@@ -1,6 +1,7 @@
 import P5 from 'p5';
 import { Line } from './Line';
 import { Sphere } from './Sphere';
+import { Polyline } from './Polyline';
 import { CoordinateSystem } from './CoordinateSystem';
 import { Intersections3d } from '../Core/Intersections3d';
 import type { GeometryItem } from './GeometryTypes';
@@ -67,6 +68,15 @@ export class BBox {
    */
   intersectsLine(line: Line): boolean {
     return Intersections3d.lineIntersectsBox(line, this);
+  }
+
+  /**
+   * Tests whether any segment of a polyline intersects this bounding box.
+   * @param polyline The polyline to test
+   * @returns True if at least one segment of the polyline passes through or touches this box
+   */
+  intersectsPolyline(polyline: Polyline): boolean {
+    return Intersections3d.polylineIntersectsBox(polyline, this);
   }
 
   // ── Subdivision ───────────────────────────────────────────────────────────
@@ -206,6 +216,10 @@ export class BBox {
         ? BBox._toLocalSpace([geometry.centerPoint], coordinateSystem)[0]
         : geometry.centerPoint.copy();
       return new BBox(center, r, r, r);
+    }
+
+    if (geometry instanceof Polyline) {
+      return BBox.fromPoints(geometry.points, coordinateSystem);
     }
 
     // P5.Vector — a point has no extent
