@@ -16,9 +16,14 @@ function toggleDarkMode() {
 
 <template>
   <v-container>
-    <v-row class="mb-4" align="center">
+    <v-row
+      class="mb-4"
+      align="center"
+    >
       <v-col>
-        <div class="text-h4">Computational Drawing</div>
+        <div class="text-h4">
+          Computational Drawing
+        </div>
         <div class="text-subtitle-1 text-medium-emphasis">
           Generative canvas experiments
         </div>
@@ -41,7 +46,10 @@ function toggleDarkMode() {
     </v-row>
 
     <v-expansion-panels variant="accordion">
-      <v-expansion-panel v-for="group in groups" :key="group.name">
+      <v-expansion-panel
+        v-for="group in groups"
+        :key="group.name"
+      >
         <v-expansion-panel-title>
           <span class="text-h6">{{ group.name }}</span>
           <span class="text-caption text-medium-emphasis ml-3">
@@ -64,12 +72,17 @@ function toggleDarkMode() {
                 :to="`/${canvas.id}`"
                 style="text-decoration: none; color: inherit"
               >
-                <v-card variant="outlined" style="cursor: pointer">
+                <v-card
+                  variant="outlined"
+                  style="cursor: pointer"
+                >
                   <v-card-title>{{ canvas.title }}</v-card-title>
                   <v-card-text>{{ canvas.description }}</v-card-text>
-                  <v-card-subtitle class="pb-3">{{
-                    canvas.createdAt
-                  }}</v-card-subtitle>
+                  <v-card-subtitle class="pb-3">
+                    {{
+                      canvas.createdAt
+                    }}
+                  </v-card-subtitle>
                 </v-card>
               </RouterLink>
             </v-col>

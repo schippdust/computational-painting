@@ -1,47 +1,33 @@
 import P5 from 'p5';
 import { Vehicle } from '../MarkMakingEntities/Extensible/Vehicle';
+import { BBox } from '../Geometry/BBox';
+import { BaseOcTreeNode, BaseOcTree } from './BaseOcTree';
 
 /**
- * A node in an octree spatial partitioning structure.
+ * A node in the vehicle octree spatial partitioning structure.
  * Represents a cubic region in 3D space and can contain vehicles or subdivide into 8 child nodes.
  * Used internally by OcTree for hierarchical spatial queries and insertion.
  */
-class OcTreeNode {
-  vehicles: Vehicle[];
-  divided: boolean;
-  children: OcTreeNode[];
+class VehicleOcTreeNode extends BaseOcTreeNode<Vehicle, VehicleOcTreeNode> {
+  vehicles: Vehicle[] = [];
 
   /**
-   * Creates a new OcTreeNode.
-   * @param boundary The center of the cubic region represented by this node
-   * @param halfSize Half the width of the cube (total width = 2 * halfSize)
+   * Creates a new VehicleOcTreeNode.
+   * @param bbox The axis-aligned bounding box for this node's region
    * @param capacity Maximum number of vehicles before subdivision (default: 4)
    */
-  constructor(
-    public boundary: P5.Vector,
-    public halfSize: number,
-    public capacity: number = 4,
-  ) {
-    this.vehicles = [];
-    this.divided = false;
-    this.children = [];
+  constructor(bbox: BBox, capacity: number = 4) {
+    super(bbox, capacity);
   }
 
-  /**
-   * Tests if a point is within this node's cubic boundary.
-   * Uses axis-aligned bounding box containment check.
-   * @param point The point to test
-   * @returns True if the point is inside this node's cubic region, false otherwise
-   */
-  contains(point: P5.Vector): boolean {
-    return (
-      point.x >= this.boundary.x - this.halfSize &&
-      point.x < this.boundary.x + this.halfSize &&
-      point.y >= this.boundary.y - this.halfSize &&
-      point.y < this.boundary.y + this.halfSize &&
-      point.z >= this.boundary.z - this.halfSize &&
-      point.z < this.boundary.z + this.halfSize
-    );
+  /** Returns the vehicles stored directly at this node. */
+  getItems(): Vehicle[] {
+    return this.vehicles;
+  }
+
+  /** Creates a child node of the same type for the given bbox. */
+  protected createChild(bbox: BBox): VehicleOcTreeNode {
+    return new VehicleOcTreeNode(bbox, this.capacity);
   }
 
   /**
@@ -52,7 +38,7 @@ class OcTreeNode {
    * @returns True if insertion succeeded, false if vehicle is outside this node's boundary
    */
   insert(vehicle: Vehicle): boolean {
-    if (!this.contains(vehicle.coords)) return false;
+    if (!this.containsPoint(vehicle.coords)) return false;
 
     if (this.vehicles.length < this.capacity) {
       this.vehicles.push(vehicle);
@@ -66,28 +52,6 @@ class OcTreeNode {
     }
 
     return false;
-  }
-
-  /**
-   * Subdivides this node into 8 child octants.
-   * Creates a 2x2x2 grid of child nodes, each with half the size of the parent.
-   * Sets the divided flag and populates the children array.
-   */
-  subdivide() {
-    const { x, y, z } = this.boundary;
-    const hs = this.halfSize / 2;
-
-    for (let dx of [-1, 1]) {
-      for (let dy of [-1, 1]) {
-        for (let dz of [-1, 1]) {
-          const offset = new P5.Vector(dx * hs, dy * hs, dz * hs);
-          const center = P5.Vector.add(this.boundary, offset);
-          this.children.push(new OcTreeNode(center, hs, this.capacity));
-        }
-      }
-    }
-
-    this.divided = true;
   }
 
   /**
@@ -122,41 +86,10 @@ class OcTreeNode {
   }
 
   /**
-   * Tests if a sphere intersects with this node's axis-aligned cubic boundary.
-   * Uses efficient AABB-sphere collision detection.
-   * @param center The center of the sphere
-   * @param radius The radius of the sphere
-   * @returns True if the sphere intersects or overlaps this node's cube, false otherwise
-   */
-  intersectsSphere(center: P5.Vector, radius: number): boolean {
-    let d = 0;
-
-    const { x, y, z } = center;
-    const bx = this.boundary.x;
-    const by = this.boundary.y;
-    const bz = this.boundary.z;
-    const hs = this.halfSize;
-
-    for (const [val, b] of [
-      [x, bx],
-      [y, by],
-      [z, bz],
-    ] as [number, number][]) {
-      const min = b - hs;
-      const max = b + hs;
-      if (val < min) d += (val - min) ** 2;
-      else if (val > max) d += (val - max) ** 2;
-    }
-
-    return d <= radius ** 2;
-  }
-
-  /**
    * Recursively inserts all vehicles from another node (and its children) into this tree.
-   * Traverses the entire subtree and inserts each vehicle using the standard insert logic.
-   * @param node The source node whose vehicles will be inserted into this tree
+   * @param node The source node whose vehicles will be inserted
    */
-  insertNode(node: OcTreeNode) {
+  insertNode(node: VehicleOcTreeNode): void {
     for (const v of node.vehicles) {
       this.insert(v);
     }
@@ -171,13 +104,10 @@ class OcTreeNode {
  * Recursively subdivides 3D space into cubic octants to enable fast range queries.
  * Typical use case: finding nearby vehicles for physics calculations or rendering.
  */
-export class OcTree {
-  root: OcTreeNode;
-  capacity: number;
-
+export class OcTree extends BaseOcTree<Vehicle, VehicleOcTreeNode> {
   /**
    * Creates a new OcTree and optionally populates it with vehicles.
-   * Automatically computes bounding box and initializes the root node.
+   * Automatically computes a bounding box from the vehicle positions.
    * @param vehicles An array of vehicles to insert (must be non-empty)
    * @param capacity Maximum vehicles per node before subdivision (default: 4)
    * @param automaticallyBuild If true, immediately inserts all vehicles (default: true)
@@ -188,36 +118,35 @@ export class OcTree {
     capacity: number = 4,
     automaticallyBuild: boolean = true,
   ) {
-    this.capacity = capacity;
-
     if (vehicles.length === 0) {
       throw new Error('Cannot construct OcTree with no vehicles.');
     }
 
-    // Find min and max coordinates across all vehicles
-    const min = vehicles[0].coords.copy();
-    const max = vehicles[0].coords.copy();
-
-    for (const v of vehicles) {
-      min.x = Math.min(min.x, v.coords.x);
-      min.y = Math.min(min.y, v.coords.y);
-      min.z = Math.min(min.z, v.coords.z);
-
-      max.x = Math.max(max.x, v.coords.x);
-      max.y = Math.max(max.y, v.coords.y);
-      max.z = Math.max(max.z, v.coords.z);
-    }
-
-    // Compute center and size
-    const center = P5.Vector.add(min, max).div(2);
-    const size = Math.max(max.x - min.x, max.y - min.y, max.z - min.z) * 1.1; // slight buffer
-    const halfSize = size / 2;
-
-    this.root = new OcTreeNode(center, halfSize, capacity);
+    const bbox = BBox.fromPoints(vehicles.map((v) => v.coords));
+    const root = new VehicleOcTreeNode(bbox, capacity);
+    super(root, capacity);
 
     if (automaticallyBuild) {
       this.build(vehicles);
     }
+  }
+
+  /** Creates a new VehicleOcTreeNode for the given bbox. */
+  protected createNode(bbox: BBox): VehicleOcTreeNode {
+    return new VehicleOcTreeNode(bbox, this.capacity);
+  }
+
+  /**
+   * Re-inserts all vehicles from the old root into the new root after expansion.
+   * Vehicles redistribute across the newly subdivided octants.
+   * @param oldRoot The root before expansion
+   * @param newRoot The newly created, already-subdivided root
+   */
+  protected reattachOldRoot(
+    oldRoot: VehicleOcTreeNode,
+    newRoot: VehicleOcTreeNode,
+  ): void {
+    newRoot.insertNode(oldRoot);
   }
 
   /**
@@ -229,7 +158,7 @@ export class OcTree {
    */
   build(vehicles: Vehicle[]): OcTree {
     for (const v of vehicles) {
-      if (!this.root.contains(v.coords)) {
+      if (!this.root.containsPoint(v.coords)) {
         this.expandToFit(v.coords);
       }
       this.root.insert(v);
@@ -252,27 +181,5 @@ export class OcTree {
     return this.root
       .queryRange(targetPos, radius)
       .filter((other) => other.uuid !== targetId);
-  }
-
-  /**
-   * Expands the octree to encompass a point that falls outside the current root's boundary.
-   * Creates progressively larger roots until the point is contained.
-   * Rebuilds the tree structure while preserving all existing vehicles.
-   * @param point The point that must be contained in the expanded tree
-   * @private
-   */
-  private expandToFit(point: P5.Vector) {
-    while (!this.root.contains(point)) {
-      const oldRoot = this.root;
-      const newHalfSize = oldRoot.halfSize * 2;
-
-      const dir = point.copy().sub(oldRoot.boundary).normalize();
-      const offset = dir.copy().mult(oldRoot.halfSize);
-      const newCenter = oldRoot.boundary.copy().add(offset);
-
-      this.root = new OcTreeNode(newCenter, newHalfSize, this.capacity);
-      this.root.subdivide();
-      this.root.insertNode(oldRoot); // Assumes this exists
-    }
   }
 }

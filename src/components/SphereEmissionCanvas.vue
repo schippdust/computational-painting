@@ -173,5 +173,5 @@ onMounted(() => {
   <div
     id="sphere-emission-canvas"
     style="overflow-y: auto; overflow-x: auto; line-height: 0"
-  ></div>
+  />
 </template>

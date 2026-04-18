@@ -44,9 +44,9 @@ const numberOfVehicles = ref(0);
 
 // let cameraPos = new P5.Vector(5000, 0, 0); // vertical
 // let cameraPos = new P5.Vector(0, 10, 7500); // horizonta
-let cameraPos = new P5.Vector(2000, -2000, 4000); // angled
-let cameraFocus = new P5.Vector(0, 0, 0);
-let fovDegrees = 80;
+const cameraPos = new P5.Vector(2000, -2000, 4000); // angled
+const cameraFocus = new P5.Vector(0, 0, 0);
+const fovDegrees = 80;
 appStore.setCameraPosition(cameraPos);
 appStore.setCameraTarget(cameraFocus);
 appStore.setCameraFOV(fovDegrees);
@@ -57,13 +57,13 @@ onMounted(() => {
   }
   let dotRenderer: VehicleDotRenderer;
   let testGenerator: CircleGenerator;
-  let generatorProps: CircleGeneratorProps = {
+  const generatorProps: CircleGeneratorProps = {
     startAngle: 0,
     endAngle: Math.PI * 3.5,
     angleStep: Math.PI / 1000,
     velocityAtGeneration: new P5.Vector(5, 0, 15),
   };
-  let brushStrokeSystemProps: BrushtrokeSystemProps = {
+  const brushStrokeSystemProps: BrushtrokeSystemProps = {
     branchContinuityProbability: 0.5,
     secondaryBranchProbability: 0.04,
     offsetScatterPotential: 0.1,
@@ -76,7 +76,7 @@ onMounted(() => {
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
       p5.background(0);
       p5.frameRate(frameRate.value);
-      let circle = new Circle(
+      const circle = new Circle(
         CoordinateSystem.fromOriginAndNormal(
           new P5.Vector(0, 0, 0),
           new P5.Vector(0, 0, 1),
@@ -95,7 +95,7 @@ onMounted(() => {
 
     p5.draw = () => {
       p5.stroke(255);
-      let brushSystem = new BrushStrokeSystem(
+      const brushSystem = new BrushStrokeSystem(
         p5,
         new P5.Vector(0, 0, 0),
         undefined,
@@ -103,7 +103,7 @@ onMounted(() => {
       );
       const vehicleProps = createGenericPhysicalProps();
       vehicleProps.maxVelocity = 1000;
-      let testVehicle = new Vehicle(p5, new P5.Vector(0, 0, 0), vehicleProps);
+      const testVehicle = new Vehicle(p5, new P5.Vector(0, 0, 0), vehicleProps);
       testGenerator.generateVehicle(testVehicle);
       if (testGenerator.generatedVehicles.vehicles.length > 1) {
         testGenerator.generatedVehicles.flock(2000);
@@ -136,7 +136,7 @@ onMounted(() => {
   <div
     id="computational-canvas"
     style="overflow-y: auto; overflow-x: auto"
-  ></div>
+  />
   <div>{{ frameRate }} fps</div>
   <div>{{ numberOfFrames }} frames</div>
   <div>{{ numberOfVehicles }} number of vehicles</div>

@@ -31,10 +31,10 @@ const {
 const frameRate = ref(40);
 const numberOfVehicles = ref(0);
 
-let cameraPos = new P5.Vector(2000, -2000, 4000);
+const cameraPos = new P5.Vector(2000, -2000, 4000);
 // let cameraPos = new P5.Vector(0, 10, 7500);
-let cameraFocus = new P5.Vector(0, 0, 0);
-let fovDegrees = 80;
+const cameraFocus = new P5.Vector(0, 0, 0);
+const fovDegrees = 80;
 appStore.setCameraPosition(cameraPos);
 appStore.setCameraTarget(cameraFocus);
 appStore.setCameraFOV(fovDegrees);
@@ -44,10 +44,10 @@ onMounted(() => {
     return {};
   }
   let cycleRadians = 0;
-  let cycleIncrement = 0.01;
+  const cycleIncrement = 0.01;
   let pm: PixelManager;
   let ws: WindSystem;
-  let isMouseDragging: boolean = false;
+  const isMouseDragging: boolean = false;
   let previousPosition;
   const vehicleCollection = new VehicleCollection();
 
@@ -115,7 +115,7 @@ onMounted(() => {
         if (location == null) {
           return;
         }
-        let testRenderVehicle = v as TestRenderVehicle;
+        const testRenderVehicle = v as TestRenderVehicle;
         testRenderVehicle.render(camera.value);
       });
 
@@ -157,7 +157,7 @@ onMounted(() => {
   <div
     id="computational-canvas"
     style="overflow-y: auto; overflow-x: auto"
-  ></div>
+  />
   <div>{{ frameRate }} fps</div>
   <div>{{ numberOfVehicles }} number of vehicles</div>
 </template>
