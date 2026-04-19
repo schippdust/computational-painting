@@ -22,13 +22,25 @@ export abstract class BaseOcTreeNode<
   children: TSelf[] = [];
 
   /**
+   * Depth of this node in the tree. The initial root is 0. Each subdivision step
+   * increments depth by 1 for children. When the tree expands upward (a new root is
+   * inserted above the current root), the new root receives depth = oldRoot.depth − 1,
+   * keeping all existing nodes stable while ancestor nodes use negative depths.
+   */
+  readonly depth: number;
+
+  /**
    * @param bbox     The spatial boundary of this node
    * @param capacity Threshold that governs when to subdivide (interpretation is subclass-defined)
+   * @param depth    Depth of this node (default: 0 for the initial root)
    */
   constructor(
     public bbox: BBox,
     public capacity: number,
-  ) {}
+    depth: number = 0,
+  ) {
+    this.depth = depth;
+  }
 
   // ── Concrete: spatial tests — delegate to BBox ────────────────────────────
 
@@ -144,7 +156,7 @@ export abstract class BaseOcTree<T, TNode extends BaseOcTreeNode<T, TNode>> {
         newHalfExtents.y,
         newHalfExtents.z,
       );
-      this.root = this.createNode(newBBox);
+      this.root = this.createNode(newBBox, oldRoot.depth - 1);
       this.root.subdivide();
       this.reattachOldRoot(oldRoot, this.root);
     }
@@ -153,13 +165,14 @@ export abstract class BaseOcTree<T, TNode extends BaseOcTreeNode<T, TNode>> {
   // ── Abstract: node factory + reattachment ─────────────────────────────────
 
   /**
-   * Creates a new root-level node for the given bbox with this tree's capacity.
-   * Called during expandToFit to build the larger root.
-   * Subclasses return `new ConcreteNode(bbox, this.capacity, ...)`.
-   * @param bbox The bounding box for the new node
-   * @returns A new root node of the correct concrete type
+   * Creates a new node for the given bbox with this tree's capacity.
+   * Called during expandToFit to build a new root (depth = oldRoot.depth − 1).
+   * Subclasses return `new ConcreteNode(bbox, this.capacity, ..., depth)`.
+   * @param bbox  The bounding box for the new node
+   * @param depth Depth of the new node (default: 0)
+   * @returns A new node of the correct concrete type
    */
-  protected abstract createNode(bbox: BBox): TNode;
+  protected abstract createNode(bbox: BBox, depth?: number): TNode;
 
   /**
    * Re-attaches the previous root to the new, larger root after expansion.

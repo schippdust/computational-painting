@@ -35,7 +35,7 @@ export class WindSystem {
 
   /** Returns the current time coordinate: specificTime if set, otherwise frameCount × timeScale. */
   private get _time(): number {
-    return this.specificTime ?? this._time;
+    return this.specificTime ?? this.p5.frameCount * this.timeScale;
   }
 
   /**

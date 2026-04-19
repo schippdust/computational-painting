@@ -13,11 +13,12 @@ class VehicleOcTreeNode extends BaseOcTreeNode<Vehicle, VehicleOcTreeNode> {
 
   /**
    * Creates a new VehicleOcTreeNode.
-   * @param bbox The axis-aligned bounding box for this node's region
+   * @param bbox     The axis-aligned bounding box for this node's region
    * @param capacity Maximum number of vehicles before subdivision (default: 4)
+   * @param depth    Depth of this node in the tree (default: 0)
    */
-  constructor(bbox: BBox, capacity: number = 4) {
-    super(bbox, capacity);
+  constructor(bbox: BBox, capacity: number = 4, depth: number = 0) {
+    super(bbox, capacity, depth);
   }
 
   /** Returns the vehicles stored directly at this node. */
@@ -27,7 +28,7 @@ class VehicleOcTreeNode extends BaseOcTreeNode<Vehicle, VehicleOcTreeNode> {
 
   /** Creates a child node of the same type for the given bbox. */
   protected createChild(bbox: BBox): VehicleOcTreeNode {
-    return new VehicleOcTreeNode(bbox, this.capacity);
+    return new VehicleOcTreeNode(bbox, this.capacity, this.depth + 1);
   }
 
   /**
@@ -132,8 +133,8 @@ export class OcTree extends BaseOcTree<Vehicle, VehicleOcTreeNode> {
   }
 
   /** Creates a new VehicleOcTreeNode for the given bbox. */
-  protected createNode(bbox: BBox): VehicleOcTreeNode {
-    return new VehicleOcTreeNode(bbox, this.capacity);
+  protected createNode(bbox: BBox, depth: number = 0): VehicleOcTreeNode {
+    return new VehicleOcTreeNode(bbox, this.capacity, depth);
   }
 
   /**

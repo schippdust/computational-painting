@@ -2,12 +2,13 @@
 import P5 from 'p5';
 import { pressSpaceToPause } from '@/classes/Rendering/DrawingUtils';
 import { VehicleDotRenderer } from '@/classes/Rendering/VehicleRenderers/VehicleDotRenderer';
+import { VehicleLineRenderer } from '@/classes/Rendering/VehicleRenderers/VehicleLineRenderer';
 import {
   Vehicle,
   createGenericPhysicalProps,
 } from '@/classes/MarkMakingEntities/Extensible/Vehicle';
 import { VehicleCollection } from '@/classes/EntityManagement/Extensible/VehicleCollection';
-import { WindSystem } from '@/classes/Core/WindSystem';
+import { NoiseSystem } from '@/classes/Core/NoiseSystem';
 import { WorldSpaceOcTree } from '@/classes/Core/WorldSpaceOcTree';
 import { BBox } from '@/classes/Geometry/BBox';
 import { useAppStore } from '@/stores/app';
@@ -50,6 +51,7 @@ defineExpose({ frameRate, numberOfFrames, numberOfVehicles });
 
 let p5Instance: P5 | null = null;
 let dotRenderer: VehicleDotRenderer | null = null;
+let lineRenderer: VehicleLineRenderer | null = null;
 let ocTreeRenderer: WorldSpaceOcTreeRenderer | null = null;
 
 watch(pauseCanvas, (paused) => {
@@ -60,6 +62,7 @@ watch(pauseCanvas, (paused) => {
 
 watch(primaryColor, (newColor) => {
   if (dotRenderer) dotRenderer.color = hexToRgb(newColor);
+  if (lineRenderer) lineRenderer.color = hexToRgb(newColor);
 });
 
 watch(secondaryColor, (newColor) => {
@@ -74,6 +77,7 @@ onUnmounted(() => {
   p5Instance?.remove();
   p5Instance = null;
   dotRenderer = null;
+  lineRenderer = null;
   ocTreeRenderer = null;
 });
 
@@ -83,7 +87,7 @@ onMounted(() => {
   const EVENT_NAME = 'Vehicle Present';
 
   let collection: VehicleCollection;
-  let windSystem: WindSystem;
+  let noiseSystem: NoiseSystem;
   let ocTree: WorldSpaceOcTree;
 
   const sketch = (p5: P5) => {
@@ -108,14 +112,25 @@ onMounted(() => {
         worldSpaceInitialDim.value * 2,
       );
 
-      windSystem = new WindSystem(p5);
-      windSystem.specificTime = 100;
-      windSystem.noiseScale = 0.0005;
-      windSystem.setNoiseDetail(5, 0.5);
+      lineRenderer = new VehicleLineRenderer(
+        p5,
+        hexToRgb(primaryColor.value),
+        1,
+        camera.value,
+        worldSpaceInitialDim.value * 2,
+      );
+      lineRenderer.historyIndex = 9;
+
+      noiseSystem = new NoiseSystem(p5);
+      noiseSystem.noiseScale = 0.001;
+      noiseSystem.octaves = 5;
+      noiseSystem.falloff = 0.5;
+      noiseSystem.outputScale = 50;
+      noiseSystem.noiseSeed = p5.random(10000, 100000000);
 
       const half = worldSpaceInitialDim.value / 2;
       ocTree = new WorldSpaceOcTree(BBox.cube(new P5.Vector(0, 0, 0), half));
-      ocTree.trackWorldEvents(EVENT_NAME, 10000);
+      ocTree.trackWorldEvents(EVENT_NAME, 1500, 8);
 
       const initialPositions = ocTree.randomPointsByActivity(
         EVENT_NAME,
@@ -139,7 +154,6 @@ onMounted(() => {
     };
 
     p5.draw = () => {
-      // p5.background(backgroundColor.value);
       const spawnPositions = ocTree.randomPointsByActivity(
         EVENT_NAME,
         numberOfVehiclesPerFrame.value,
@@ -156,13 +170,17 @@ onMounted(() => {
 
       collection.addVehicle(newVehicles, false);
 
-      collection.applyWind(windSystem, 0, 10).update();
+      for (const v of collection.vehicles) {
+        v.applyForce(noiseSystem.sample(v.coordSystem.getPosition()));
+      }
+      collection.update();
 
       for (const v of collection.vehicles) {
         ocTree.logPointEvent(v.coordSystem.getPosition(), EVENT_NAME);
       }
 
-      dotRenderer?.renderVehicles(collection.vehicles);
+      lineRenderer?.renderVehicles(collection.vehicles);
+      // dotRenderer?.renderVehicles(collection.vehicles);
       // ocTreeRenderer?.renderOcTree(ocTree);
 
       numberOfFrames.value++;

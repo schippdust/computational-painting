@@ -22,6 +22,12 @@ export interface WorldEventRecord {
   count: number;
   /** Maximum count before this node subdivides. Inherited by child nodes. */
   limit: number;
+  /**
+   * Maximum subdivision depth allowed for this event. Nodes at or deeper than
+   * this depth will not subdivide when this event exceeds its limit.
+   * Defaults to Infinity (no depth cap).
+   */
+  maxDepth: number;
 }
 
 // ─── Node ─────────────────────────────────────────────────────────────────────
@@ -41,18 +47,26 @@ class WorldSpaceOcTreeNode extends BaseOcTreeNode<
 
   /**
    * Creates a new WorldSpaceOcTreeNode.
-   * @param bbox         The bounding box for this node's spatial region
-   * @param capacity     Passed to base (not used for subdivision here — limit governs it)
-   * @param trackedEvents Initial set of event names and their limits to pre-register
+   * @param bbox          The bounding box for this node's spatial region
+   * @param capacity      Passed to base (not used for subdivision here — limit governs it)
+   * @param trackedEvents Initial set of event names and their per-event config to pre-register
+   * @param depth         Depth of this node in the tree (root = 0)
    */
   constructor(
     bbox: BBox,
     capacity: number,
-    trackedEvents: Map<string, number> = new Map(),
+    trackedEvents: Map<string, { limit: number; maxDepth: number }> = new Map(),
+    depth: number = 0,
   ) {
-    super(bbox, capacity);
-    for (const [event, limit] of trackedEvents) {
-      this.records.set(event, { event, geometry: [], count: 0, limit });
+    super(bbox, capacity, depth);
+    for (const [event, { limit, maxDepth }] of trackedEvents) {
+      this.records.set(event, {
+        event,
+        geometry: [],
+        count: 0,
+        limit,
+        maxDepth,
+      });
     }
   }
 
@@ -67,22 +81,34 @@ class WorldSpaceOcTreeNode extends BaseOcTreeNode<
    * @returns A new WorldSpaceOcTreeNode with the same tracked events (empty counts)
    */
   protected createChild(bbox: BBox): WorldSpaceOcTreeNode {
-    const inherited = new Map<string, number>();
+    const inherited = new Map<string, { limit: number; maxDepth: number }>();
     for (const [event, record] of this.records) {
-      inherited.set(event, record.limit);
+      inherited.set(event, { limit: record.limit, maxDepth: record.maxDepth });
     }
-    return new WorldSpaceOcTreeNode(bbox, this.capacity, inherited);
+    return new WorldSpaceOcTreeNode(
+      bbox,
+      this.capacity,
+      inherited,
+      this.depth + 1,
+    );
   }
 
   /**
    * Registers a new event type on this node.
    * If the event is already tracked, this is a no-op.
-   * @param event The event name
-   * @param limit The count limit before subdivision
+   * @param event    The event name
+   * @param limit    The count limit before subdivision
+   * @param maxDepth Maximum subdivision depth for this event
    */
-  registerEvent(event: string, limit: number): void {
+  registerEvent(event: string, limit: number, maxDepth: number): void {
     if (!this.records.has(event)) {
-      this.records.set(event, { event, geometry: [], count: 0, limit });
+      this.records.set(event, {
+        event,
+        geometry: [],
+        count: 0,
+        limit,
+        maxDepth,
+      });
     }
   }
 
@@ -172,14 +198,15 @@ class WorldSpaceOcTreeNode extends BaseOcTreeNode<
   /**
    * Propagates a newly registered event down to all existing children.
    * Called by WorldSpaceOcTree.trackWorldEvents after initial registration.
-   * @param event The event name
-   * @param limit The count limit
+   * @param event    The event name
+   * @param limit    The count limit
+   * @param maxDepth Maximum subdivision depth for this event
    */
-  propagateEvent(event: string, limit: number): void {
-    this.registerEvent(event, limit);
+  propagateEvent(event: string, limit: number, maxDepth: number): void {
+    this.registerEvent(event, limit, maxDepth);
     if (this.divided) {
       for (const child of this.children) {
-        child.propagateEvent(event, limit);
+        child.propagateEvent(event, limit, maxDepth);
       }
     }
   }
@@ -207,7 +234,7 @@ class WorldSpaceOcTreeNode extends BaseOcTreeNode<
     record.geometry.push(geom);
     record.count++;
 
-    if (record.count > record.limit) {
+    if (record.count > record.limit && this.depth < record.maxDepth) {
       this._subdivideAndRedistribute();
     }
   }
@@ -271,8 +298,9 @@ export class WorldSpaceOcTree extends BaseOcTree<
   WorldEventRecord,
   WorldSpaceOcTreeNode
 > {
-  /** Registered events and their per-node limits. */
-  private trackedEvents: Map<string, number> = new Map();
+  /** Registered events and their per-node config. */
+  private trackedEvents: Map<string, { limit: number; maxDepth: number }> =
+    new Map();
 
   /**
    * Creates a new WorldSpaceOcTree with an empty root and no tracked events.
@@ -296,9 +324,13 @@ export class WorldSpaceOcTree extends BaseOcTree<
    * @param limit Count limit before a node subdivides for this event
    * @returns This WorldSpaceOcTree instance for method chaining
    */
-  trackWorldEvents(event: string, limit: number): WorldSpaceOcTree {
-    this.trackedEvents.set(event, limit);
-    this.root.propagateEvent(event, limit);
+  trackWorldEvents(
+    event: string,
+    limit: number,
+    maxDepth: number = Infinity,
+  ): WorldSpaceOcTree {
+    this.trackedEvents.set(event, { limit, maxDepth });
+    this.root.propagateEvent(event, limit, maxDepth);
     return this;
   }
 
@@ -487,9 +519,14 @@ export class WorldSpaceOcTree extends BaseOcTree<
 
   // ── BaseOcTree implementation ──────────────────────────────────────────────
 
-  /** Creates a new root node for the given bbox, pre-registering all tracked events. */
-  protected createNode(bbox: BBox): WorldSpaceOcTreeNode {
-    return new WorldSpaceOcTreeNode(bbox, this.capacity, this.trackedEvents);
+  /** Creates a new node for the given bbox, pre-registering all tracked events. */
+  protected createNode(bbox: BBox, depth: number = 0): WorldSpaceOcTreeNode {
+    return new WorldSpaceOcTreeNode(
+      bbox,
+      this.capacity,
+      this.trackedEvents,
+      depth,
+    );
   }
 
   /**

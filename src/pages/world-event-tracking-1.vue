@@ -17,9 +17,9 @@ const {
   cameraInitFOV,
 } = storeToRefs(appStore);
 
-appStore.setCameraInitPos(1500, -1500, 1500);
+appStore.setCameraInitPos(2500, -2500, 2500);
 appStore.setCameraInitTarget(0, 0, 0);
-appStore.setCameraInitFOV(80);
+appStore.setCameraInitFOV(35);
 
 function goHome() {
   appStore.resetInitialization();
@@ -27,7 +27,7 @@ function goHome() {
 }
 
 const initialVehicleCount = ref(2);
-const worldSpaceInitialDim = ref(1500);
+const worldSpaceInitialDim = ref(1250);
 const numberOfVehiclesPerFrame = ref(3);
 const paramMenuOpen = ref(false);
 
