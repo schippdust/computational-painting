@@ -30,13 +30,8 @@ function updateHeight(val: string) {
     :opacity="0.88"
     class="canvas-init-overlay"
   >
-    <v-card
-      :width="props.width"
-      class="init-card"
-    >
-      <v-card-title class="pt-5 px-6 text-h6">
-        Setup Canvas
-      </v-card-title>
+    <v-card :width="props.width" class="init-card">
+      <v-card-title class="pt-5 px-6 text-h6"> Setup Canvas </v-card-title>
 
       <v-card-text class="px-6 pb-2">
         <!-- Global settings: canvas dimensions -->

@@ -169,15 +169,28 @@ export class Vehicle {
     is3D: boolean = true,
     randomizeUp: boolean = true,
   ): Vehicle {
-    const randomX = this.p5.random(fromCoord.x - maxDist, fromCoord.x + maxDist);
-    const randomY = this.p5.random(fromCoord.y - maxDist, fromCoord.y + maxDist);
-    const randomZ = this.p5.random(fromCoord.z - maxDist, fromCoord.z + maxDist);
+    const randomX = this.p5.random(
+      fromCoord.x - maxDist,
+      fromCoord.x + maxDist,
+    );
+    const randomY = this.p5.random(
+      fromCoord.y - maxDist,
+      fromCoord.y + maxDist,
+    );
+    const randomZ = this.p5.random(
+      fromCoord.z - maxDist,
+      fromCoord.z + maxDist,
+    );
     const randomCoords = new P5.Vector(randomX, randomY, is3D ? randomZ : 0);
     if (randomizeUp && is3D) {
       const randomUpX = this.p5.random();
       const randomUpY = this.p5.random();
       const randomUpZ = this.p5.random();
-      const randomUp = new P5.Vector(randomUpX, randomUpY, randomUpZ).normalize();
+      const randomUp = new P5.Vector(
+        randomUpX,
+        randomUpY,
+        randomUpZ,
+      ).normalize();
       this.coordSystem = CoordinateSystem.fromOriginAndNormal(
         randomCoords,
         randomUp,

@@ -101,10 +101,7 @@ export abstract class BaseOcTreeNode<
  * @typeParam T     The payload type stored at nodes
  * @typeParam TNode The concrete node subclass
  */
-export abstract class BaseOcTree<
-  T,
-  TNode extends BaseOcTreeNode<T, TNode>,
-> {
+export abstract class BaseOcTree<T, TNode extends BaseOcTreeNode<T, TNode>> {
   root: TNode;
   capacity: number;
 
@@ -141,7 +138,12 @@ export abstract class BaseOcTree<
       );
       const newCenter = oldRoot.bbox.center.copy().add(offset);
 
-      const newBBox = new BBox(newCenter, newHalfExtents.x, newHalfExtents.y, newHalfExtents.z);
+      const newBBox = new BBox(
+        newCenter,
+        newHalfExtents.x,
+        newHalfExtents.y,
+        newHalfExtents.z,
+      );
       this.root = this.createNode(newBBox);
       this.root.subdivide();
       this.reattachOldRoot(oldRoot, this.root);

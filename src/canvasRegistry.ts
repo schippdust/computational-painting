@@ -79,11 +79,11 @@ export const canvasRegistry: CanvasEntry[] = [
   },
 
   {
-    id: 'smart-paint-testing-1',
-    title: 'Smart Paint Testing 1',
+    id: 'world-event-tracking-1',
+    title: 'World Event Tracking 1',
     description:
       'Smart Paint Testing 1 — a new computational canvas iteration.',
     createdAt: '2026-04-17',
-    group: 'Mark Making',
+    group: 'Event Tracking',
   },
 ];

@@ -17,7 +17,8 @@ import type {
 
 declare module 'vue-router' {
   interface TypesConfig {
-    ParamParsers: never;
+    ParamParsers:
+      | never
   }
 }
 
@@ -31,50 +32,50 @@ declare module 'vue-router/auto-routes' {
       '/',
       Record<never, never>,
       Record<never, never>,
-      never
-    >;
+      | never
+    >,
     '/branching-spheres': RouteRecordInfo<
       '/branching-spheres',
       '/branching-spheres',
       Record<never, never>,
       Record<never, never>,
-      never
-    >;
+      | never
+    >,
     '/branching-upward': RouteRecordInfo<
       '/branching-upward',
       '/branching-upward',
       Record<never, never>,
       Record<never, never>,
-      never
-    >;
+      | never
+    >,
     '/branching-upward-2': RouteRecordInfo<
       '/branching-upward-2',
       '/branching-upward-2',
       Record<never, never>,
       Record<never, never>,
-      never
-    >;
-    '/smart-paint-testing-1': RouteRecordInfo<
-      '/smart-paint-testing-1',
-      '/smart-paint-testing-1',
-      Record<never, never>,
-      Record<never, never>,
-      never
-    >;
+      | never
+    >,
     '/sphere-emission': RouteRecordInfo<
       '/sphere-emission',
       '/sphere-emission',
       Record<never, never>,
       Record<never, never>,
-      never
-    >;
+      | never
+    >,
     '/spring-grids': RouteRecordInfo<
       '/spring-grids',
       '/spring-grids',
       Record<never, never>,
       Record<never, never>,
-      never
-    >;
+      | never
+    >,
+    '/world-event-tracking-1': RouteRecordInfo<
+      '/world-event-tracking-1',
+      '/world-event-tracking-1',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
   }
 
   /**
@@ -89,33 +90,47 @@ declare module 'vue-router/auto-routes' {
    */
   export interface _RouteFileInfoMap {
     'src/pages/index.vue': {
-      routes: '/';
-      views: never;
-    };
+      routes:
+        | '/'
+      views:
+        | never
+    }
     'src/pages/branching-spheres.vue': {
-      routes: '/branching-spheres';
-      views: never;
-    };
+      routes:
+        | '/branching-spheres'
+      views:
+        | never
+    }
     'src/pages/branching-upward.vue': {
-      routes: '/branching-upward';
-      views: never;
-    };
+      routes:
+        | '/branching-upward'
+      views:
+        | never
+    }
     'src/pages/branching-upward-2.vue': {
-      routes: '/branching-upward-2';
-      views: never;
-    };
-    'src/pages/smart-paint-testing-1.vue': {
-      routes: '/smart-paint-testing-1';
-      views: never;
-    };
+      routes:
+        | '/branching-upward-2'
+      views:
+        | never
+    }
     'src/pages/sphere-emission.vue': {
-      routes: '/sphere-emission';
-      views: never;
-    };
+      routes:
+        | '/sphere-emission'
+      views:
+        | never
+    }
     'src/pages/spring-grids.vue': {
-      routes: '/spring-grids';
-      views: never;
-    };
+      routes:
+        | '/spring-grids'
+      views:
+        | never
+    }
+    'src/pages/world-event-tracking-1.vue': {
+      routes:
+        | '/world-event-tracking-1'
+      views:
+        | never
+    }
   }
 
   /**
@@ -127,7 +142,7 @@ declare module 'vue-router/auto-routes' {
   export type _RouteNamesForFilePath<FilePath extends string> =
     _RouteFileInfoMap extends Record<FilePath, infer Info>
       ? Info['routes']
-      : keyof RouteNamedMap;
+      : keyof RouteNamedMap
 }
 
-export {};
+export {}

@@ -50,16 +50,9 @@ function onText(raw: string) {
 </script>
 
 <template>
-  <v-menu
-    v-model="menuOpen"
-    :close-on-content-click="false"
-    location="end"
-  >
+  <v-menu v-model="menuOpen" :close-on-content-click="false" location="end">
     <template #activator="{ props: menuProps }">
-      <v-tooltip
-        :text="tooltipText"
-        location="right"
-      >
+      <v-tooltip :text="tooltipText" location="right">
         <template #activator="{ props: tip }">
           <v-btn
             variant="text"

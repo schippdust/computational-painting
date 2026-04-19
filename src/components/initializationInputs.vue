@@ -45,9 +45,7 @@ function setThreadSpacing(event: string) {
   <v-container>
     <v-row>
       <v-col>
-        <div class="text-h5">
-          Setup Canvas
-        </div>
+        <div class="text-h5">Setup Canvas</div>
       </v-col>
     </v-row>
     <v-row>
@@ -92,10 +90,7 @@ function setThreadSpacing(event: string) {
     </v-row>
     <v-row>
       <v-col cols="3">
-        <v-btn
-          variant="outlined"
-          @click="appStore.initializeCanvas()"
-        >
+        <v-btn variant="outlined" @click="appStore.initializeCanvas()">
           Initialize Canvas
         </v-btn>
       </v-col>

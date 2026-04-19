@@ -141,14 +141,8 @@ onUnmounted(() => {
       :style="{ background: darkMode ? '#2d2d2d' : '#f0f0f0' }"
     >
       <!-- Scrollable canvas layer — ref used for fit measurements -->
-      <div
-        ref="canvasAreaRef"
-        class="canvas-scroll"
-      >
-        <div
-          class="canvas-zoom-wrapper"
-          :style="{ zoom: zoom }"
-        >
+      <div ref="canvasAreaRef" class="canvas-scroll">
+        <div class="canvas-zoom-wrapper" :style="{ zoom: zoom }">
           <branching-spheres-canvas
             v-if="initialized"
             ref="canvasRef"
@@ -162,10 +156,7 @@ onUnmounted(() => {
         class="canvas-ui-layer"
         :style="{ paddingRight: `${8 + scrollbarWidth}px` }"
       >
-        <v-tooltip
-          text="Return to gallery"
-          location="left"
-        >
+        <v-tooltip text="Return to gallery" location="left">
           <template #activator="{ props: tip }">
             <v-btn
               class="home-btn"
@@ -180,22 +171,12 @@ onUnmounted(() => {
         </v-tooltip>
       </div>
 
-      <canvas-init-overlay
-        v-if="!initialized"
-        :width="560"
-      >
+      <canvas-init-overlay v-if="!initialized" :width="560">
         <v-divider class="my-3" />
-        <p class="text-subtitle-2 mb-2">
-          Camera
-        </p>
+        <p class="text-subtitle-2 mb-2">Camera</p>
 
-        <p class="text-caption text-medium-emphasis mb-1">
-          Position
-        </p>
-        <v-row
-          dense
-          class="mb-2"
-        >
+        <p class="text-caption text-medium-emphasis mb-1">Position</p>
+        <v-row dense class="mb-2">
           <v-col>
             <v-text-field
               variant="outlined"
@@ -252,13 +233,8 @@ onUnmounted(() => {
           </v-col>
         </v-row>
 
-        <p class="text-caption text-medium-emphasis mb-1">
-          Look At
-        </p>
-        <v-row
-          dense
-          class="mb-2"
-        >
+        <p class="text-caption text-medium-emphasis mb-1">Look At</p>
+        <v-row dense class="mb-2">
           <v-col>
             <v-text-field
               variant="outlined"

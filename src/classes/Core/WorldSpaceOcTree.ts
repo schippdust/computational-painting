@@ -373,6 +373,93 @@ export class WorldSpaceOcTree extends BaseOcTree<
     return this;
   }
 
+  /**
+   * Returns random points sampled from the tree, biased toward spatial regions
+   * with higher activity for the given event.
+   *
+   * At bias=0 each point is drawn uniformly from the entire root bounding box.
+   * At bias=1 leaf nodes are selected proportionally to their logged event count,
+   * so high-activity regions are sampled much more frequently.
+   * Intermediate values blend volume-proportional and activity-proportional weights:
+   *   weight_i = (1 − bias) × (leafVolume_i / totalVolume) + bias × (count_i / totalCount)
+   *
+   * Only leaf nodes participate in the weighted selection. When no events have
+   * been logged for the given event name (totalCount = 0), the method falls back
+   * to volume-proportional weights regardless of bias.
+   * This method does not mutate the instance.
+   * @param event         The tracked event name to use as the activity signal
+   * @param numberOfPoints How many points to return (default: 1)
+   * @param bias          Blend between uniform (0) and fully activity-weighted (1) (default: 0.85)
+   * @returns An array of P5.Vector positions sampled from the tree
+   */
+  randomPointsByActivity(
+    event: string,
+    numberOfPoints: number = 1,
+    bias: number = 0.85,
+  ): P5.Vector[] {
+    if (numberOfPoints <= 0) return [];
+
+    if (bias === 0) {
+      return Array.from({ length: numberOfPoints }, () =>
+        this.root.bbox.randomPoint(),
+      );
+    }
+
+    const leaves: WorldSpaceOcTreeNode[] = [];
+    this._collectLeaves(this.root, leaves);
+
+    if (leaves.length === 0) {
+      return Array.from({ length: numberOfPoints }, () =>
+        this.root.bbox.randomPoint(),
+      );
+    }
+
+    const volumes = leaves.map(
+      (l) =>
+        8 * l.bbox.halfExtents.x * l.bbox.halfExtents.y * l.bbox.halfExtents.z,
+    );
+    const totalVolume = volumes.reduce((a, b) => a + b, 0);
+
+    const counts = leaves.map((l) => l.records.get(event)?.count ?? 0);
+    const totalCount = counts.reduce((a, b) => a + b, 0);
+
+    const weights = leaves.map((_, i) => {
+      const vw = totalVolume > 0 ? volumes[i] / totalVolume : 1 / leaves.length;
+      const aw = totalCount > 0 ? counts[i] / totalCount : 1 / leaves.length;
+      return (1 - bias) * vw + bias * aw;
+    });
+
+    const cumulative: number[] = [];
+    let weightSum = 0;
+    for (const w of weights) {
+      weightSum += w;
+      cumulative.push(weightSum);
+    }
+
+    return Array.from({ length: numberOfPoints }, () => {
+      const r = Math.random() * weightSum;
+      let idx = cumulative.findIndex((c) => r <= c);
+      if (idx < 0) idx = leaves.length - 1;
+      return leaves[idx].bbox.randomPoint();
+    });
+  }
+
+  // ── Private helpers ────────────────────────────────────────────────────────
+
+  /** Recursively collects all leaf nodes into the provided array. */
+  private _collectLeaves(
+    node: WorldSpaceOcTreeNode,
+    leaves: WorldSpaceOcTreeNode[],
+  ): void {
+    if (!node.divided) {
+      leaves.push(node);
+    } else {
+      for (const child of node.children) {
+        this._collectLeaves(child, leaves);
+      }
+    }
+  }
+
   // ── BaseOcTree implementation ──────────────────────────────────────────────
 
   /** Creates a new root node for the given bbox, pre-registering all tracked events. */
@@ -404,9 +491,11 @@ export class WorldSpaceOcTree extends BaseOcTree<
     // Insert old root's content into the first child as a safe default.
     for (const [event, record] of oldRoot.records) {
       for (const geom of record.geometry) {
-        if (geom instanceof P5.Vector) newRoot.children[0].logPoint(geom, event);
+        if (geom instanceof P5.Vector)
+          newRoot.children[0].logPoint(geom, event);
         else if (geom instanceof Line) newRoot.children[0].logLine(geom, event);
-        else if (geom instanceof Polyline) newRoot.children[0].logPolyline(geom, event);
+        else if (geom instanceof Polyline)
+          newRoot.children[0].logPolyline(geom, event);
         else newRoot.children[0].logSphere(geom as Sphere, event);
       }
     }

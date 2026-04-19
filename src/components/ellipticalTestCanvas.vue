@@ -154,10 +154,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div
-    id="computational-canvas"
-    style="overflow-y: auto; overflow-x: auto"
-  />
+  <div id="computational-canvas" style="overflow-y: auto; overflow-x: auto" />
   <div>{{ frameRate }} fps</div>
   <div>{{ numberOfVehicles }} number of vehicles</div>
 </template>

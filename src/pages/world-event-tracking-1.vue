@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SmartPaintTesting1Canvas from '@/components/SmartPaintTesting1Canvas.vue';
+import WorldEventTracking1Canvas from '@/components/WorldEventTracking1Canvas.vue';
 import CanvasToolbar from '@/components/CanvasToolbar.vue';
 import CanvasInitOverlay from '@/components/CanvasInitOverlay.vue';
 import { useAppStore } from '@/stores/app';
@@ -79,7 +79,7 @@ const currentFrame = computed(() => canvasRef.value?.numberOfFrames ?? 0);
 
 function handleAutomateCapture(filename: string) {
   const canvas = document.querySelector(
-    '#smart-paint-testing-1-canvas canvas',
+    '#world-event-tracking-1-canvas canvas',
   ) as HTMLCanvasElement;
   if (canvas) {
     const link = document.createElement('a');
@@ -138,7 +138,7 @@ onUnmounted(() => {
       <!-- Scrollable canvas layer — ref used for fit measurements -->
       <div ref="canvasAreaRef" class="canvas-scroll">
         <div class="canvas-zoom-wrapper" :style="{ zoom: zoom }">
-          <SmartPaintTesting1Canvas
+          <WorldEventTracking1Canvas
             ref="canvasRef"
             v-if="initialized"
             :key="canvasKey"

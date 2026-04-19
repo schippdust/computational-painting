@@ -79,6 +79,20 @@ export class BBox {
     return Intersections3d.polylineIntersectsBox(polyline, this);
   }
 
+  // ── Random sampling ──────────────────────────────────────────────────────
+
+  /**
+   * Returns a uniformly random point within this bounding box.
+   * @returns A random P5.Vector inside the box
+   */
+  randomPoint(): P5.Vector {
+    return new P5.Vector(
+      this.center.x + (Math.random() * 2 - 1) * this.halfExtents.x,
+      this.center.y + (Math.random() * 2 - 1) * this.halfExtents.y,
+      this.center.z + (Math.random() * 2 - 1) * this.halfExtents.z,
+    );
+  }
+
   // ── Subdivision ───────────────────────────────────────────────────────────
 
   /**

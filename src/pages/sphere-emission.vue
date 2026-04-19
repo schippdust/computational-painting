@@ -138,14 +138,8 @@ onUnmounted(() => {
       :style="{ background: darkMode ? '#2d2d2d' : '#f0f0f0' }"
     >
       <!-- Scrollable canvas layer — ref used for fit measurements -->
-      <div
-        ref="canvasAreaRef"
-        class="canvas-scroll"
-      >
-        <div
-          class="canvas-zoom-wrapper"
-          :style="{ zoom: zoom }"
-        >
+      <div ref="canvasAreaRef" class="canvas-scroll">
+        <div class="canvas-zoom-wrapper" :style="{ zoom: zoom }">
           <SphereEmissionCanvas
             v-if="initialized"
             ref="canvasRef"
@@ -159,10 +153,7 @@ onUnmounted(() => {
         class="canvas-ui-layer"
         :style="{ paddingRight: `${8 + scrollbarWidth}px` }"
       >
-        <v-tooltip
-          text="Return to gallery"
-          location="left"
-        >
+        <v-tooltip text="Return to gallery" location="left">
           <template #activator="{ props: tip }">
             <v-btn
               class="home-btn"

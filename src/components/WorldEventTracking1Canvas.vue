@@ -98,7 +98,7 @@ onMounted(() => {
   };
 
   const canvasElement = document.getElementById(
-    'smart-paint-testing-1-canvas',
+    'world-event-tracking-1-canvas',
   ) as HTMLElement;
   p5Instance = new P5(sketch, canvasElement);
 });
@@ -106,7 +106,7 @@ onMounted(() => {
 
 <template>
   <div
-    id="smart-paint-testing-1-canvas"
+    id="world-event-tracking-1-canvas"
     style="overflow-y: auto; overflow-x: auto; line-height: 0"
   ></div>
 </template>
