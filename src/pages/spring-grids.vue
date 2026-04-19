@@ -14,6 +14,7 @@ const {
   canvasHeight,
   darkMode,
   cameraInitPos,
+  cameraInitTarget,
   cameraInitFOV,
 } = storeToRefs(appStore);
 
@@ -366,63 +367,133 @@ onUnmounted(() => {
         <!-- Camera settings -->
         <v-divider class="mb-4 mt-2" />
         <div class="text-subtitle-2 mb-3">Camera</div>
-        <v-row dense>
+
+        <p class="text-caption text-medium-emphasis mb-1">Position</p>
+        <v-row dense class="mb-2">
           <v-col>
             <v-text-field
               variant="outlined"
-              label="Position X"
+              label="X"
               type="number"
               density="compact"
+              hide-details
               :model-value="cameraInitPos.x"
               @update:model-value="
-                appStore.setCameraInitPos(
-                  Number($event),
-                  cameraInitPos.y,
-                  cameraInitPos.z,
-                )
+                (v) =>
+                  appStore.setCameraInitPos(
+                    +v,
+                    cameraInitPos.y,
+                    cameraInitPos.z,
+                  )
               "
             />
           </v-col>
           <v-col>
             <v-text-field
               variant="outlined"
-              label="Position Y"
+              label="Y"
               type="number"
               density="compact"
+              hide-details
               :model-value="cameraInitPos.y"
               @update:model-value="
-                appStore.setCameraInitPos(
-                  cameraInitPos.x,
-                  Number($event),
-                  cameraInitPos.z,
-                )
+                (v) =>
+                  appStore.setCameraInitPos(
+                    cameraInitPos.x,
+                    +v,
+                    cameraInitPos.z,
+                  )
               "
             />
           </v-col>
           <v-col>
             <v-text-field
               variant="outlined"
-              label="Position Z"
+              label="Z"
               type="number"
               density="compact"
+              hide-details
               :model-value="cameraInitPos.z"
               @update:model-value="
-                appStore.setCameraInitPos(
-                  cameraInitPos.x,
-                  cameraInitPos.y,
-                  Number($event),
-                )
+                (v) =>
+                  appStore.setCameraInitPos(
+                    cameraInitPos.x,
+                    cameraInitPos.y,
+                    +v,
+                  )
+              "
+            />
+          </v-col>
+        </v-row>
+
+        <p class="text-caption text-medium-emphasis mb-1">Look At</p>
+        <v-row dense class="mb-2">
+          <v-col>
+            <v-text-field
+              variant="outlined"
+              label="X"
+              type="number"
+              density="compact"
+              hide-details
+              :model-value="cameraInitTarget.x"
+              @update:model-value="
+                (v) =>
+                  appStore.setCameraInitTarget(
+                    +v,
+                    cameraInitTarget.y,
+                    cameraInitTarget.z,
+                  )
               "
             />
           </v-col>
           <v-col>
+            <v-text-field
+              variant="outlined"
+              label="Y"
+              type="number"
+              density="compact"
+              hide-details
+              :model-value="cameraInitTarget.y"
+              @update:model-value="
+                (v) =>
+                  appStore.setCameraInitTarget(
+                    cameraInitTarget.x,
+                    +v,
+                    cameraInitTarget.z,
+                  )
+              "
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              variant="outlined"
+              label="Z"
+              type="number"
+              density="compact"
+              hide-details
+              :model-value="cameraInitTarget.z"
+              @update:model-value="
+                (v) =>
+                  appStore.setCameraInitTarget(
+                    cameraInitTarget.x,
+                    cameraInitTarget.y,
+                    +v,
+                  )
+              "
+            />
+          </v-col>
+        </v-row>
+
+        <v-row dense>
+          <v-col cols="4">
             <v-text-field
               variant="outlined"
               label="Field of View (°)"
               type="number"
               density="compact"
+              hide-details
               :model-value="cameraInitFOV"
-              @update:model-value="appStore.setCameraInitFOV(Number($event))"
+              @update:model-value="(v) => appStore.setCameraInitFOV(+v)"
             />
           </v-col>
         </v-row>

@@ -225,7 +225,19 @@ import { storeToRefs } from 'pinia';
 
 const router = useRouter();
 const appStore = useAppStore();
-const { initialized, canvasWidth, canvasHeight, darkMode } = storeToRefs(appStore);
+const {
+  initialized,
+  canvasWidth,
+  canvasHeight,
+  darkMode,
+  cameraInitPos,
+  cameraInitTarget,
+  cameraInitFOV,
+} = storeToRefs(appStore);
+
+appStore.setCameraInitPos(8000, -8000, 9000);
+appStore.setCameraInitTarget(0, 0, 0);
+appStore.setCameraInitFOV(80);
 
 function goHome() {
   appStore.resetInitialization();
@@ -369,8 +381,97 @@ onUnmounted(() => {
         </v-tooltip>
       </div>
 
-      <canvas-init-overlay v-if="!initialized">
-        <!-- Add canvas-specific init settings here via slot -->
+      <canvas-init-overlay v-if="!initialized" :width="560">
+        <v-divider class="my-3" />
+        <p class="text-subtitle-2 mb-2">Camera</p>
+
+        <p class="text-caption text-medium-emphasis mb-1">Position</p>
+        <v-row dense class="mb-2">
+          <v-col>
+            <v-text-field
+              variant="outlined"
+              label="X"
+              type="number"
+              density="compact"
+              hide-details
+              :model-value="cameraInitPos.x"
+              @update:model-value="(v) => appStore.setCameraInitPos(+v, cameraInitPos.y, cameraInitPos.z)"
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              variant="outlined"
+              label="Y"
+              type="number"
+              density="compact"
+              hide-details
+              :model-value="cameraInitPos.y"
+              @update:model-value="(v) => appStore.setCameraInitPos(cameraInitPos.x, +v, cameraInitPos.z)"
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              variant="outlined"
+              label="Z"
+              type="number"
+              density="compact"
+              hide-details
+              :model-value="cameraInitPos.z"
+              @update:model-value="(v) => appStore.setCameraInitPos(cameraInitPos.x, cameraInitPos.y, +v)"
+            />
+          </v-col>
+        </v-row>
+
+        <p class="text-caption text-medium-emphasis mb-1">Look At</p>
+        <v-row dense class="mb-2">
+          <v-col>
+            <v-text-field
+              variant="outlined"
+              label="X"
+              type="number"
+              density="compact"
+              hide-details
+              :model-value="cameraInitTarget.x"
+              @update:model-value="(v) => appStore.setCameraInitTarget(+v, cameraInitTarget.y, cameraInitTarget.z)"
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              variant="outlined"
+              label="Y"
+              type="number"
+              density="compact"
+              hide-details
+              :model-value="cameraInitTarget.y"
+              @update:model-value="(v) => appStore.setCameraInitTarget(cameraInitTarget.x, +v, cameraInitTarget.z)"
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              variant="outlined"
+              label="Z"
+              type="number"
+              density="compact"
+              hide-details
+              :model-value="cameraInitTarget.z"
+              @update:model-value="(v) => appStore.setCameraInitTarget(cameraInitTarget.x, cameraInitTarget.y, +v)"
+            />
+          </v-col>
+        </v-row>
+
+        <v-row dense>
+          <v-col cols="4">
+            <v-text-field
+              variant="outlined"
+              label="Field of View (°)"
+              type="number"
+              density="compact"
+              hide-details
+              :model-value="cameraInitFOV"
+              @update:model-value="(v) => appStore.setCameraInitFOV(+v)"
+            />
+          </v-col>
+        </v-row>
       </canvas-init-overlay>
     </div>
   </div>

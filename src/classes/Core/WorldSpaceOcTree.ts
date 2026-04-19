@@ -444,6 +444,18 @@ export class WorldSpaceOcTree extends BaseOcTree<
     });
   }
 
+  /**
+   * Returns the bounding boxes of every node in the tree — both internal and leaf nodes.
+   * Useful for visualizing the full spatial subdivision structure.
+   * This method does not mutate the instance.
+   * @returns An array of BBox instances, one per tree node
+   */
+  collectAllBBoxes(): BBox[] {
+    const nodes: WorldSpaceOcTreeNode[] = [];
+    this._collectAllNodes(this.root, nodes);
+    return nodes.map((n) => n.bbox);
+  }
+
   // ── Private helpers ────────────────────────────────────────────────────────
 
   /** Recursively collects all leaf nodes into the provided array. */
@@ -456,6 +468,19 @@ export class WorldSpaceOcTree extends BaseOcTree<
     } else {
       for (const child of node.children) {
         this._collectLeaves(child, leaves);
+      }
+    }
+  }
+
+  /** Recursively collects every node (leaf and internal) into the provided array. */
+  private _collectAllNodes(
+    node: WorldSpaceOcTreeNode,
+    acc: WorldSpaceOcTreeNode[],
+  ): void {
+    acc.push(node);
+    if (node.divided) {
+      for (const child of node.children) {
+        this._collectAllNodes(child, acc);
       }
     }
   }

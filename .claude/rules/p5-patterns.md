@@ -99,6 +99,10 @@ Mutating operations return `this` (method chaining):
 v.normalize().mult(5).add(offset);
 ```
 
+## Vehicles
+
+Refer to the .claude/rules/p5-vehicles.md file for patterns related to vehicles, including steering behaviors, forces, collection preferences, and the Vehicle class structure.
+
 ## Canvas Parameters ("Add a parameter")
 
 When the user asks to "add a parameter" to a canvas, **add the parameter in three places by default**: the canvas component props, the init overlay sliders, AND the left-hand toolbar menu. This is the behavior when `--reactive` is `true` (the default).

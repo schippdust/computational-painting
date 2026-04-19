@@ -21,10 +21,22 @@ export class WindSystem {
    */
   public timeScale: number = 0.01;
 
+  /**
+   * When set to a number, that value is used as the time coordinate in all noise
+   * calculations instead of the live `frameCount × timeScale`. Set to null to
+   * restore frame-driven time. Useful for freezing or scrubbing the wind field.
+   */
+  public specificTime: number | null = null;
+
   // Arbitrary offsets used to decorrelate the three noise components (N1, N2, N3)
   // These values ensure the curl noise produces low-correlation, realistic flow patterns
   private readonly NOISE_OFFSET_N2 = [31.416, 47.853, 12.793];
   private readonly NOISE_OFFSET_N3 = [99.123, 65.432, 77.789];
+
+  /** Returns the current time coordinate: specificTime if set, otherwise frameCount × timeScale. */
+  private get _time(): number {
+    return this.specificTime ?? this._time;
+  }
 
   /**
    * Creates a new WindSystem.
@@ -66,7 +78,7 @@ export class WindSystem {
       new P5.Vector(0, 0, 0),
       directionalWindMultiplier,
     );
-    const time = this.p5.frameCount * this.timeScale;
+    const time = this._time;
     const strengthMult = this.p5.noise(time, time, time);
     const cumulativeWind = P5.Vector.add(eddyWind, directionalWind);
     if (strengthVariability) {
@@ -88,9 +100,9 @@ export class WindSystem {
     const scale = this.noiseScale;
     const eps = 0.001;
 
-    const x = pos.x * scale + this.p5.frameCount * this.timeScale;
-    const y = pos.y * scale + this.p5.frameCount * this.timeScale;
-    const z = pos.z * scale + this.p5.frameCount * this.timeScale;
+    const x = pos.x * scale + this._time;
+    const y = pos.y * scale + this._time;
+    const z = pos.z * scale + this._time;
 
     // Define vector-valued field F = [N1, N2, N3] using offset noise
     const N1 = (xi: number, yi: number, zi: number) =>

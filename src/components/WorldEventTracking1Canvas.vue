@@ -2,11 +2,27 @@
 import P5 from 'p5';
 import { pressSpaceToPause } from '@/classes/Rendering/DrawingUtils';
 import { VehicleDotRenderer } from '@/classes/Rendering/VehicleRenderers/VehicleDotRenderer';
+import {
+  Vehicle,
+  createGenericPhysicalProps,
+} from '@/classes/MarkMakingEntities/Extensible/Vehicle';
+import { VehicleCollection } from '@/classes/EntityManagement/Extensible/VehicleCollection';
+import { WindSystem } from '@/classes/Core/WindSystem';
+import { WorldSpaceOcTree } from '@/classes/Core/WorldSpaceOcTree';
+import { BBox } from '@/classes/Geometry/BBox';
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
+import { WorldSpaceOcTreeRenderer } from '@/classes/Rendering/PhysicsRenderers/WorldSpaceOcTreeRenderer';
 
-// Import side-effect overloads if you need v.scatter() / v.rotate() on P5.Vector:
-// import '@/classes/Geometry/VectorOverloads';
+const props = defineProps<{
+  initialVehicleCount: number;
+  worldSpaceInitialDim: number;
+  numberOfVehiclesPerFrame: number;
+}>();
+
+const initialVehicleCount = toRef(props, 'initialVehicleCount');
+const worldSpaceInitialDim = toRef(props, 'worldSpaceInitialDim');
+const numberOfVehiclesPerFrame = toRef(props, 'numberOfVehiclesPerFrame');
 
 const appStore = useAppStore();
 const {
@@ -19,7 +35,6 @@ const {
   backgroundColor,
 } = storeToRefs(appStore);
 
-/** Convert a CSS hex color string to a p5-compatible [r, g, b] array. */
 function hexToRgb(hex: string): [number, number, number] {
   const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/i.exec(hex);
   return m
@@ -31,12 +46,11 @@ const frameRate = ref(40);
 const numberOfFrames = ref(0);
 const numberOfVehicles = ref(0);
 
-// Expose stats so the toolbar automation feature can track frame count.
 defineExpose({ frameRate, numberOfFrames, numberOfVehicles });
 
-// Keep the p5 loop in sync with the store's pause state (toggled by toolbar or spacebar).
 let p5Instance: P5 | null = null;
 let dotRenderer: VehicleDotRenderer | null = null;
+let ocTreeRenderer: WorldSpaceOcTreeRenderer | null = null;
 
 watch(pauseCanvas, (paused) => {
   if (!p5Instance) return;
@@ -44,12 +58,14 @@ watch(pauseCanvas, (paused) => {
   else p5Instance.loop();
 });
 
-// Update dot color when primaryColor changes — future marks use the new color.
 watch(primaryColor, (newColor) => {
   if (dotRenderer) dotRenderer.color = hexToRgb(newColor);
 });
 
-// Clear the canvas with the new background color when backgroundColor changes.
+watch(secondaryColor, (newColor) => {
+  if (ocTreeRenderer) ocTreeRenderer.color = hexToRgb(newColor);
+});
+
 watch(backgroundColor, (newColor) => {
   p5Instance?.background(newColor);
 });
@@ -58,9 +74,18 @@ onUnmounted(() => {
   p5Instance?.remove();
   p5Instance = null;
   dotRenderer = null;
+  ocTreeRenderer = null;
 });
 
 onMounted(() => {
+  const VEHICLE_LIFESPAN = 300;
+  const VEHICLE_FRICTION = 0.02;
+  const EVENT_NAME = 'Vehicle Present';
+
+  let collection: VehicleCollection;
+  let windSystem: WindSystem;
+  let ocTree: WorldSpaceOcTree;
+
   const sketch = (p5: P5) => {
     p5.setup = () => {
       p5.createCanvas(canvasWidth.value, canvasHeight.value);
@@ -69,27 +94,79 @@ onMounted(() => {
 
       dotRenderer = new VehicleDotRenderer(
         p5,
-        5,
-        15000,
+        2,
+        worldSpaceInitialDim.value * 2,
         hexToRgb(primaryColor.value),
         camera.value,
       );
 
-      // TODO: initialize geometry, collections
+      ocTreeRenderer = new WorldSpaceOcTreeRenderer(
+        p5,
+        hexToRgb(secondaryColor.value),
+        2,
+        camera.value,
+        worldSpaceInitialDim.value * 2,
+      );
+
+      windSystem = new WindSystem(p5);
+      windSystem.specificTime = 100;
+      windSystem.noiseScale = 0.0005;
+      windSystem.setNoiseDetail(5, 0.5);
+
+      const half = worldSpaceInitialDim.value / 2;
+      ocTree = new WorldSpaceOcTree(BBox.cube(new P5.Vector(0, 0, 0), half));
+      ocTree.trackWorldEvents(EVENT_NAME, 10000);
+
+      const initialPositions = ocTree.randomPointsByActivity(
+        EVENT_NAME,
+        initialVehicleCount.value,
+        0,
+      );
+
+      const initialVehicles = initialPositions.map((pos) => {
+        const v = new Vehicle(p5, pos, createGenericPhysicalProps());
+        v.lifeExpectancy = VEHICLE_LIFESPAN;
+        v.env.friction = VEHICLE_FRICTION;
+        v.phys.mass = 100;
+        return v;
+      });
+
+      collection = new VehicleCollection(initialVehicles);
+
+      for (const pos of initialPositions) {
+        ocTree.logPointEvent(pos, EVENT_NAME);
+      }
     };
 
     p5.draw = () => {
-      // TODO: update vehicles
+      // p5.background(backgroundColor.value);
+      const spawnPositions = ocTree.randomPointsByActivity(
+        EVENT_NAME,
+        numberOfVehiclesPerFrame.value,
+        0.9,
+      );
 
-      if (dotRenderer) {
-        // Render visible vehicles with primary color, occluded with secondary:
-        // dotRenderer.color = hexToRgb(primaryColor.value);
-        // dotRenderer.renderVehicles(visibleVehicles);
-        // dotRenderer.color = hexToRgb(secondaryColor.value);
-        // dotRenderer.renderVehicles(occludedVehicles);
+      const newVehicles = spawnPositions.map((pos) => {
+        const v = new Vehicle(p5, pos, createGenericPhysicalProps());
+        v.lifeExpectancy = VEHICLE_LIFESPAN;
+        v.env.friction = VEHICLE_FRICTION;
+        v.phys.mass = 100;
+        return v;
+      });
+
+      collection.addVehicle(newVehicles, false);
+
+      collection.applyWind(windSystem, 0, 10).update();
+
+      for (const v of collection.vehicles) {
+        ocTree.logPointEvent(v.coordSystem.getPosition(), EVENT_NAME);
       }
 
+      dotRenderer?.renderVehicles(collection.vehicles);
+      // ocTreeRenderer?.renderOcTree(ocTree);
+
       numberOfFrames.value++;
+      numberOfVehicles.value = collection.vehicles.length;
     };
 
     p5.keyPressed = () => {
