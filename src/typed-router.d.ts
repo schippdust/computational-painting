@@ -17,7 +17,8 @@ import type {
 
 declare module 'vue-router' {
   interface TypesConfig {
-    ParamParsers: never;
+    ParamParsers:
+      | never
   }
 }
 
@@ -31,29 +32,36 @@ declare module 'vue-router/auto-routes' {
       '/',
       Record<never, never>,
       Record<never, never>,
-      never
-    >;
+      | never
+    >,
     '/branching-spheres': RouteRecordInfo<
       '/branching-spheres',
       '/branching-spheres',
       Record<never, never>,
       Record<never, never>,
-      never
-    >;
+      | never
+    >,
+    '/mesh-occlusion-test': RouteRecordInfo<
+      '/mesh-occlusion-test',
+      '/mesh-occlusion-test',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/sphere-emission': RouteRecordInfo<
       '/sphere-emission',
       '/sphere-emission',
       Record<never, never>,
       Record<never, never>,
-      never
-    >;
+      | never
+    >,
     '/spring-grids': RouteRecordInfo<
       '/spring-grids',
       '/spring-grids',
       Record<never, never>,
       Record<never, never>,
-      never
-    >;
+      | never
+    >,
   }
 
   /**
@@ -68,21 +76,35 @@ declare module 'vue-router/auto-routes' {
    */
   export interface _RouteFileInfoMap {
     'src/pages/index.vue': {
-      routes: '/';
-      views: never;
-    };
+      routes:
+        | '/'
+      views:
+        | never
+    }
     'src/pages/branching-spheres.vue': {
-      routes: '/branching-spheres';
-      views: never;
-    };
+      routes:
+        | '/branching-spheres'
+      views:
+        | never
+    }
+    'src/pages/mesh-occlusion-test.vue': {
+      routes:
+        | '/mesh-occlusion-test'
+      views:
+        | never
+    }
     'src/pages/sphere-emission.vue': {
-      routes: '/sphere-emission';
-      views: never;
-    };
+      routes:
+        | '/sphere-emission'
+      views:
+        | never
+    }
     'src/pages/spring-grids.vue': {
-      routes: '/spring-grids';
-      views: never;
-    };
+      routes:
+        | '/spring-grids'
+      views:
+        | never
+    }
   }
 
   /**
@@ -94,7 +116,7 @@ declare module 'vue-router/auto-routes' {
   export type _RouteNamesForFilePath<FilePath extends string> =
     _RouteFileInfoMap extends Record<FilePath, infer Info>
       ? Info['routes']
-      : keyof RouteNamedMap;
+      : keyof RouteNamedMap
 }
 
-export {};
+export {}
