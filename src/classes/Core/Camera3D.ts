@@ -33,6 +33,36 @@ export class Camera3D {
     this.fov = fovDegrees * (Math.PI / 180);
   }
 
+  /** Copy of the look-at target point the camera is facing. */
+  getFocus(): P5.Vector {
+    return this.focus.copy();
+  }
+
+  /** Copy of the up-direction vector used to establish the camera basis. */
+  getUp(): P5.Vector {
+    return this.up.copy();
+  }
+
+  /** Near clipping plane distance. Points closer than this are culled by project(). */
+  getNear(): number {
+    return this.near;
+  }
+
+  /** Vertical field of view in degrees. */
+  getFovDegrees(): number {
+    return this.fov * (180 / Math.PI);
+  }
+
+  /** Canvas width used for the aspect ratio. */
+  getCanvasWidth(): number {
+    return this.canvasWidth;
+  }
+
+  /** Canvas height used for the aspect ratio. */
+  getCanvasHeight(): number {
+    return this.canvasHeight;
+  }
+
   /**
    * Projects a 3D point in world space to 2D screen coordinates using perspective projection.
    * Points behind the camera (closer than the near clipping plane) return null.

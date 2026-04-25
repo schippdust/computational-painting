@@ -86,4 +86,12 @@ export const canvasRegistry: CanvasEntry[] = [
     createdAt: '2026-04-17',
     group: 'Event Tracking',
   },
+
+  {
+    id: 'mesh-occlusion-test',
+    title: 'Mesh Occlusion Test',
+    description: 'Three.js mesh silhouette and occluded wires',
+    createdAt: '2026-04-24',
+    group: 'Meshes',
+  },
 ];

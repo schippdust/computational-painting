@@ -16,6 +16,7 @@ declare module 'vue' {
     FunShapesCanvas: typeof import('./components/funShapesCanvas.vue')['default']
     GridBlowingInWind: typeof import('./components/gridBlowingInWind.vue')['default']
     InitializationInputs: typeof import('./components/initializationInputs.vue')['default']
+    MeshOcclusionTestCanvas: typeof import('./components/MeshOcclusionTestCanvas.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SmartPaintTesting1Canvas: typeof import('./components/SmartPaintTesting1Canvas.vue')['default']

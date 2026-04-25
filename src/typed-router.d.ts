@@ -19,6 +19,8 @@ declare module 'vue-router' {
   interface TypesConfig {
     ParamParsers:
       | never
+    ParamParsers:
+      | never
   }
 }
 
@@ -37,6 +39,13 @@ declare module 'vue-router/auto-routes' {
     '/branching-spheres': RouteRecordInfo<
       '/branching-spheres',
       '/branching-spheres',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/mesh-occlusion-test': RouteRecordInfo<
+      '/mesh-occlusion-test',
+      '/mesh-occlusion-test',
       Record<never, never>,
       Record<never, never>,
       | never
@@ -94,25 +103,31 @@ declare module 'vue-router/auto-routes' {
         | '/'
       views:
         | never
-    }
+    },
     'src/pages/branching-spheres.vue': {
       routes:
         | '/branching-spheres'
       views:
         | never
-    }
+    },
+    'src/pages/mesh-occlusion-test.vue': {
+      routes:
+        | '/mesh-occlusion-test'
+      views:
+        | never
+    },
     'src/pages/branching-upward.vue': {
       routes:
         | '/branching-upward'
       views:
         | never
-    }
+    },
     'src/pages/branching-upward-2.vue': {
       routes:
         | '/branching-upward-2'
       views:
         | never
-    }
+    },
     'src/pages/sphere-emission.vue': {
       routes:
         | '/sphere-emission'
@@ -120,17 +135,9 @@ declare module 'vue-router/auto-routes' {
         | never
     }
     'src/pages/spring-grids.vue': {
-      routes:
-        | '/spring-grids'
-      views:
-        | never
-    }
-    'src/pages/world-event-tracking-1.vue': {
-      routes:
-        | '/world-event-tracking-1'
-      views:
-        | never
-    }
+      routes: '/spring-grids';
+      views: never;
+    };
   }
 
   /**
