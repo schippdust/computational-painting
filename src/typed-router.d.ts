@@ -133,11 +133,19 @@ declare module 'vue-router/auto-routes' {
         | '/sphere-emission'
       views:
         | never
-    }
+    },
     'src/pages/spring-grids.vue': {
-      routes: '/spring-grids';
-      views: never;
-    };
+      routes:
+        | '/spring-grids'
+      views:
+        | never
+    }
+    'src/pages/world-event-tracking-1.vue': {
+      routes:
+        | '/world-event-tracking-1'
+      views:
+        | never
+    }
   }
 
   /**
@@ -149,7 +157,7 @@ declare module 'vue-router/auto-routes' {
   export type _RouteNamesForFilePath<FilePath extends string> =
     _RouteFileInfoMap extends Record<FilePath, infer Info>
       ? Info['routes']
-      : keyof RouteNamedMap
+      : keyof RouteNamedMap;
 }
 
 export {}
