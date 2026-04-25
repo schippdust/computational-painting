@@ -18,7 +18,9 @@ import { Camera3D } from '@/classes/Core/Camera3D';
  * @param v The source vector; only x/y/z are read.
  * @returns A new Vector3 with the same components.
  */
-export function toVector3(v: P5.Vector | { x: number; y: number; z: number }): Vector3 {
+export function toVector3(
+  v: P5.Vector | { x: number; y: number; z: number },
+): Vector3 {
   return new Vector3(v.x, v.y, v.z ?? 0);
 }
 

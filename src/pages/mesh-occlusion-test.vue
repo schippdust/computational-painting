@@ -7,7 +7,8 @@ import { storeToRefs } from 'pinia';
 
 const router = useRouter();
 const appStore = useAppStore();
-const { initialized, canvasWidth, canvasHeight, darkMode } = storeToRefs(appStore);
+const { initialized, canvasWidth, canvasHeight, darkMode } =
+  storeToRefs(appStore);
 
 function goHome() {
   appStore.resetInitialization();
@@ -39,11 +40,21 @@ watch(initialized, (isInit) => {
 });
 
 function handleKeydown(e: KeyboardEvent) {
-  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+  if (
+    e.target instanceof HTMLInputElement ||
+    e.target instanceof HTMLTextAreaElement
+  )
+    return;
   if (e.key === '+' || e.key === '=') {
-    zoom.value = Math.min(ZOOM_MAX, parseFloat((zoom.value + ZOOM_STEP).toFixed(2)));
+    zoom.value = Math.min(
+      ZOOM_MAX,
+      parseFloat((zoom.value + ZOOM_STEP).toFixed(2)),
+    );
   } else if (e.key === '-') {
-    zoom.value = Math.max(ZOOM_MIN, parseFloat((zoom.value - ZOOM_STEP).toFixed(2)));
+    zoom.value = Math.max(
+      ZOOM_MIN,
+      parseFloat((zoom.value - ZOOM_STEP).toFixed(2)),
+    );
   } else if (e.key === '0') {
     zoom.value = 1;
   }
@@ -67,7 +78,9 @@ const canvasRef = ref<{ numberOfFrames: number } | null>(null);
 const currentFrame = computed(() => canvasRef.value?.numberOfFrames ?? 0);
 
 function handleAutomateCapture(filename: string) {
-  const canvas = document.querySelector('#mesh-occlusion-test-canvas canvas') as HTMLCanvasElement;
+  const canvas = document.querySelector(
+    '#mesh-occlusion-test-canvas canvas',
+  ) as HTMLCanvasElement;
   if (canvas) {
     const link = document.createElement('a');
     link.download = `${filename}.png`;
@@ -87,7 +100,7 @@ onMounted(() => {
     const update = () => {
       scrollbarWidth.value =
         (canvasAreaRef.value?.offsetWidth ?? 0) -
-        (canvasAreaRef.value?.clientWidth  ?? 0);
+        (canvasAreaRef.value?.clientWidth ?? 0);
     };
     resizeObserver = new ResizeObserver(update);
     resizeObserver.observe(canvasAreaRef.value);
@@ -123,14 +136,8 @@ onUnmounted(() => {
       :style="{ background: darkMode ? '#2d2d2d' : '#f0f0f0' }"
     >
       <!-- Scrollable canvas layer — ref used for fit measurements -->
-      <div
-        ref="canvasAreaRef"
-        class="canvas-scroll"
-      >
-        <div
-          class="canvas-zoom-wrapper"
-          :style="{ zoom: zoom }"
-        >
+      <div ref="canvasAreaRef" class="canvas-scroll">
+        <div class="canvas-zoom-wrapper" :style="{ zoom: zoom }">
           <MeshOcclusionTestCanvas
             v-if="initialized"
             ref="canvasRef"
@@ -144,10 +151,7 @@ onUnmounted(() => {
         class="canvas-ui-layer"
         :style="{ paddingRight: `${8 + scrollbarWidth}px` }"
       >
-        <v-tooltip
-          text="Return to gallery"
-          location="left"
-        >
+        <v-tooltip text="Return to gallery" location="left">
           <template #activator="{ props: tip }">
             <v-btn
               class="home-btn"

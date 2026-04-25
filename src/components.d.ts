@@ -19,7 +19,6 @@ declare module 'vue' {
     MeshOcclusionTestCanvas: typeof import('./components/MeshOcclusionTestCanvas.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    SmartPaintTesting1Canvas: typeof import('./components/SmartPaintTesting1Canvas.vue')['default']
     SphereEmissionCanvas: typeof import('./components/SphereEmissionCanvas.vue')['default']
     SpringGridsCanvas: typeof import('./components/SpringGridsCanvas.vue')['default']
     ToolbarNumericInput: typeof import('./components/ToolbarNumericInput.vue')['default']

@@ -111,5 +111,4 @@ export class MeshRaycaster {
     if (hit === null) return false;
     return hit.distance < maxDist - endEpsilon;
   }
-
 }

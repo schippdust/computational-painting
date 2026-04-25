@@ -19,8 +19,6 @@ declare module 'vue-router' {
   interface TypesConfig {
     ParamParsers:
       | never
-    ParamParsers:
-      | never
   }
 }
 
@@ -43,13 +41,6 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
-    '/mesh-occlusion-test': RouteRecordInfo<
-      '/mesh-occlusion-test',
-      '/mesh-occlusion-test',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
     '/branching-upward': RouteRecordInfo<
       '/branching-upward',
       '/branching-upward',
@@ -60,6 +51,13 @@ declare module 'vue-router/auto-routes' {
     '/branching-upward-2': RouteRecordInfo<
       '/branching-upward-2',
       '/branching-upward-2',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/mesh-occlusion-test': RouteRecordInfo<
+      '/mesh-occlusion-test',
+      '/mesh-occlusion-test',
       Record<never, never>,
       Record<never, never>,
       | never
@@ -103,37 +101,37 @@ declare module 'vue-router/auto-routes' {
         | '/'
       views:
         | never
-    },
+    }
     'src/pages/branching-spheres.vue': {
       routes:
         | '/branching-spheres'
       views:
         | never
-    },
-    'src/pages/mesh-occlusion-test.vue': {
-      routes:
-        | '/mesh-occlusion-test'
-      views:
-        | never
-    },
+    }
     'src/pages/branching-upward.vue': {
       routes:
         | '/branching-upward'
       views:
         | never
-    },
+    }
     'src/pages/branching-upward-2.vue': {
       routes:
         | '/branching-upward-2'
       views:
         | never
-    },
+    }
+    'src/pages/mesh-occlusion-test.vue': {
+      routes:
+        | '/mesh-occlusion-test'
+      views:
+        | never
+    }
     'src/pages/sphere-emission.vue': {
       routes:
         | '/sphere-emission'
       views:
         | never
-    },
+    }
     'src/pages/spring-grids.vue': {
       routes:
         | '/spring-grids'
@@ -157,7 +155,7 @@ declare module 'vue-router/auto-routes' {
   export type _RouteNamesForFilePath<FilePath extends string> =
     _RouteFileInfoMap extends Record<FilePath, infer Info>
       ? Info['routes']
-      : keyof RouteNamedMap;
+      : keyof RouteNamedMap
 }
 
 export {}

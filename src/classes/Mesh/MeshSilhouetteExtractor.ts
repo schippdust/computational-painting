@@ -80,9 +80,7 @@ export class MeshSilhouetteExtractor {
       const bx = verts[edge.v1 * 3];
       const by = verts[edge.v1 * 3 + 1];
       const bz = verts[edge.v1 * 3 + 2];
-      out.push(
-        new Line(new P5.Vector(ax, ay, az), new P5.Vector(bx, by, bz)),
-      );
+      out.push(new Line(new P5.Vector(ax, ay, az), new P5.Vector(bx, by, bz)));
     }
 
     return out;
@@ -144,8 +142,7 @@ function buildAdjacency(mesh: Mesh3D): EdgeAdjacency {
     vertices[i * 3 + 1] =
       (worldMat[1] * x + worldMat[5] * y + worldMat[9] * z + worldMat[13]) / w;
     vertices[i * 3 + 2] =
-      (worldMat[2] * x + worldMat[6] * y + worldMat[10] * z + worldMat[14]) /
-      w;
+      (worldMat[2] * x + worldMat[6] * y + worldMat[10] * z + worldMat[14]) / w;
   }
 
   const faceCount = indices.length / 3;

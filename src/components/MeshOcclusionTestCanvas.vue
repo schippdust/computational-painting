@@ -70,6 +70,10 @@ onMounted(() => {
       p5.background(backgroundColor.value);
       p5.frameRate(frameRate.value);
 
+      // Store default (0,0,1000)→(0,0,0) is degenerate: forward ∥ up vector.
+      camera.value.setPosition(new P5.Vector(0, -1400, 600));
+      camera.value.lookAt(new P5.Vector(0, 0, 0));
+
       // Scene: an icosphere at the origin and a box offset on +X. Self-occlusion
       // + cross-occlusion exercises the full silhouette + clipping path.
       const sphere = MeshBuilders.icosphere(260, 2).setPosition(
