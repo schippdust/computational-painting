@@ -65,6 +65,12 @@ When `[new-kebab]` is omitted (or identical to the current name), only the regis
 
 The script will abort without writing anything if the source files don't exist, the targets already exist, or the registry doesn't contain the old id.
 
+## Skills
+
+| Skill | Invoke | Description |
+|---|---|---|
+| [Development Team](.claude/skills/development-team.md) | "Ask the team to..." or "Code Review" | Spawns Architect, Software Engineer, and Computational Designer agents in parallel to assess a request, then synthesizes their findings into a sprint plan saved to `.claude/plans/` |
+
 ## Quick Orientation
 
 - Canvas components live in `src/components/` — each is a self-contained p5 sketch mounted on `onMounted`
