@@ -13,6 +13,10 @@ import { LineRenderer } from '@/classes/Rendering/GeometryRenderers/LineRenderer
  * then delegated to an internal LineRenderer. Distance scaling uses the line's midpoint
  * distance (handled by LineRenderer): scaledWeight = (baseStrokeWeight × referenceDistance) / dist.
  * Springs whose either endpoint projects behind the near clip plane are culled.
+ *
+ * Mutable properties (color, camera, baseStrokeWeight, referenceDistance) are forwarded
+ * directly to the internal LineRenderer via get/set accessors — there is no secondary
+ * copy to keep in sync.
  */
 export class SpringRenderer {
   private lineRenderer: LineRenderer;
@@ -27,12 +31,46 @@ export class SpringRenderer {
    */
   constructor(
     sketch: P5,
-    public color: number[],
-    public camera: Camera3D,
-    public baseStrokeWeight: number = 1,
-    public referenceDistance: number = 1000,
+    color: number[],
+    camera: Camera3D,
+    baseStrokeWeight: number = 1,
+    referenceDistance: number = 1000,
   ) {
-    this.lineRenderer = new LineRenderer(sketch, color, 1, camera);
+    this.lineRenderer = new LineRenderer(
+      sketch,
+      color,
+      baseStrokeWeight,
+      camera,
+      referenceDistance,
+    );
+  }
+
+  get color(): number[] {
+    return this.lineRenderer.color;
+  }
+  set color(v: number[]) {
+    this.lineRenderer.color = v;
+  }
+
+  get camera(): Camera3D {
+    return this.lineRenderer.camera;
+  }
+  set camera(v: Camera3D) {
+    this.lineRenderer.camera = v;
+  }
+
+  get baseStrokeWeight(): number {
+    return this.lineRenderer.strokeWeightValue;
+  }
+  set baseStrokeWeight(v: number) {
+    this.lineRenderer.strokeWeightValue = v;
+  }
+
+  get referenceDistance(): number {
+    return this.lineRenderer.referenceDistance;
+  }
+  set referenceDistance(v: number) {
+    this.lineRenderer.referenceDistance = v;
   }
 
   /**
@@ -46,13 +84,6 @@ export class SpringRenderer {
    */
   renderSprings(springs: Spring | Spring[]): SpringRenderer {
     const list = Array.isArray(springs) ? springs : [springs];
-
-    // Sync mutable public properties to the internal renderer so hot-swaps
-    // of color/camera/weights between frames take effect immediately.
-    this.lineRenderer.color = this.color;
-    this.lineRenderer.camera = this.camera;
-    this.lineRenderer.strokeWeightValue = this.baseStrokeWeight;
-    this.lineRenderer.referenceDistance = this.referenceDistance;
 
     for (const spring of list) {
       const posA = spring.vehicleA.coords;

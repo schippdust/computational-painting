@@ -36,12 +36,10 @@ export class NoiseSystem {
   ];
 
   /**
-   * Creates a new NoiseSystem and applies the initial noise detail settings.
+   * Creates a new NoiseSystem.
    * @param p5 The p5 instance used for noise sampling
    */
-  constructor(private readonly p5: P5) {
-    this._applyNoiseDetail();
-  }
+  constructor(private readonly p5: P5) {}
 
   // ── Public get/set properties ─────────────────────────────────────────────
 
@@ -79,7 +77,6 @@ export class NoiseSystem {
   }
   set octaves(v: number) {
     this._octaves = v;
-    this._applyNoiseDetail();
   }
 
   /**
@@ -94,7 +91,6 @@ export class NoiseSystem {
   }
   set falloff(v: number) {
     this._falloff = v;
-    this._applyNoiseDetail();
   }
 
   /**
@@ -184,10 +180,13 @@ export class NoiseSystem {
    * Each component is driven by an independent noise channel at the same spatial
    * coordinate, decorrelated by channelOffsets. The result has center, normalize,
    * outputScale, and outputOffset applied in that order.
+   * p5.noiseDetail() is re-applied on each call so this system's settings are always
+   * in effect regardless of what other noise users have set globally.
    * @param pos World-space position to sample
    * @returns A P5.Vector representing the noise field value at that position
    */
   sample(pos: P5.Vector): P5.Vector {
+    this._applyNoiseDetail();
     const sx = pos.x * this._noiseScale + this._offset.x;
     const sy = pos.y * this._noiseScale + this._offset.y;
     const sz = pos.z * this._noiseScale + this._offset.z;
@@ -218,11 +217,14 @@ export class NoiseSystem {
    * The raw p5.noise() value in [0, 1] is returned (or remapped to [-1, 1] when
    * `center` is true). outputScale and outputOffset are NOT applied — this returns
    * the raw channel value for use as a weight, density, or threshold.
+   * p5.noiseDetail() is re-applied on each call so this system's settings are always
+   * in effect regardless of what other noise users have set globally.
    * @param pos          World-space position to sample
    * @param channelIndex Which output channel's noise to sample (0 = x, 1 = y, 2 = z; default: 0)
    * @returns A scalar noise value
    */
   sampleScalar(pos: P5.Vector, channelIndex: number = 0): number {
+    this._applyNoiseDetail();
     const sx = pos.x * this._noiseScale + this._offset.x;
     const sy = pos.y * this._noiseScale + this._offset.y;
     const sz = pos.z * this._noiseScale + this._offset.z;
@@ -235,7 +237,7 @@ export class NoiseSystem {
 
   // ── Private helpers ───────────────────────────────────────────────────────
 
-  /** Applies current octave and falloff values to p5.noiseDetail(). */
+  /** Re-applies this system's octave and falloff to p5.noiseDetail() immediately before each sample. */
   private _applyNoiseDetail(): void {
     this.p5.noiseDetail(this._octaves, this._falloff);
   }

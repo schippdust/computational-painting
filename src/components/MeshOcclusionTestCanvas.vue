@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import P5 from 'p5';
 import { pressSpaceToPause } from '@/classes/Rendering/DrawingUtils';
+import { hexToRgb } from '@/classes/Core/Color';
 import { MeshBuilders } from '@/classes/Mesh/Mesh3D';
 import type { Mesh3D } from '@/classes/Mesh/Mesh3D';
 import { MeshSilhouetteRenderer } from '@/classes/Rendering/GeometryRenderers/MeshSilhouetteRenderer';
@@ -18,13 +19,6 @@ const {
   secondaryColor,
   backgroundColor,
 } = storeToRefs(appStore);
-
-function hexToRgb(hex: string): [number, number, number] {
-  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/i.exec(hex);
-  return m
-    ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)]
-    : [255, 255, 255];
-}
 
 const frameRate = ref(20);
 const numberOfFrames = ref(0);

@@ -24,28 +24,39 @@ export class DotRenderer {
   ) {}
 
   /**
+   * Returns the distance-scaled dot diameter for a world-space position.
+   * Subclasses that need per-point size variation should call this instead of
+   * replicating the formula. Assumes the camera position is current.
+   * @param worldPos World-space position of the point
+   * @returns Scaled dot diameter in screen pixels
+   */
+  protected scaledSize(worldPos: P5.Vector): number {
+    const dist = P5.Vector.dist(worldPos, this.camera.pos);
+    return (this.dotSize * this.referenceDistance) / dist;
+  }
+
+  /**
    * Renders one or more world-space positions as distance-scaled filled circles.
    * Skips positions that project outside the camera view (null projection).
+   * Uses a single push/pop pair for the whole batch — fill and stroke are uniform
+   * across all points in one call. Subclasses that need per-point color variation
+   * must override this method and manage their own push/pop.
    * This method mutates the p5 canvas state (push/pop for isolation) and returns it for method chaining.
    * @param positions A single P5.Vector or array of P5.Vectors to render
    * @returns This DotRenderer instance for method chaining
    */
   renderPoints(positions: P5.Vector | P5.Vector[]): DotRenderer {
     const pts = Array.isArray(positions) ? positions : [positions];
+    this.sketch.push();
+    this.sketch.fill(this.color[0], this.color[1], this.color[2]);
+    this.sketch.noStroke();
     for (const position of pts) {
       const screenPos = this.camera.project(position);
       if (screenPos === null) continue;
-
-      const distanceToCamera = P5.Vector.dist(position, this.camera.pos);
-      const scaledSize =
-        (this.dotSize * this.referenceDistance) / distanceToCamera;
-
-      this.sketch.push();
-      this.sketch.fill(this.color[0], this.color[1], this.color[2]);
-      this.sketch.noStroke();
-      this.sketch.ellipse(screenPos.x, screenPos.y, scaledSize, scaledSize);
-      this.sketch.pop();
+      const size = this.scaledSize(position);
+      this.sketch.ellipse(screenPos.x, screenPos.y, size, size);
     }
+    this.sketch.pop();
     return this;
   }
 }

@@ -1,16 +1,18 @@
 import P5 from 'p5';
 import { Camera3D } from '@/classes/Core/Camera3D';
+import { DotRenderer } from '@/classes/Rendering/GeometryRenderers/DotRenderer';
 import { Vehicle } from '@/classes/MarkMakingEntities/Extensible/Vehicle';
 
 /**
  * Renders vehicles as tapering brushstroke-like trails using their position history.
  * The head (current position) is drawn at full size and opacity; historical positions
  * taper linearly toward zero in both size and alpha, creating a brushstroke appearance.
- * Dot size scales inversely with camera distance, identical to DotRenderer.
+ * Dot size scales inversely with camera distance via the inherited scaledSize() method.
+ * Each trail step changes alpha, so push/pop isolation is required per step.
  */
-export class TaperingCircleRenderer {
+export class VehicleTaperingCircleRenderer extends DotRenderer {
   /**
-   * Creates a new TaperingCircleRenderer.
+   * Creates a new VehicleTaperingCircleRenderer.
    * @param sketch The p5.js sketch instance for drawing operations
    * @param dotSize The diameter of the dot at the vehicle's current position in screen pixels (default: 5)
    * @param referenceDistance A world-space distance used to normalise dot size relative to camera (default: 1000)
@@ -19,13 +21,15 @@ export class TaperingCircleRenderer {
    * @param trailLength How many historical positions to include in the tapering trail (default: 10)
    */
   constructor(
-    private sketch: P5,
-    public dotSize: number = 5,
-    public referenceDistance: number = 1000,
-    public color: number[],
-    public camera: Camera3D,
+    sketch: P5,
+    dotSize: number = 5,
+    referenceDistance: number = 1000,
+    color: number[],
+    camera: Camera3D,
     public trailLength: number = 10,
-  ) {}
+  ) {
+    super(sketch, dotSize, referenceDistance, color, camera);
+  }
 
   /**
    * Renders one or more vehicles as tapering circle trails on the canvas.
@@ -35,9 +39,9 @@ export class TaperingCircleRenderer {
    * Skips vehicles and individual history points that project outside the camera view.
    * This method mutates the p5 canvas state (push/pop for isolation) and returns it for method chaining.
    * @param vehicles A single Vehicle or array of Vehicles to render
-   * @returns This TaperingCircleRenderer instance for method chaining
+   * @returns This VehicleTaperingCircleRenderer instance for method chaining
    */
-  renderVehicles(vehicles: Vehicle | Vehicle[]): TaperingCircleRenderer {
+  renderVehicles(vehicles: Vehicle | Vehicle[]): VehicleTaperingCircleRenderer {
     const toRender = Array.isArray(vehicles) ? vehicles : [vehicles];
 
     for (const vehicle of toRender) {
@@ -45,9 +49,7 @@ export class TaperingCircleRenderer {
       const screenPos = this.camera.project(position);
       if (screenPos === null) continue;
 
-      const distanceToCamera = P5.Vector.dist(position, this.camera.pos);
-      const baseSize =
-        (this.dotSize * this.referenceDistance) / distanceToCamera;
+      const baseSize = this.scaledSize(position);
 
       // Draw tail first (oldest → newest) so the head is painted on top.
       // t = 0 at the tail, approaches 1 as the mark gets closer to the head.

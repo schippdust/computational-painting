@@ -10,6 +10,12 @@ export class Camera3D {
   private fov: number;
   private aspect: number;
 
+  // Cached orthonormal basis — recomputed lazily when position, focus, or FOV changes.
+  private _forward: P5.Vector = new P5.Vector();
+  private _right: P5.Vector = new P5.Vector();
+  private _up: P5.Vector = new P5.Vector();
+  private _basisDirty = true;
+
   /**
    * Creates a new Camera3D instance.
    * @param canvasWidth The width of the rendering canvas in pixels
@@ -70,14 +76,23 @@ export class Camera3D {
    * @param point A 3D point in world coordinates
    * @returns The 2D screen coordinates, or null if the point is behind the near clipping plane
    */
+  private _rebuildBasis(): void {
+    this._forward = P5.Vector.sub(this.focus, this.pos).normalize();
+    this._right = (
+      this._forward.copy().cross(this.up.copy()) as P5.Vector
+    ).normalize();
+    this._up = (
+      this._right.copy().cross(this._forward.copy()) as P5.Vector
+    ).normalize();
+    this._basisDirty = false;
+  }
+
   project(point: P5.Vector): P5.Vector | null {
-    // Step 1: Orthonormal basis
     point = point.copy();
-    const forward = P5.Vector.sub(this.focus, this.pos).normalize(); // forward: into screen (Y)
-    const right = forward.copy().cross(this.up.copy()) as P5.Vector; // right: X
-    right.normalize();
-    const camUp = right.copy().cross(forward.copy()) as P5.Vector; // camUp: Z
-    camUp.normalize();
+    if (this._basisDirty) this._rebuildBasis();
+    const forward = this._forward;
+    const right = this._right;
+    const camUp = this._up;
 
     // Step 2: Transform point into camera space
     const relative = P5.Vector.sub(point, this.pos);
@@ -138,8 +153,8 @@ export class Camera3D {
    * @param pos The new camera position
    */
   setPosition(pos: P5.Vector) {
-    pos = pos.copy();
-    this.pos = pos;
+    this.pos = pos.copy();
+    this._basisDirty = true;
   }
 
   /**
@@ -148,8 +163,8 @@ export class Camera3D {
    * @param focus The new focus point in world coordinates
    */
   lookAt(focus: P5.Vector) {
-    focus = focus.copy();
-    this.focus = focus;
+    this.focus = focus.copy();
+    this._basisDirty = true;
   }
 
   /**
@@ -158,6 +173,7 @@ export class Camera3D {
    */
   setFOV(degrees: number) {
     this.fov = degrees * (Math.PI / 180);
+    this._basisDirty = true;
   }
 
   /**

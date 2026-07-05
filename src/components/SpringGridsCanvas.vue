@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import P5 from 'p5';
 import { pressSpaceToPause } from '@/classes/Rendering/DrawingUtils';
+import { hexToRgb } from '@/classes/Core/Color';
 import { VehicleDotRenderer } from '@/classes/Rendering/VehicleRenderers/VehicleDotRenderer';
 import { VehicleCollection } from '@/classes/EntityManagement/Extensible/VehicleCollection';
 import { GridGenerator } from '@/classes/Generators/InstanceGenerators/GridGenerator';
@@ -11,7 +12,6 @@ import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
 import { SphereRenderer } from '@/classes/Rendering/GeometryRenderers/SphereRenderer';
 import { SpringRenderer } from '@/classes/Rendering/PhysicsRenderers/SpringRenderer';
-import { he } from 'vuetify/locale';
 
 const props = defineProps<{
   /** Fixed at canvas init — number of grid rows. */
@@ -44,13 +44,6 @@ const {
   backgroundColor,
 } = storeToRefs(appStore);
 
-function hexToRgb(hex: string): [number, number, number] {
-  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/i.exec(hex);
-  return m
-    ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)]
-    : [255, 255, 255];
-}
-
 const frameRate = ref(40);
 const numberOfFrames = ref(0);
 const numberOfVehicles = ref(0);
@@ -77,6 +70,7 @@ onUnmounted(() => {
 
 onMounted(() => {
   let gen: GridGenerator | null = null;
+  let springRenderer: SpringRenderer | null = null;
   const springVehicles = new VehicleCollection();
   const springAttractors: P5.Vector[] = [];
 
@@ -115,19 +109,16 @@ onMounted(() => {
           origin,
           stiffness: props.springStiffness,
           damping: props.springDamping,
+          immortal: true,
           // connectDiagonals: true,
         },
         vehicleProps,
       );
       gen.populate(springVehicles);
 
-      // Vehicles must be immortal — the default lifeExpectancy is 150 frames, after which
-      // the collection becomes empty and buildOcTree() throws "Cannot construct OcTree with
-      // no vehicles", crashing the draw loop permanently.
       for (const layer of gen.grid) {
         for (const row of layer) {
           for (const v of row) {
-            v.lifeExpectancy = 250;
             v.env.friction = 0.04;
           }
         }
@@ -174,17 +165,16 @@ onMounted(() => {
         ),
         50,
       );
+
+      springRenderer = new SpringRenderer(
+        p5,
+        hexToRgb(primaryColor.value),
+        camera.value,
+        2,
+      );
     };
 
-    const springRenderer = new SpringRenderer(
-      p5,
-      hexToRgb(primaryColor.value),
-      camera.value,
-      2,
-    );
-
     p5.draw = () => {
-      // p5.background(backgroundColor.value);
       if (!gen) return;
 
       // Push current reactive prop values into the spring objects each frame.
@@ -193,14 +183,16 @@ onMounted(() => {
         s.damping = props.springDamping;
       }
 
-      springVehicles.arrive(springAttractors, props.attractorRange);
+      springVehicles.seek(
+        springAttractors,
+        props.attractorStrength,
+        props.attractorRange,
+      );
       springVehicles.applySprings();
       springVehicles.update();
 
-      // dotRenderer?.renderVehicles(springVehicles.vehicles);
-      if (numberOfFrames.value % 8 === 0) {
+      if (numberOfFrames.value % 8 === 0 && springRenderer) {
         // Render every 3rd frame to improve performance by reducing expensive spring rendering calls.
-        // dotRenderer?.renderVehicles(springVehicles.vehicles);
         springRenderer.renderSprings(gen.springs);
       }
 

@@ -120,6 +120,12 @@ export const useAppStore = defineStore('app', {
     resetInitialization() {
       this.initialized = false;
       this.pauseCanvas = false;
+      this.canvasWidth = 4600;
+      this.canvasHeight = 4600;
+      this.cameraInitPos = { x: 0, y: 0, z: 1000 };
+      this.cameraInitTarget = { x: 0, y: 0, z: 0 };
+      this.cameraInitFOV = 60;
+      this.camera = markRaw(new Camera3D(4600, 4600));
     },
     getProjectedPoint(vector: P5.Vector) {
       const projected = this.camera?.project(vector);

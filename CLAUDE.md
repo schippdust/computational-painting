@@ -67,8 +67,8 @@ The script will abort without writing anything if the source files don't exist, 
 
 ## Skills
 
-| Skill | Invoke | Description |
-|---|---|---|
+| Skill                                                  | Invoke                                | Description                                                                                                                                                                          |
+| ------------------------------------------------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [Development Team](.claude/skills/development-team.md) | "Ask the team to..." or "Code Review" | Spawns Architect, Software Engineer, and Computational Designer agents in parallel to assess a request, then synthesizes their findings into a sprint plan saved to `.claude/plans/` |
 
 ## Quick Orientation

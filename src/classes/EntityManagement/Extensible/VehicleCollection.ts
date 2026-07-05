@@ -80,7 +80,6 @@ export class VehicleCollection {
   }
 
   buildOcTree(): VehicleCollection {
-    console.log('building oc tree');
     this.ocTree = new OcTree(this.vehicles);
     return this;
   }

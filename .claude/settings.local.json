@@ -1,5 +1,12 @@
 {
   "permissions": {
-    "allow": ["Bash(npm run:*)"]
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(curl -s -w \"\\\\nHTTP_STATUS:%{http_code}\\\\n\" \"http://localhost:3000/node_modules/.vite/deps/d3-color.js\")",
+      "Bash(curl -s -w \"\\\\nHTTP_STATUS:%{http_code}\\\\n\" \"http://localhost:3000/node_modules/.vite/deps/d3.js\")",
+      "Bash(pkill -f \"vite\")",
+      "Bash(curl -s -o /dev/null -w \"port 3000: %{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"port 3001: %{http_code}\\\\n\" http://localhost:3001/)"
+    ]
   }
 }

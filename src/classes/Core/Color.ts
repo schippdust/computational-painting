@@ -1,5 +1,17 @@
-import d3 from 'd3';
+import * as d3 from 'd3';
 import * as d3Color from 'd3-color';
+
+/**
+ * Converts a CSS hex color string to a p5-compatible [r, g, b] tuple.
+ * @param hex Hex color string with or without leading '#' (e.g. '#ff8800' or 'ff8800')
+ * @returns RGB tuple with values 0–255; falls back to [255, 255, 255] for invalid input
+ */
+export function hexToRgb(hex: string): [number, number, number] {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/i.exec(hex);
+  return m
+    ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)]
+    : [255, 255, 255];
+}
 
 export class ColorManager {
   constructor(public colorPalette: d3Color.Color[] = []) {}

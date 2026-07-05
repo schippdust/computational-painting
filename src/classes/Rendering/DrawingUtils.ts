@@ -2,8 +2,6 @@ import { Camera3D } from '../Core/Camera3D';
 import P5 from 'p5';
 import { useAppStore } from '@/stores/app';
 import { storeToRefs } from 'pinia';
-const appStore = useAppStore();
-const { pauseCanvas } = storeToRefs(appStore);
 
 export function drawAxes(p5: P5, camera: Camera3D, axisLength: number) {
   const centerPoint = camera.project(new P5.Vector(0, 0, 0));
@@ -21,6 +19,9 @@ export function drawAxes(p5: P5, camera: Camera3D, axisLength: number) {
 }
 
 export function pressSpaceToPause(p5: P5) {
+  // Called inside a mounted Vue component, so Pinia is always active here.
+  const appStore = useAppStore();
+  const { pauseCanvas } = storeToRefs(appStore);
   if (p5.key == ' ') {
     if (pauseCanvas.value) {
       console.log('Spacebar Pressed: Unpausing Canvas');

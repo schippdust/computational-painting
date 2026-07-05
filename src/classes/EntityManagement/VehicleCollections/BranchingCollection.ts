@@ -74,7 +74,6 @@ export function createGenericBranchingCollectionProps(): BranchingCollectionProp
  * naturally-looking tree-like or vascular structures.
  */
 export class BranchingCollection extends VehicleCollection {
-  public branches: VehicleCollection[] = [];
   public props: BranchingCollectionProps;
 
   /**
@@ -98,14 +97,13 @@ export class BranchingCollection extends VehicleCollection {
    * @returns This BranchingCollection instance for method chaining
    */
   update(): BranchingCollection {
-    super.update();
-
-    // Process branching for each vehicle
+    // Snapshot before super.update() so end-of-life vehicles still get their
+    // highest-probability branching chance before being culled.
+    const snapshot = this.vehicles.slice();
     const newVehicles: Vehicle[] = [];
     const vehiclesToRemove: Set<string> = new Set();
 
-    for (const vehicle of this.vehicles) {
-      // Calculate branching probability based on age
+    for (const vehicle of snapshot) {
       // Closer to end of lifecycle = closer to highProbabilityOfBranching
       // Newer vehicle = closer to lowProbabilityOfBranching
       const lifeProgress = vehicle.age / vehicle.lifeExpectancy;
@@ -115,9 +113,7 @@ export class BranchingCollection extends VehicleCollection {
           (this.props.highProbabilityOfBranching -
             this.props.lowProbabilityOfBranching);
 
-      // Check if vehicle should branch
       if (Math.random() < branchingProbability) {
-        // Randomly select number of branches
         const numberOfBranches = Math.floor(
           Math.random() *
             (this.props.maxNumberOfBranches -
@@ -126,12 +122,11 @@ export class BranchingCollection extends VehicleCollection {
             this.props.minNumberOfBranches,
         );
 
-        // Create and apply forces to each branch
         for (let i = 0; i < numberOfBranches; i++) {
           const branch = vehicle.duplicate();
           branch.age = 0;
           branch.lifeExpectancy =
-            vehicle.lifeExpectancy * Math.random() * 0.5 + 0.75;
+            vehicle.lifeExpectancy * (Math.random() * 0.5 + 0.75);
           const branchForce = this.generateRandomBranchingForce(vehicle);
           branch.velocity = branchForce.setMag(vehicle.phys.velocity.mag());
           newVehicles.push(branch);
@@ -141,11 +136,12 @@ export class BranchingCollection extends VehicleCollection {
       }
     }
 
-    // Replace branching vehicles in the main collection
+    // Splice out branching vehicles and add new branches before super.update()
+    // so physics forces are applied to the new branches this same frame.
     this.vehicles = this.vehicles.filter((v) => !vehiclesToRemove.has(v.uuid));
     this.vehicles.push(...newVehicles);
 
-    this.branches.forEach((branch) => branch.update());
+    super.update();
     return this;
   }
 

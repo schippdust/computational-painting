@@ -17,6 +17,7 @@
 - Use `type` imports for interfaces that are only needed at compile time: `import type { WindSystem } from '...'`
 - Use `@/` path alias for all imports from `src/` (not relative `../../`).
 - `P5.Vector` (capital P5, static class) is used throughout — not `p5.Vector`.
+- `d3` and its sub-packages (`d3-color`, etc.) are ESM-only with no default export — always `import * as d3 from 'd3'`, never `import d3 from 'd3'`. A default import compiles fine under TypeScript but fails at runtime in Vite with `does not provide an export named 'default'`.
 
 ## Class Design
 

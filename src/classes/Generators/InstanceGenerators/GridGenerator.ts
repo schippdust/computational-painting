@@ -33,6 +33,13 @@ export interface GridGeneratorProps {
    */
   connectDiagonals?: boolean;
   /**
+   * If true, every vehicle is created with lifeExpectancy = Infinity so the grid never expires.
+   * Omitting this causes all vehicles to die at frame 150 (the default), emptying the collection
+   * and crashing the next spatial query. Always set this for persistent spring-grid simulations.
+   * (default: false)
+   */
+  immortal?: boolean;
+  /**
    * Direction of columns in world space (default: world +X).
    * Will be normalised internally.
    */
@@ -106,6 +113,7 @@ export class GridGenerator {
       stiffness = 1,
       damping = 0,
       connectDiagonals = false,
+      immortal = false,
     } = this.props;
 
     const xDir = (this.props.xAxis ?? new P5.Vector(1, 0, 0))
@@ -131,7 +139,9 @@ export class GridGenerator {
             .add(xDir.copy().mult(c * spacing))
             .add(yDir.copy().mult(r * spacing))
             .add(zDir.copy().mult(l * spacing));
-          row.push(new Vehicle(this.sketch, pos, { ...this.vehicleProps }));
+          const v = new Vehicle(this.sketch, pos, { ...this.vehicleProps });
+          if (immortal) v.lifeExpectancy = Infinity;
+          row.push(v);
         }
         layerGrid.push(row);
       }

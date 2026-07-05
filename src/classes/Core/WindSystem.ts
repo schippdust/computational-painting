@@ -33,6 +33,9 @@ export class WindSystem {
   private readonly NOISE_OFFSET_N2 = [31.416, 47.853, 12.793];
   private readonly NOISE_OFFSET_N3 = [99.123, 65.432, 77.789];
 
+  private _noiseOctaves: number = 4;
+  private _noiseFalloff: number = 0.6;
+
   /** Returns the current time coordinate: specificTime if set, otherwise frameCount × timeScale. */
   private get _time(): number {
     return this.specificTime ?? this.p5.frameCount * this.timeScale;
@@ -42,18 +45,18 @@ export class WindSystem {
    * Creates a new WindSystem.
    * @param p5 The p5 instance for accessing noise and frame count
    */
-  constructor(private p5: P5) {
-    this.setNoiseDetail(4);
-  }
+  constructor(private p5: P5) {}
 
   /**
-   * Configures the detail of the Perlin noise function.
-   * Higher octaves and appropriate falloff create more detailed, realistic wind patterns.
+   * Configures the detail of the Perlin noise function used by this system.
+   * The settings are stored and re-applied immediately before each wind calculation
+   * so they are always in effect regardless of what other noise users have set globally.
    * @param octaves The number of noise octaves for layered (fBm) noise
    * @param falloff The amplitude falloff ratio between octaves (default: 0.6)
    */
   setNoiseDetail(octaves: number, falloff = 0.6) {
-    this.p5.noiseDetail(octaves, falloff);
+    this._noiseOctaves = octaves;
+    this._noiseFalloff = falloff;
   }
 
   /**
@@ -73,6 +76,9 @@ export class WindSystem {
     eddyMultiplier = 1,
     strengthVariability = true,
   ): P5.Vector {
+    // Re-apply this system's noise settings before sampling so they are always
+    // in effect regardless of what other noise users have set globally.
+    this.p5.noiseDetail(this._noiseOctaves, this._noiseFalloff);
     const eddyWind = this.calculateNoiseAtCoords(pos, eddyMultiplier);
     const directionalWind = this.calculateNoiseAtCoords(
       new P5.Vector(0, 0, 0),

@@ -254,9 +254,8 @@ export class Vehicle {
     // Reset acceleration so it doesn't carry into next frame
     this.phys.acceleration.mult(0);
     // Update coordinate system based on new position and velocity direction
-    this.coordSystem.translateCoordinateSystem(this.phys.velocity);
     this.coordSystem = CoordinateSystem.fromOriginAndNormal(
-      this.coords,
+      P5.Vector.add(this.coords, this.phys.velocity),
       this.phys.velocity,
     );
     this.phys.forward = this.coordSystem.getZAxis(1);

@@ -8,11 +8,11 @@ Orchestrate three specialized agents in parallel to assess a request, then synth
 
 ## Team Roles
 
-| Agent | Lens |
-|---|---|
-| **Software Engineer** | Code quality, modularity, naming, dead code, redundancy, TypeScript best practices |
-| **Computational Designer** | Aesthetic intent, visual output, how classes/physics/rendering serve the art-making workflow |
-| **Architect** | Big-picture structural integrity, art/code balance, cross-cutting concerns, pragmatic judgment |
+| Agent                      | Lens                                                                                           |
+| -------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Software Engineer**      | Code quality, modularity, naming, dead code, redundancy, TypeScript best practices             |
+| **Computational Designer** | Aesthetic intent, visual output, how classes/physics/rendering serve the art-making workflow   |
+| **Architect**              | Big-picture structural integrity, art/code balance, cross-cutting concerns, pragmatic judgment |
 
 ---
 
@@ -146,6 +146,7 @@ Group output by tier (MUST → INCLUDE → DEPRIORITIZE → SKIP), not by source
 As the orchestrator, combine the Architect's prioritization with all three original plans and write the final sprint plan.
 
 **Sprint ordering rules:**
+
 - Each sprint = one concern or tightly connected group
 - Order sprints so earlier ones don't create blockers for later ones
 - Foundation/structural work comes before feature-level work
@@ -157,19 +158,24 @@ As the orchestrator, combine the Architect's prioritization with all three origi
 
 ```markdown
 # [Request Title] — Development Plan
-*Generated: YYYY-MM-DD*
-*Request: [original user request verbatim]*
+
+_Generated: YYYY-MM-DD_
+_Request: [original user request verbatim]_
 
 ## Summary
+
 [2-3 sentences: what this plan addresses and the expected outcome]
 
 ## Sprint 1 — [Descriptive Focus Area Title]
+
 **Goal:** [one sentence stating what done looks like]
 **Rationale:** [why this sprint comes first]
 **Sources:** [SE] / [CD] / [AR] — which agents flagged this
 
 ### Tasks
+
 - [ ] [Specific task description]
+
   - File: `src/path/to/file.ts` (lines ~N if relevant)
   - Change: [what specifically to do]
   - Context: [any non-obvious constraint or invariant the executing agent needs to know]
@@ -177,6 +183,7 @@ As the orchestrator, combine the Architect's prioritization with all three origi
 - [ ] [Next task...]
 
 ## Sprint 2 — [Descriptive Focus Area Title]
+
 ...
 ```
 
@@ -184,6 +191,30 @@ As the orchestrator, combine the Architect's prioritization with all three origi
 Use today's date from your context. Use a short kebab slug that captures the request (e.g. `code-review-2026-07-04.md`, `spring-grid-refactor-2026-07-04.md`).
 
 **After saving:** report the file path to the user and give a one-paragraph summary of what the plan covers — sprint titles, main themes, and total task count.
+
+---
+
+## Sprint Execution Tracking
+
+After completing each sprint, **update the plan file** to record what was done. This keeps the plan as a living document and gives future sessions full context on what has already shipped.
+
+For every completed sprint, make three edits to the plan:
+
+1. **Sprint header** — append `✅ *Completed YYYY-MM-DD*` to the `## Sprint N —` line.
+2. **Task checkboxes** — change every `- [ ]` in the sprint to `- [x]`.
+3. **Done notes** — add a `**Done:**` line after the `Context:` line of each task. Describe what was actually changed: file(s) touched, method or field modified, any meaningful deviation from the plan (e.g. a 7th file discovered by grep, a different fix strategy that achieved the same result). One to three sentences per task is enough.
+
+**When to update:** immediately after each sprint completes — before moving to the next one, and before reporting back to the user. The plan file is the source of truth for sprint progress.
+
+**Example completed task entry:**
+
+```markdown
+- [x] Remove dead `branches` field from `BranchingCollection`
+  - File: `src/classes/EntityManagement/VehicleCollections/BranchingCollection.ts`
+  - Change: Remove `public branches: VehicleCollection[]` and the `this.branches.forEach(...)` call.
+  - Context: Nothing ever pushes into `branches`; the forEach iterates an empty array every frame.
+  - **Done:** Removed the field declaration and the forEach loop at the end of `update()`.
+```
 
 ---
 

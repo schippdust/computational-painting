@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import P5 from 'p5';
 import { pressSpaceToPause } from '@/classes/Rendering/DrawingUtils';
+import { hexToRgb } from '@/classes/Core/Color';
 import { CoordinateSystem } from '@/classes/Geometry/CoordinateSystem';
 import { Sphere } from '@/classes/Geometry/Sphere';
 
@@ -16,8 +17,6 @@ import {
   createGenericBranchingCollectionProps,
 } from '@/classes/EntityManagement/VehicleCollections/BranchingCollection';
 import { VehicleDotRenderer } from '@/classes/Rendering/VehicleRenderers/VehicleDotRenderer';
-import { dot } from 'mathjs';
-
 const appStore = useAppStore();
 const {
   canvasHeight,
@@ -28,14 +27,6 @@ const {
   secondaryColor,
   backgroundColor,
 } = storeToRefs(appStore);
-
-/** Convert a CSS hex color string to a p5-compatible [r, g, b] array. */
-function hexToRgb(hex: string): [number, number, number] {
-  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})/i.exec(hex);
-  return m
-    ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)]
-    : [255, 255, 255];
-}
 
 const frameRate = ref(40);
 const numberOfFrames = ref(0);
@@ -192,10 +183,6 @@ onMounted(() => {
         silhouettesRendered = true;
       }
 
-      // Remove dead vehicles before processing
-      // branchingCollection.applyWind(windSystem, 1, 1);
-      // Update all vehicles with forces and behaviors (persistent steer forces applied in vehicle.update())
-
       // Update the branching collection (handles branching)
       if (branchingCollection.vehicles.length > 1) {
         branchingCollection.flock(flockingSearchRadius, 1.5, 0.1, 0.2);
@@ -280,10 +267,6 @@ onMounted(() => {
       numberOfFrames.value++;
       numberOfVehicles.value = branchingCollection.vehicles.length;
     };
-
-    p5.mousePressed = () => {};
-    p5.mouseDragged = () => {};
-    p5.mouseReleased = () => {};
 
     p5.keyPressed = () => {
       pressSpaceToPause(p5);
