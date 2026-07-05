@@ -12,6 +12,7 @@ declare module 'vue' {
     BranchingUpwardCanvas: typeof import('./components/BranchingUpwardCanvas.vue')['default']
     CanvasInitOverlay: typeof import('./components/CanvasInitOverlay.vue')['default']
     CanvasToolbar: typeof import('./components/CanvasToolbar.vue')['default']
+    DeleteCanvasTestCanvas: typeof import('./components/DeleteCanvasTestCanvas.vue')['default']
     EllipticalTestCanvas: typeof import('./components/ellipticalTestCanvas.vue')['default']
     FunShapesCanvas: typeof import('./components/funShapesCanvas.vue')['default']
     GridBlowingInWind: typeof import('./components/gridBlowingInWind.vue')['default']

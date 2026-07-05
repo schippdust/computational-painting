@@ -56,6 +56,10 @@ Mark methods that mutate-and-chain explicitly. Mark pure/side-effect-free method
 - Keep all p5 canvas setup and draw logic inside the `onMounted` callback of Vue components.
 - Use `p5.push()` / `p5.pop()` to isolate drawing state changes within renderer methods.
 
+## Canvas Scaffolding
+
+Never hand-write a new canvas's boilerplate, hand-wire a parameter's four touch points (page ref, canvas tag prop, init overlay control, toolbar menu control, component prop), or hand-edit the registry to remove a canvas — use the `npm run` scripts in `scripts/` for all of it. See the [Canvas Scripts](../skills/canvas-scripts.md) skill for the full command reference (`new-canvas`, `create-slider`/`create-input`/`create-color-picker`, `edit-slider`/`edit-input`/`edit-color-picker`, `delete-param`, `delete-canvas`).
+
 ## Naming
 
 - Class files: `PascalCase.ts`
