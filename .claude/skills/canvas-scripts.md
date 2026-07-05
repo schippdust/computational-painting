@@ -2,7 +2,7 @@
 
 Scaffold, parameterize, and delete canvas iterations using the `npm run` scripts in `scripts/` — never hand-write these mechanics (a new canvas's boilerplate, a parameter's four wiring points, a canvas's removal from the registry) when a script already does it atomically and consistently.
 
-**Invoke when:** the user asks to create/scaffold a new canvas, add or edit a canvas parameter (slider, numeric input, or color picker), or delete/remove a canvas — whether they name the npm script directly or just describe the outcome (e.g. "add a friction slider to spring-grids", "get rid of the old-experiment canvas").
+**Invoke when:** the user asks to create/scaffold a new canvas, add or edit a canvas parameter (slider, numeric input, or color picker), delete/remove a canvas, or duplicate a canvas as the next iteration — whether they name the npm script directly or just describe the outcome (e.g. "add a friction slider to spring-grids", "get rid of the old-experiment canvas", "duplicate Branching Test", "iterative step on Branching Test 5").
 
 ---
 
@@ -30,6 +30,24 @@ npm run rename-canvas -- spring-grids --group "Lattice Experiments"  # group-onl
 ```
 
 Renames the component file, page file, and registry `id`/`title` together, updating internal references (element id, import, tag) in both files. Omitting `[new-kebab]` (or passing the current name) updates only the registry `group` — no files are renamed. Aborts without writing anything if the source doesn't exist, a target already exists, or the registry doesn't contain the old id.
+
+## Duplicating a Canvas ("iterative step")
+
+**Trigger phrasing:** "duplicate `<canvas>`", "iterative step on `<canvas>`", "make a new iteration of `<canvas>`" — with no separate npm script of its own, this is `new-canvas -- <computed-name> --template <source-kebab>` where the new name follows the project's existing numeric-iteration convention (already visible in the registry as `branching-upward` / `branching-upward-2`).
+
+**Determining the new name — do this before running the script:**
+
+1. Resolve the canvas the user named to its kebab id (check `src/canvasRegistry.ts` if the user gave a title instead of a kebab name).
+2. Strip any trailing `-<number>` from that id to get the **base** (e.g. `branching-test-5` → base `branching-test`; `branching-test` with no number is already its own base).
+3. Search `src/canvasRegistry.ts` for every entry whose id matches `<base>` or `<base>-<number>`. Treat a bare base match as iteration `1`. Take the highest number found across all matches.
+4. The new iteration is `<base>-<highest+1>` (kebab) / `<Base Title> <highest+1>` (title) — e.g. `Branching Test` → `Branching Test 2`, `Branching Test 2` → `Branching Test 3`.
+5. Run the clone using the **specific canvas instance the user named** as the template source (not the base) — later iterations may have diverged from earlier ones, and the duplicate should inherit whatever that specific instance currently contains:
+
+```bash
+npm run new-canvas -- <base>-<highest+1> --template <source-kebab> --group "<source's existing group>"
+```
+
+Keep the same `--group` as the source unless told otherwise. Report the resulting mapping (`<source title> (<source-kebab>) -> <new title> (<new-kebab>)`) back to the user — this mapping is also what a plan needs when a duplication happens mid-sprint (see the Development Team skill's "Iterative-Step Sprints" section).
 
 ## Adding / Editing Canvas Parameters
 

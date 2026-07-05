@@ -168,6 +168,21 @@ export class Camera3D {
   }
 
   /**
+   * Sets the world-space up direction used to establish the camera's right/up basis vectors.
+   * Required for a straight-down (or straight-up) camera: the default up (0,0,1) is parallel
+   * to that forward direction and degenerates the basis (right = forward × up = 0 → NaN
+   * projection), so an overhead view must call this with a horizontal up first, e.g. (0,1,0).
+   * This method mutates the instance and returns it for method chaining.
+   * @param up The new up-direction vector in world space
+   * @returns This Camera3D instance for method chaining
+   */
+  setUp(up: P5.Vector): Camera3D {
+    this.up = up.copy();
+    this._basisDirty = true;
+    return this;
+  }
+
+  /**
    * Sets the vertical field of view of the camera.
    * @param degrees The field of view angle in degrees
    */

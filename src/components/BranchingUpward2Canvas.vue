@@ -90,7 +90,7 @@ onUnmounted(() => {
 onMounted(() => {
   let branchingCollection: BranchingCollection;
   let windSystem: WindSystem;
-  let initialVelocityMagnitude = 5;
+  const initialVelocityMagnitude = 5;
   const maxVehicles = 1000;
   const persistentSteerForceMagnitude = 0.5; // Magnitude of radial outward persistent steer force
   const flockingSearchRadius = 1500;
@@ -153,7 +153,7 @@ onMounted(() => {
 
       const generationPoints = generationCircle.getRandomPointsInside(3);
       dotRenderer?.renderPoints(generationPoints);
-      for (let pt of generationPoints) {
+      for (const pt of generationPoints) {
         const startVel = p5.random(
           -1 * maxStartingVelocity.value,
           1 * maxStartingVelocity.value,
@@ -192,5 +192,5 @@ onMounted(() => {
   <div
     id="branching-upward-2-canvas"
     style="overflow-y: auto; overflow-x: auto; line-height: 0"
-  ></div>
+  />
 </template>

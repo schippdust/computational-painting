@@ -186,8 +186,8 @@ onUnmounted(() => {
       <div ref="canvasAreaRef" class="canvas-scroll">
         <div class="canvas-zoom-wrapper" :style="{ zoom: zoom }">
           <WorldEventTracking1Canvas
-            ref="canvasRef"
             v-if="initialized"
+            ref="canvasRef"
             :key="canvasKey"
             :number-of-vehicles-per-frame="numberOfVehiclesPerFrame"
             :world-space-initial-dim="worldSpaceInitialDim"

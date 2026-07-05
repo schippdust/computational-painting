@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import BranchingUpward2Canvas from '@/components/BranchingUpward2Canvas.vue';
+import FishInTheSeaCanvas from '@/components/FishInTheSeaCanvas.vue';
 import CanvasToolbar from '@/components/CanvasToolbar.vue';
 import CanvasInitOverlay from '@/components/CanvasInitOverlay.vue';
 import { useAppStore } from '@/stores/app';
@@ -11,59 +11,30 @@ const {
   initialized,
   canvasWidth,
   canvasHeight,
+  darkMode,
   cameraInitPos,
   cameraInitTarget,
   cameraInitFOV,
-  darkMode,
 } = storeToRefs(appStore);
 
-// Set camera defaults for this canvas before the overlay is shown.
-appStore.setCameraInitPos(8000, -8000, 9000);
+// Overhead view: camera straight above the origin looking straight down (-Z).
+// The horizontal "up" (0,1,0) needed to keep this basis from degenerating is set
+// on the live Camera3D once it exists — see FishInTheSeaCanvas.vue's p5.setup().
+appStore.setCameraInitPos(0, 0, 4000);
 appStore.setCameraInitTarget(0, 0, 0);
-appStore.setCameraInitFOV(50);
+appStore.setCameraInitFOV(65);
 
 function goHome() {
   appStore.resetInitialization();
   router.push('/');
 }
 
-const generationCircleRadius = ref(2000);
-const falloff = ref(0.001);
-const maxStartingVelocity = ref(25);
-
-const paramMenuOpen = ref(false);
 const zoom = ref(1);
-
-const canvasKey = ref(0);
-
-function resetCanvas() {
-  canvasKey.value++;
-}
-const canvasRef = ref<{ numberOfFrames: number } | null>(null);
-const currentFrame = computed(() => canvasRef.value?.numberOfFrames ?? 0);
-
-function handleAutomateCapture(filename: string) {
-  const canvas = document.querySelector(
-    '#branching-upward-2-canvas canvas',
-  ) as HTMLCanvasElement;
-  if (canvas) {
-    const link = document.createElement('a');
-    link.download = `${filename}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  }
-  setTimeout(() => resetCanvas(), 50);
-}
-
-function handleAutomateComplete() {
-  goHome();
-}
 const ZOOM_STEP = 0.05;
 const ZOOM_MIN = 0.05;
 const ZOOM_MAX = 4;
 
-// Points at the inner scroll container, not the outer wrapper.
-// clientWidth/clientHeight here exclude any visible scrollbar — correct for fit math.
+// Points at the inner scroll container — clientWidth/clientHeight exclude any visible scrollbar.
 const canvasAreaRef = ref<HTMLElement | null>(null);
 
 // Track vertical scrollbar width so the home button stays 8px from its left edge.
@@ -74,8 +45,6 @@ function handleFit() {
   if (!canvasAreaRef.value) return;
   const fitW = canvasAreaRef.value.clientWidth / canvasWidth.value;
   const fitH = canvasAreaRef.value.clientHeight / canvasHeight.value;
-  // Floor to 3 decimal places — rounding up would make the canvas fractionally
-  // larger than the container and trigger a scrollbar.
   zoom.value = Math.floor(Math.min(fitW, fitH) * 1000) / 1000;
 }
 
@@ -103,6 +72,40 @@ function handleKeydown(e: KeyboardEvent) {
   } else if (e.key === '0') {
     zoom.value = 1;
   }
+}
+
+// ─── Canvas reset ─────────────────────────────────────────────────────────────
+// Incrementing canvasKey destroys and re-creates the canvas component, firing
+// onUnmounted (p5 cleanup) then onMounted (full re-init) with current prop values.
+
+const canvasKey = ref(0);
+
+function resetCanvas() {
+  canvasKey.value++;
+}
+
+// ─── Automation ───────────────────────────────────────────────────────────────
+// canvasRef exposes numberOfFrames from the canvas component so CanvasToolbar
+// can track the current frame count and trigger captures at the right moment.
+
+const canvasRef = ref<{ numberOfFrames: number } | null>(null);
+const currentFrame = computed(() => canvasRef.value?.numberOfFrames ?? 0);
+
+function handleAutomateCapture(filename: string) {
+  const canvas = document.querySelector(
+    '#fish-in-the-sea-canvas canvas',
+  ) as HTMLCanvasElement;
+  if (canvas) {
+    const link = document.createElement('a');
+    link.download = `${filename}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+  setTimeout(() => resetCanvas(), 50);
+}
+
+function handleAutomateComplete() {
+  goHome();
 }
 
 onMounted(() => {
@@ -138,60 +141,7 @@ onUnmounted(() => {
       @automate-capture="handleAutomateCapture"
       @automate-complete="handleAutomateComplete"
     >
-      <!-- Parameters menu -->
-      <v-menu
-        v-model="paramMenuOpen"
-        :close-on-content-click="false"
-        location="end"
-      >
-        <template #activator="{ props: menuProps }">
-          <v-tooltip text="Canvas parameters" location="right">
-            <template #activator="{ props: tip }">
-              <v-btn
-                variant="text"
-                icon="mdi-tune"
-                density="compact"
-                v-bind="{ ...menuProps, ...tip }"
-                @click="menuProps.onClick"
-              />
-            </template>
-          </v-tooltip>
-        </template>
-        <v-card min-width="260">
-          <v-card-text class="pt-3">
-            <p class="text-caption text-medium-emphasis mb-n2">
-              Generation Circle Radius
-            </p>
-            <v-slider
-              v-model="generationCircleRadius"
-              :min="100"
-              :max="10000"
-              :step="0.001"
-              hide-details
-              class="mb-4"
-            />
-            <p class="text-caption text-medium-emphasis mb-n2">Falloff</p>
-            <v-slider
-              v-model="falloff"
-              :min="0.0001"
-              :max="0.01"
-              :step="0.0001"
-              hide-details
-              class="mb-4"
-            />
-            <p class="text-caption text-medium-emphasis mb-n2">
-              Max Starting Velocity
-            </p>
-            <v-slider
-              v-model="maxStartingVelocity"
-              :min="1"
-              :max="100"
-              :step="1"
-              hide-details
-            />
-          </v-card-text>
-        </v-card>
-      </v-menu>
+      <!-- Add canvas-specific toolbar items here via slot -->
     </canvas-toolbar>
 
     <!-- Outer wrapper: position:relative, no overflow — anchors the UI overlay -->
@@ -202,13 +152,10 @@ onUnmounted(() => {
       <!-- Scrollable canvas layer — ref used for fit measurements -->
       <div ref="canvasAreaRef" class="canvas-scroll">
         <div class="canvas-zoom-wrapper" :style="{ zoom: zoom }">
-          <branching-upward-2-canvas
+          <FishInTheSeaCanvas
             v-if="initialized"
             ref="canvasRef"
             :key="canvasKey"
-            :generation-circle-radius="generationCircleRadius"
-            :falloff="falloff"
-            :max-starting-velocity="maxStartingVelocity"
           />
         </div>
       </div>
@@ -234,40 +181,6 @@ onUnmounted(() => {
       </div>
 
       <canvas-init-overlay v-if="!initialized" :width="560">
-        <v-divider class="my-3" />
-        <p class="text-subtitle-2 mb-2">Parameters</p>
-
-        <v-slider
-          v-model="generationCircleRadius"
-          label="Generation Circle Radius"
-          :min="100"
-          :max="10000"
-          :step="0.001"
-          thumb-label
-          hide-details
-          class="mb-2"
-        />
-        <v-slider
-          v-model="falloff"
-          label="Falloff"
-          :min="0.0001"
-          :max="0.01"
-          :step="0.0001"
-          thumb-label
-          hide-details
-          class="mb-2"
-        />
-        <v-slider
-          v-model="maxStartingVelocity"
-          label="Max Starting Velocity"
-          :min="1"
-          :max="100"
-          :step="1"
-          thumb-label
-          hide-details
-          class="mb-3"
-        />
-
         <v-divider class="my-3" />
         <p class="text-subtitle-2 mb-2">Camera</p>
 

@@ -94,4 +94,12 @@ export const canvasRegistry: CanvasEntry[] = [
     createdAt: '2026-04-24',
     group: 'Meshes',
   },
+
+  {
+    id: 'fish-in-the-sea',
+    title: 'Fish In The Sea',
+    description: 'Swarms of fish flocking, viewed straight down into water',
+    createdAt: '2026-07-05',
+    group: 'Flocking',
+  },
 ];

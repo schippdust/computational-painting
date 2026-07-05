@@ -2,7 +2,38 @@ import P5 from 'p5';
 import { prependUniqueWithLimit } from '../../Core/CodeUtils';
 import type { WindSystem } from '../../Core/WindSystem';
 import { CoordinateSystem } from '../../Geometry/CoordinateSystem';
+import { Circle } from '../../Geometry/Circle';
 import { rotate3D } from '../../Geometry/VectorOverloads';
+
+/**
+ * Configuration for Vehicle.wander3d(). All fields are optional — wander3d works
+ * with no arguments using the defaults noted below.
+ */
+export interface Wander3dOptions {
+  /** Radius of the wander sphere projected ahead of the vehicle (default: 40). */
+  radius?: number;
+  /** Distance ahead of the vehicle, along its current travel direction, the wander sphere is centered at (default: 60). */
+  distance?: number;
+  /** Max world-space arc length the wander point may travel across the sphere surface per frame (default: 8). */
+  maxArcLength?: number;
+  /** Steering force multiplier passed through to seek() (default: 1). */
+  multiplier?: number;
+  /** Noise time-scale controlling how quickly the wander point's motion evolves — smaller is slower/smoother (default: 0.01). */
+  noiseScale?: number;
+}
+
+/**
+ * Configuration for Vehicle.wander2d(). All fields are optional — wander2d works
+ * with no arguments using the defaults noted below.
+ */
+export interface Wander2dOptions extends Wander3dOptions {
+  /**
+   * The plane the wander circle lies in. Defaults to a plane perpendicular to the
+   * vehicle's current travel direction (i.e. normal = travel direction), positioned
+   * `distance` ahead of the vehicle — matching wander3d's default framing.
+   */
+  coordinateSystem?: CoordinateSystem;
+}
 
 /**
  * Physical properties of a vehicle including kinematics, mass, and steering constraints.
@@ -76,6 +107,12 @@ export class Vehicle {
   public desiredSeparation: number;
   protected persistentSteerForces: P5.Vector[] = [];
 
+  // wander state — persisted across frames so the wander point ambles smoothly
+  // instead of jumping to a new random point every call. See wander3d()/wander2d().
+  protected wanderDirection3d: P5.Vector | null = null;
+  protected wanderAngle2d: number | null = null;
+  protected readonly wanderNoiseSeed: number;
+
   /**
    * Creates a new Vehicle.
    * @param sketch The p5 instance
@@ -91,6 +128,9 @@ export class Vehicle {
   ) {
     this.uuid = crypto.randomUUID();
     this.p5 = sketch;
+    // Per-vehicle offset into the noise domain so wander3d()/wander2d() don't all
+    // sample identical noise values and move in lockstep.
+    this.wanderNoiseSeed = this.p5.random(1000);
 
     this.lifeExpectancy = 150;
     this.age = 0;
@@ -612,6 +652,146 @@ export class Vehicle {
     this.separate(neighborCoords, separateMultiplier);
     this.align(neighborVelocities, alignMultiplier);
     this.cohere(neighborCoords, cohereMultiplier);
+    return this;
+  }
+
+  /**
+   * Returns the vehicle's current travel direction, falling back to its last known
+   * forward direction (or world +Z) if it is momentarily stationary and `phys.forward`
+   * has zero magnitude. Used to orient wander3d()/wander2d()'s default framing.
+   * @returns A normalized direction vector
+   * @private
+   */
+  private travelDirection(): P5.Vector {
+    if (this.phys.forward.mag() > 1e-6) {
+      return this.phys.forward.copy().normalize();
+    }
+    if (this.previousForward && this.previousForward.mag() > 1e-6) {
+      return this.previousForward.copy().normalize();
+    }
+    return new P5.Vector(0, 0, 1);
+  }
+
+  /**
+   * Builds the default wander coordinate system: a plane perpendicular to the
+   * vehicle's current travel direction (normal = travel direction), centered
+   * `distance` world units ahead of the vehicle.
+   * @param distance World-space offset ahead of the vehicle along its travel direction
+   * @returns A CoordinateSystem positioned and oriented for the default wander framing
+   * @private
+   */
+  private defaultWanderCoordinateSystem(distance: number): CoordinateSystem {
+    const travelDir = this.travelDirection();
+    const center = P5.Vector.add(this.coords, travelDir.copy().mult(distance));
+    return CoordinateSystem.fromOriginAndNormal(center, travelDir);
+  }
+
+  /**
+   * Builds an orthonormal tangent basis (two vectors) perpendicular to the given normal.
+   * Used to take a small random step "along the surface" of the wander sphere in wander3d().
+   * @param normal The direction to build a tangent basis around (will be normalized)
+   * @returns A pair of orthonormal vectors spanning the plane perpendicular to normal
+   * @private
+   */
+  private static tangentBasis(normal: P5.Vector): [P5.Vector, P5.Vector] {
+    const n = normal.copy().normalize();
+    const arbitrary =
+      Math.abs(n.z) < 0.99 ? new P5.Vector(0, 0, 1) : new P5.Vector(1, 0, 0);
+    const u = (arbitrary.copy().cross(n) as P5.Vector).normalize();
+    const v = (n.copy().cross(u) as P5.Vector).normalize();
+    return [u, v];
+  }
+
+  /**
+   * Steers toward a wandering point on a sphere projected ahead of the vehicle, producing
+   * organic, non-straight-line motion. The wander point is remembered on the vehicle between
+   * calls: each frame it takes a small step across the sphere's surface — a smoothly
+   * time-varying (noise-driven) direction and magnitude, capped by `maxArcLength` — so its
+   * motion stays correlated frame-to-frame instead of jittering to a new random point.
+   * This method mutates the instance (steering force + persisted wander state) and returns
+   * it for method chaining.
+   * @param options Wander configuration; every field is optional (see Wander3dOptions)
+   * @returns This Vehicle instance for method chaining
+   */
+  wander3d(options: Wander3dOptions = {}): Vehicle {
+    const {
+      radius = 40,
+      distance = 60,
+      maxArcLength = 8,
+      multiplier = 1,
+      noiseScale = 0.01,
+    } = options;
+
+    if (!this.wanderDirection3d) {
+      this.wanderDirection3d = P5.Vector.random3D();
+    }
+
+    const maxAngleStep = maxArcLength / radius;
+    const t = this.p5.frameCount * noiseScale + this.wanderNoiseSeed;
+    const stepAngle = this.p5.noise(t) * Math.PI * 2;
+    const stepMagnitude = this.p5.noise(t + 1000) * maxAngleStep;
+
+    const [u, v] = Vehicle.tangentBasis(this.wanderDirection3d);
+    const tangentStep = P5.Vector.add(
+      u.mult(Math.cos(stepAngle)),
+      v.mult(Math.sin(stepAngle)),
+    ).mult(stepMagnitude);
+
+    this.wanderDirection3d = P5.Vector.add(
+      this.wanderDirection3d,
+      tangentStep,
+    ).normalize();
+
+    const sphereCenter = P5.Vector.add(
+      this.coords,
+      this.travelDirection().mult(distance),
+    );
+    const target = P5.Vector.add(
+      sphereCenter,
+      this.wanderDirection3d.copy().mult(radius),
+    );
+
+    this.seek(target, multiplier);
+    return this;
+  }
+
+  /**
+   * A 2D variant of wander3d(): the wander point is confined to a circle on a given
+   * coordinate system's plane rather than roaming a full sphere. By default the circle's
+   * plane is perpendicular to the vehicle's current travel direction (i.e. the classic
+   * "wander circle" projected in front of the vehicle) — pass `coordinateSystem` to wander
+   * around a different plane instead (e.g. a fixed world plane). Persists the wander angle
+   * on the vehicle between calls and steps it each frame by a small, noise-driven,
+   * `maxArcLength`-capped amount so the motion stays smooth frame-to-frame.
+   * This method mutates the instance (steering force + persisted wander state) and returns
+   * it for method chaining.
+   * @param options Wander configuration; every field is optional (see Wander2dOptions)
+   * @returns This Vehicle instance for method chaining
+   */
+  wander2d(options: Wander2dOptions = {}): Vehicle {
+    const {
+      radius = 40,
+      distance = 60,
+      maxArcLength = 8,
+      multiplier = 1,
+      noiseScale = 0.01,
+      coordinateSystem,
+    } = options;
+
+    if (this.wanderAngle2d === null) {
+      this.wanderAngle2d = this.p5.random(Math.PI * 2);
+    }
+
+    const maxAngleStep = maxArcLength / radius;
+    const t = this.p5.frameCount * noiseScale + this.wanderNoiseSeed;
+    const delta = (this.p5.noise(t + 2000) * 2 - 1) * maxAngleStep;
+    this.wanderAngle2d += delta;
+
+    const cs = coordinateSystem ?? this.defaultWanderCoordinateSystem(distance);
+    const circle = new Circle(cs, radius);
+    const target = circle.getPointOnCircle(this.wanderAngle2d);
+
+    this.seek(target, multiplier);
     return this;
   }
 

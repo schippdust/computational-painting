@@ -218,6 +218,22 @@ For every completed sprint, make three edits to the plan:
 
 ---
 
+## Iterative-Step Sprints (Canvas Duplication)
+
+**Trigger phrasing:** "run sprint N as an iterative step on `<canvas>`", "make sprint N an iterative step off `<canvas>`" — any instruction that a sprint's work should land on a duplicate of an existing canvas rather than the canvas itself.
+
+**Procedure:**
+
+1. **Before** starting the sprint's tasks, duplicate the named canvas following the "Duplicating a Canvas" convention in the [Canvas Scripts](canvas-scripts.md) skill — compute the next numeric iteration name and run `new-canvas --template <source-kebab>`. Note the resulting mapping, e.g. `Branching Test 5 (branching-test-5) -> Branching Test 6 (branching-test-6)`.
+2. Perform all of that sprint's tasks against the **new** canvas's component/page files, not the original's.
+3. **The redirect is standing, not one-sprint-only:** every later sprint in this plan that would otherwise target the original canvas now targets the new one instead, unless the user names a different canvas explicitly for a given sprint. Don't silently revert to the original canvas in sprint N+1.
+4. This only affects canvas-component-level work. Changes to shared base classes (`Vehicle`, `VehicleCollection`, renderers, etc. under `src/classes/`) still apply globally to every canvas, including the original — there is nothing to redirect there, since inheritance already propagates the change.
+5. **Update the plan file immediately**, as part of the normal Sprint Execution Tracking pass (before reporting back):
+   - On the completed sprint, add a `**Canvas iteration:** <old title> (<old-kebab>) → <new title> (<new-kebab>)` line directly under its `**Sources:**` line.
+   - Rewrite every remaining, not-yet-executed sprint's Goal/Task text that names the old canvas so it names the new canvas instead. A fresh Claude instance opening this plan later for sprint N+2 must see the current canvas name in that sprint's own text — it should never have to scan backward through completed sprints to discover a redirect.
+
+---
+
 ## Code Review Mode
 
 When the user requests a **Code Review** from the Development Team, each agent's `[CODE REVIEW ONLY]` instructions apply. Specifically, each agent must:

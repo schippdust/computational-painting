@@ -203,8 +203,8 @@ onUnmounted(() => {
       <div ref="canvasAreaRef" class="canvas-scroll">
         <div class="canvas-zoom-wrapper" :style="{ zoom: zoom }">
           <branching-upward-canvas
-            ref="canvasRef"
             v-if="initialized"
+            ref="canvasRef"
             :key="canvasKey"
             :generation-circle-radius="generationCircleRadius"
             :falloff="falloff"

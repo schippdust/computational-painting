@@ -1,5 +1,9 @@
 import P5 from 'p5';
 import { Vehicle } from '../../MarkMakingEntities/Extensible/Vehicle';
+import type {
+  Wander3dOptions,
+  Wander2dOptions,
+} from '../../MarkMakingEntities/Extensible/Vehicle';
 import { OcTree } from '../../Core/VehicleOcTree';
 import type { WindSystem } from '../../Core/WindSystem';
 import { Spring } from '../../Core/Spring';
@@ -340,6 +344,30 @@ export class VehicleCollection {
         );
       });
     }
+    return this;
+  }
+
+  /**
+   * Applies Vehicle.wander3d() to every vehicle in the collection, each with its own
+   * persisted wander state — see Vehicle.wander3d() for the full behavior and options.
+   * This method mutates all vehicles and returns this for method chaining.
+   * @param options Wander configuration passed through to each vehicle; every field is optional
+   * @returns This VehicleCollection instance for method chaining
+   */
+  wander3dAll(options?: Wander3dOptions): VehicleCollection {
+    this.vehicles.forEach((v) => v.wander3d(options));
+    return this;
+  }
+
+  /**
+   * Applies Vehicle.wander2d() to every vehicle in the collection, each with its own
+   * persisted wander state — see Vehicle.wander2d() for the full behavior and options.
+   * This method mutates all vehicles and returns this for method chaining.
+   * @param options Wander configuration passed through to each vehicle; every field is optional
+   * @returns This VehicleCollection instance for method chaining
+   */
+  wander2dAll(options?: Wander2dOptions): VehicleCollection {
+    this.vehicles.forEach((v) => v.wander2d(options));
     return this;
   }
 

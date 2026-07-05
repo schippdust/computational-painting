@@ -1,5 +1,10 @@
 # Coding Conventions
 
+## .claude/plans
+
+- When executing a plan, please reference the development-team.md skill for instructions on how to modify the plan.md file under the Sprint Execution Tracking section.
+- When an interative step or duplication of a canvas is requested in the context of a plan, please reference the development-team.md skill for instructions on how to implement this and update the plan.md file.
+
 ## Vue SFCs
 
 - `<script setup lang="ts">` **always comes before** `<template>` — no exceptions.
@@ -55,6 +60,10 @@ Mark methods that mutate-and-chain explicitly. Mark pure/side-effect-free method
 - The p5 instance is passed as `sketch: P5` to class constructors that need canvas access.
 - Keep all p5 canvas setup and draw logic inside the `onMounted` callback of Vue components.
 - Use `p5.push()` / `p5.pop()` to isolate drawing state changes within renderer methods.
+
+## Verifying UI / Canvas Changes
+
+Do not install browser-automation tooling (Playwright, chromium-cli, Selenium, etc.) to screenshot or drive the app for verification. Start the dev server (`npm run dev`) and hand the URL to the user — they check the canvas in their own browser. Type-checking and lint are yours to run; visually confirming a canvas looks/behaves correctly is the user's.
 
 ## Canvas Scaffolding
 

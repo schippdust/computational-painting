@@ -25,10 +25,10 @@ npm run format     # Prettier
 
 ## Skills
 
-| Skill                                                  | Invoke                                                                       | Description                                                                                                                                                                                |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [Development Team](.claude/skills/development-team.md) | "Ask the team to..." or "Code Review"                                        | Spawns Architect, Software Engineer, and Computational Designer agents in parallel to assess a request, then synthesizes their findings into a sprint plan saved to `.claude/plans/`       |
-| [Canvas Scripts](.claude/skills/canvas-scripts.md)     | Creating/scaffolding a canvas, adding/editing a parameter, deleting a canvas | Reference for the `new-canvas`/`rename-canvas`/`delete-canvas` and `create-*`/`edit-*`/`delete-param` npm scripts — always use these instead of hand-editing wiring points or the registry |
+| Skill                                                  | Invoke                                                                                                                        | Description                                                                                                                                                                                |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [Development Team](.claude/skills/development-team.md) | "Ask the team to..." or "Code Review"                                                                                         | Spawns Architect, Software Engineer, and Computational Designer agents in parallel to assess a request, then synthesizes their findings into a sprint plan saved to `.claude/plans/`       |
+| [Canvas Scripts](.claude/skills/canvas-scripts.md)     | Creating/scaffolding a canvas, adding/editing a parameter, deleting a canvas, duplicate a canvas, iterative step for a canvas | Reference for the `new-canvas`/`rename-canvas`/`delete-canvas` and `create-*`/`edit-*`/`delete-param` npm scripts — always use these instead of hand-editing wiring points or the registry |
 
 ## Quick Orientation
 

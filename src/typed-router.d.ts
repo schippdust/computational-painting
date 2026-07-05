@@ -55,6 +55,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/fish-in-the-sea': RouteRecordInfo<
+      '/fish-in-the-sea',
+      '/fish-in-the-sea',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/mesh-occlusion-test': RouteRecordInfo<
       '/mesh-occlusion-test',
       '/mesh-occlusion-test',
@@ -117,6 +124,12 @@ declare module 'vue-router/auto-routes' {
     'src/pages/branching-upward-2.vue': {
       routes:
         | '/branching-upward-2'
+      views:
+        | never
+    }
+    'src/pages/fish-in-the-sea.vue': {
+      routes:
+        | '/fish-in-the-sea'
       views:
         | never
     }

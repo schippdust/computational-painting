@@ -41,7 +41,8 @@ src/classes/
 │   ├── Intersections3d.ts   Static library of 3D intersection/containment tests (point/sphere/box, etc.)
 │   ├── NoiseSystem.ts       Static (time-frozen) 3D Perlin noise field mapping positions → smooth vectors
 │   ├── Spring.ts            Hooke's-law spring connecting two vehicles; applies paired forces each frame
-│   └── WindSystem.ts        Curl-noise wind field (Perlin fBm, divergence-free)
+│   ├── WindSystem.ts        Curl-noise wind field (Perlin fBm, divergence-free)
+│   └── ViewBoundary.ts      Soft, smoothstep-ramped XY containment force pulling vehicles back once they stray past a comfort radius from a center point
 │
 ├── Geometry/                Mathematical primitives; no simulation logic
 │   ├── CoordinateSystem.ts  3×3 basis matrix; local↔world transforms; rotation, translation, lookAt
@@ -157,6 +158,8 @@ export class MyCollection extends VehicleCollection {
 - `Mesh3D` wraps the one three.js object other Mesh/ classes operate on; `MeshWireExtractor`/`MeshSilhouetteExtractor` turn it into world-space `Line[]`, which `MeshWireRenderer`/`MeshSilhouetteRenderer` draw via an internal `LineRenderer` — three.js never reaches the canvas directly
 - `MeshOcclusionClipper` holds a `MeshRaycaster` and samples visibility along each input `Line` against `Mesh3D[]` occluders, producing a `ClipResult` of `Polyline[]`/`Line[]` that feeds `MeshWireRenderer`/`MeshSilhouetteRenderer`
 - `WorldSpaceOcTreeRenderer` consumes `WorldSpaceOcTree.collectAllBBoxes()` plus `BBoxRenderer`'s static `getEdges()` helper to deduplicate shared edges before drawing
+- `ViewBoundary.applyAll(collection)` mirrors the `WindSystem` apply/applyAll idiom; it calls `vehicle.seek()` internally rather than issuing a raw force, so it composes with — not replaces — a vehicle's other steering behaviors
+- `Vehicle.wander2d()` composes an internal `Circle` (Geometry) to compute the wander target on a plane that defaults to perpendicular-to-travel-direction; `Vehicle.wander3d()` composes `Vehicle.seek()` only (no separate geometry primitive — the wander sphere's surface point is tracked as a persisted direction vector). `VehicleCollection.wander3dAll()`/`wander2dAll()` are thin per-vehicle forEach wrappers, same idiom as `applyPersistentSteerForceAll`
 
 ## New Class Procedures
 
